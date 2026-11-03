@@ -8,8 +8,10 @@ Snapshot lifecycle (canonical snapshots are treated as read-only but possibly
 still changing until the corpus owner confirms publication):
 
 * Each snapshot directory gets a stat fingerprint (size, mtime, inode, ctime of
-  every file). A snapshot is verified with the backend's ``storage.verify`` only
-  after the directory has been quiet for ``stable_s`` seconds.
+  every file). A snapshot is verified only after the directory has been quiet for
+  ``stable_s`` seconds, by the backend: ``storage.verified(storage.store_path(...),
+  ledger='require')`` hashes every payload file and checks the publication ledger.
+  Refusals keep the backend's typed ``PublicationError.state``.
 * A verified snapshot's *version* is its ``manifest_sha256``. Every response is
   bound to that version; a client that sends an older version gets HTTP 409.
 * No DuckDB connection is kept open. Each request opens the file read-only,
@@ -36,8 +38,9 @@ sys.dont_write_bytecode = True
 
 # Versions this UI was built and exercised against.
 SUPPORTED = {'schema': {'2'}, 'parser': {'conservative-3'}, 'projection': {'linked-1'}}
-# d6049e2: persisted corpus pilot with manifest-3 + publication ledger (pinned for corpus integration).
-TESTED_COMMITS = {'d6049e21b05dcc9c96b03cb7ca722cea921031a4'}
+# 63f4221: corpus pilot with ledger format 2, ledger-bound store reads (StoreEntry) and typed refusals; independently
+# accepted in cuneiform-research reviews/corpus-pilot-review-v0.3.md. d6049e2 lacks storage.verified/store_path.
+TESTED_COMMITS = {'63f42216243141f4b10cdfd3d7ddd514c85b63d7'}
 
 SNAPSHOT_RE = re.compile(r'^snapshot:[0-9a-f]{32}$')
 DATASET_RE = re.compile(r'^(snapshot:[0-9a-f]{32}|[a-z][a-z0-9-]{1,40})$')
@@ -52,7 +55,6 @@ MAX_RAW_TRACE_BYTES = 64 * 1024**2
 STABLE_S = float(os.environ.get('CUNEIFORM_UI_STABLE_S', '30'))  # quiet period before a snapshot is verified
 REVERIFY_S = 900.0  # full re-hash of ready snapshots at most this often (stat fingerprint is checked per request)
 SELECTION_SOURCES = {'oracc-selection', 'cdli-selection'}
-LEDGER = '.publication-ledger.jsonl'
 STATE_LOCK = threading.RLock()  # dataset state transitions: verification commits vs request-time invalidation
 
 
@@ -95,13 +97,15 @@ class Dataset:
     next_retry: float = 0.0
     builtin_examples: bool = False
     publication: dict = field(default_factory=dict)
+    superseded: dict | None = None  # oracc-cdl-1 snapshot superseded for sense provenance (still served)
+    supersedes: dict | None = None
 
     def public(self) -> dict:
         return {'key': self.key, 'kind': self.kind, 'title': self.title, 'description': self.description,
                 'status': self.status, 'error': self.error, 'scopes': self.scopes, 'inputs': self.inputs,
                 'examples': self.examples, 'authority': AUTHORITY[self.kind], 'version': self.version,
                 'selection': self.selection, 'verified_at': self.verified_at, 'checked_at': self.checked_at,
-                'reverifying': self.reverifying, 'stale': self.stale,
+                'reverifying': self.reverifying, 'stale': self.stale, 'superseded': self.superseded, 'supersedes': self.supersedes,
                 'publication': self.publication or {'status': 'not-a-snapshot', 'note': PUBLICATION[self.kind]},
                 'manifest': _manifest_summary(self.manifest) if self.manifest else None}
 
@@ -145,30 +149,33 @@ def _fingerprint(path: Path) -> dict:
 
 
 def store_entry_refusal(path: Path, key: str) -> dict | None:
-    """Refuse store entries that are not plain directories holding their own ID (Q-020 B2 hardening, UI side).
+    """UI pre-check before any hashing, using the backend's state names (Q-020 R1 / review v0.3).
 
-    A symlinked entry, a symlink anywhere inside it, or a manifest naming another snapshot ID could make the bytes
-    served differ from the ones the ledger published under this ID. Checked before any hashing; nothing is followed.
+    The backend (63f4221) refuses symlinked or escaping entries and payload-path symlinks itself. This check is a strict
+    superset: it also refuses a symlink anywhere inside the entry, and types a manifest naming another ID as
+    ``misplaced`` (the backend reports that case as a plain identity-mismatch error). Nothing is followed.
     """
-    def refuse(status: str, note: str) -> dict:
-        return {'status': status, 'servable': False, 'note': note}
+    def refuse(state: str, detail: str) -> dict:
+        out = publication_refusal(state)
+        out.update(source='UI pre-check (before backend verification)', detail=detail)
+        return out
     if path.is_symlink():
-        return refuse('symlinked-entry', 'store entry is a symbolic link; only plain snapshot directories are served')
+        return refuse('symlinked-entry', 'the store entry itself is a symbolic link')
     store = path.parent
     try:
         if path.resolve().parent != store.resolve():
-            return refuse('outside-store', 'store entry resolves outside the snapshot store; refused')
+            return refuse('symlinked-entry', 'the store entry resolves outside the snapshot store')
         links = [str(p.relative_to(path)) for p in path.rglob('*') if p.is_symlink()]
     except OSError as exc:
-        return refuse('unreadable-entry', f'could not inspect store entry ({type(exc).__name__}); refused')
+        return refuse('symlinked-entry', f'the store entry could not be inspected ({type(exc).__name__})')
     if links:
-        return refuse('symlink-inside-entry', f'store entry contains symbolic links ({", ".join(sorted(links)[:3])}); refused')
+        return refuse('symlinked-entry', f'the store entry contains symbolic links ({", ".join(sorted(links)[:3])})')
     try:
         sid = json.loads((path / 'manifest.json').read_text()).get('snapshot_id')
     except (OSError, ValueError, AttributeError):
         return None  # unreadable/incomplete manifest: verification reports it (and retries if it settles)
     if sid != key:
-        return refuse('id-mismatch', f'manifest names {str(sid)[:41]}, but the store entry is {key}; refused')
+        return refuse('misplaced', f'manifest names {str(sid)[:41]}, but the store entry is {key}')
     return None
 
 
@@ -183,99 +190,98 @@ def _newest(fp: dict) -> float:
 
 def selection_of(persisted, manifest: dict, path: Path) -> dict:
     """Population the counts describe, from the backend's own ``persisted.scope`` (never re-derived here)."""
-    sc = persisted.scope(path, manifest)
+    sc = {k: v for k, v in persisted.scope(path, manifest).items() if k != 'publication'}  # publication is held separately
     kind = {'rule-selected cohort': 'cohort', 'explicit selection': 'selection', 'single input': 'single-input'}.get(sc.get('kind'), sc.get('kind'))
-    return dict(sc, kind=kind, backend_kind=sc.get('kind'), note=sc.get('scope_note'),
-                size=sc.get('cohort_size', sc.get('selected')), rule_name=(sc.get('rule') or {}).get('name') or sc.get('selection_rule'))
-
-
-LEDGER_CORRUPT = '@corrupt'  # read_ledger key for an unparseable record (fails every ID closed)
-
-
-def read_ledger(snapshot_dir: Path) -> dict[str, list[dict]]:
-    """Backend publication ledger (append-only; read here, never written). snapshot_id -> entries.
-
-    An unparseable *terminated* line fails every ID closed (``LEDGER_CORRUPT``): skipping it could hide a second
-    record for an ID. An unparseable final line without a newline is a concurrent append in progress and is ignored.
-    """
-    out: dict[str, list[dict]] = {}
-    try:
-        data = (snapshot_dir / LEDGER).read_bytes()
-    except OSError:
-        return out
-    lines = data.split(b'\n')
-    for i, line in enumerate(lines):
-        if not line.strip():
-            continue
-        try:
-            e = json.loads(line)
-            if not isinstance(e, dict):
-                raise ValueError('not an object')
-        except ValueError:
-            if i == len(lines) - 1:
-                continue  # unterminated tail: an append in progress (or torn); never trusted
-            out[LEDGER_CORRUPT] = [{'line': i + 1}]
-            continue
-        out.setdefault(e.get('snapshot_id'), []).append(e)
+    out = dict(sc, kind=kind, backend_kind=sc.get('kind'), note=sc.get('scope_note'),
+               size=sc.get('cohort_size', sc.get('selected')), rule_name=(sc.get('rule') or {}).get('name') or sc.get('selection_rule'))
+    if manifest.get('source') == 'oracc-selection':
+        out['oracc'] = oracc_info(manifest, path)
     return out
 
 
-def _is_format2(e: dict) -> bool:
-    return 'event' in e or (isinstance(e.get('ledger_format'), int) and e['ledger_format'] >= 2)
+def oracc_adapter_problem(manifest: dict) -> str | None:
+    if manifest.get('source') != 'oracc-selection' or manifest.get('adapter') in ORACC_ADAPTERS:
+        return None
+    return f"ORACC adapter {manifest.get('adapter')!r} is not one this UI understands ({', '.join(sorted(ORACC_ADAPTERS))}); not served"
 
 
-def publication_of(entries: list[dict] | None, manifest: dict, corrupt: bool = False) -> dict:
-    """Publication status from the legacy (format 1) ledger, as written by the pinned backend d6049e2.
-
-    Separates trusted immutability (ledgered once, read-only) from the legacy same-ID rebuild incident. Ledger
-    format 2 (reserve + commit, backend 94af111+) is recognised and refused with its own typed status: this UI's
-    pinned backend predates it, and its semantics are the backend's to decide (``storage.verified``), not re-derived here.
-    """
-    if corrupt:
-        return {'status': 'ledger-corrupt', 'servable': False,
-                'note': 'the publication ledger has an unparseable record; every snapshot is refused until the corpus owner repairs it'}
-    if not entries:
-        return {'status': 'not-in-ledger', 'servable': False,
-                'note': 'not listed in the backend publication ledger; not served until the corpus owner publishes it'}
-    if any(_is_format2(e) for e in entries):
-        events = ' → '.join(str(e.get('event', 'legacy')) for e in entries)
-        return {'status': 'unsupported-ledger-format', 'servable': False, 'ledger_events': events,
-                'note': (f'published with publication-ledger format 2 ({events}) by a newer backend. This UI runs the pinned backend '
-                         'd6049e2, which predates that format, so it is not served yet. This is a version gap, not an integrity '
-                         'failure; it becomes servable once the UI is re-pinned to a reviewed backend that provides storage.verified.')}
-    if len(entries) != 1:
-        return {'status': 'ledger-conflict', 'servable': False,
-                'note': f'{len(entries)} legacy publication records for this ID (exactly one is allowed); refused'}
-    e = entries[0]
-    if e.get('manifest_sha256') != manifest.get('manifest_sha256'):
-        return {'status': 'ledger-mismatch', 'servable': False,
-                'note': (f"the ledger published manifest {str(e.get('manifest_sha256'))[:16]}…, but this directory holds manifest "
-                         f"{str(manifest.get('manifest_sha256'))[:16]}…; refused")}
-    contract = manifest.get('snapshot_contract')
-    base = {'published_at': e.get('published_at'), 'backfilled': bool(e.get('backfilled')), 'snapshot_contract': contract,
-            'ledger_manifest_sha256': e.get('manifest_sha256'), 'servable': True}
-    if e.get('incident'):
-        return dict(base, status='legacy-incident', note=incident_note(e))
-    if e.get('backfilled'):
-        return dict(base, status='ledgered-legacy',
-                    note='Published once before the ledger existed (backfilled, legacy pre-manifest-3 identity); read-only since.')
-    return dict(base, status='ledgered', note=f'Published once through the ledger ({contract or "contract unrecorded"}); read-only and never republishable.')
+def oracc_info(manifest: dict, path: Path) -> dict:
+    """Adapter label plus a same-inputs key (parent zip, project, texts, rule) from selection.json, which the backend's
+    verification binds to the manifest. Snapshots sharing the key are the same texts read by different adapters; they
+    are labelled, never merged (the backend's input_identity differs because the adapter is part of the record ID)."""
+    adapter = manifest.get('adapter')
+    sel = json.loads((path / 'selection.json').read_text())
+    same_inputs = hashlib.sha256(json.dumps([(sel.get('parent') or {}).get('sha256'), sel.get('project'), sorted(sel.get('texts') or []),
+                                             sel.get('selection_rule')], sort_keys=True).encode()).hexdigest()[:32]
+    return dict(ORACC_ADAPTERS.get(adapter, {}), adapter=adapter, same_inputs=same_inputs, texts=len(sel.get('texts') or []),
+                project=sel.get('project'))
 
 
-def incident_note(e: dict) -> str:
+# Backend PublicationError.state -> (dataset status, UI note). The backend decides the state (storage.verified with
+# ledger='require'); the UI only words it. Review v0.3 N1: a reader's ``reserved`` is "not yet available" -- the backend's
+# refusal text can claim no live writer holds the lock, which a reader never checks, so that prose is not shown.
+PUBLICATION_STATES = {
+    'reserved': ('not-yet-available', 'Not yet available: the ledger has a reservation for this ID but no commit. A writer may '
+                 'still be completing it, or it was interrupted; nothing is served until a commit is recorded.'),
+    'not-in-ledger': ('unpublished', 'Not listed as published in the backend publication ledger; not served.'),
+    'unledgered': ('unpublished', 'Present in the store without a publication record; not served.'),
+    'ledger-mismatch': ('refused', 'The bytes in the store differ from what the ledger published under this ID; refused.'),
+    'conflict': ('refused', 'The ledger holds an impossible sequence of records for this ID; refused.'),
+    'ledger-corrupt': ('refused', 'The publication ledger has an unparseable record before its end; every snapshot is refused '
+                       'until the corpus owner repairs it.'),
+    'symlinked-entry': ('refused', 'The store entry is a symbolic link, contains one, or resolves outside the store; only real '
+                        'directories inside the store are served.'),
+    'misplaced': ('refused', 'The directory name and the snapshot ID in its manifest differ; refused.'),
+    'published-missing': ('unavailable', 'Published in the ledger, but its directory is missing from the store; not served.'),
+    'abandoned': ('unavailable', 'Reserved and then lost before commit; the ID is burned permanently and never served.'),
+    'aborted': ('unavailable', 'Its reservation was aborted; nothing was published under this ID.'),
+    'not-found': ('unavailable', 'Not present in the store.'),
+}
+# States worth listing for a ledger ID that has no directory (aborted / never-seen IDs are not shown).
+LEDGER_ONLY_STATES = {'reserved', 'published-missing', 'abandoned', 'conflict'}
+
+# ORACC selection adapters this UI understands. Both stay servable; oracc-cdl-1 is superseded for sense provenance.
+ORACC_ADAPTERS = {
+    'oracc-cdl-1': {'sense_provenance': 'legacy',
+                    'note': 'oracc-cdl-1: the shared Sense row stores the sig of the first attesting instance only; it is not '
+                            'each word\'s own sig. Per-word sense provenance is not recorded in this snapshot.'},
+    'oracc-cdl-2': {'sense_provenance': 'per-word',
+                    'note': 'oracc-cdl-2: each word\'s own sig, inst and payload pointer are on its LEMMATIZED_AS / IN_SENSE '
+                            'links; the shared Sense row holds only a sense-key locator.'},
+}
+
+
+def publication_refusal(state: str, exc: BaseException | None = None) -> dict:
+    """Typed refusal for a backend PublicationError state."""
+    status, note = PUBLICATION_STATES.get(state, ('refused', f'The backend refused this snapshot (publication state {state}).'))
+    out = {'status': state, 'dataset_status': status, 'servable': False, 'source': 'backend storage.verified', 'note': note}
+    if exc is not None and state != 'reserved':
+        out['backend_message'] = str(exc)[:600]
+    return out
+
+
+def incident_note(incident: str) -> str:
     return ('Ledgered after the fact. This ID was deleted and rebuilt under the same ID before the ledger existed; '
             'first-version bytes were not retained. Current bytes verify, but results produced from this ID before '
-            'the rebuild cannot be reproduced. Incident: ' + str(e.get('incident')))
+            'the rebuild cannot be reproduced. Incident: ' + str(incident))
 
 
-def publication_from_backend(pub: dict, entries: list[dict] | None) -> dict:
-    """Map ``storage.verified(...)['publication']`` (backend 94af111+) to the UI label; the legacy incident stays visible."""
-    incident = next((e for e in entries or [] if e.get('incident')), None)
+def tail_note(tail: dict) -> str:
+    return (f"The publication ledger ends with an unterminated record at byte {tail.get('offset')} "
+            f"({tail.get('length')} bytes, sha256 {str(tail.get('sha256'))[:16]}…, parsed={tail.get('parsed')}): an append in "
+            'progress or a torn write. The backend ignores it for reads (a torn commit leaves its ID reserved, so that ID stays '
+            'refused) and refuses further publication until `publication-repair-ledger` acknowledges it.')
+
+
+def publication_from_backend(pub: dict) -> dict:
+    """Map ``storage.verified(...)['publication']`` to the UI label; the legacy incident and a torn tail stay visible."""
     out = dict(pub, servable=True, source='backend storage.verified')
-    if incident is not None:
-        out.update(status='legacy-incident', note=incident_note(incident), backend_status=pub.get('status'))
+    if pub.get('incident'):
+        out.update(status='legacy-incident', note=incident_note(pub['incident']), backend_status=pub.get('status'))
     else:
         out.setdefault('note', pub.get('binding') or 'published (backend ledger check)')
+    if pub.get('ledger_tail'):
+        out['ledger_tail_note'] = 'unterminated final ledger record present at this read (' + str(pub['ledger_tail']) + ')'
     return out
 
 
@@ -292,8 +298,26 @@ class Backend:
         self.datasets: dict[str, Dataset] = {}
         self.discovery_lock = threading.Lock()
         self.last_discovery: float | None = None
-        self.ledger: dict[str, list[dict]] = {}
+        self.ledger: dict = {'by_id': {}}  # last observation of the backend ledger (Ledger.scan), for display/change detection
+        self.timing = threading.local()  # per-request timing breakdown (see timing_begin/timing_parts)
         self.info = self._load()
+
+    # -- per-request timing -------------------------------------------------
+    def timing_begin(self) -> None:
+        self.timing.parts = {}
+
+    def timing_parts(self) -> dict:
+        return dict(getattr(self.timing, 'parts', None) or {})
+
+    def _mark(self, name: str, started: float) -> None:
+        parts = getattr(self.timing, 'parts', None)
+        if parts is not None:
+            parts[name] = round(parts.get(name, 0.0) + (time.monotonic() - started) * 1000, 1)
+
+    def note_timing(self, name: str, value) -> None:
+        parts = getattr(self.timing, 'parts', None)
+        if parts is not None:
+            parts[name] = value
 
     # -- backend import and compatibility ---------------------------------
     def _load(self) -> dict:
@@ -311,12 +335,17 @@ class Backend:
         if Path(cuneiform.__file__).resolve().parent != self.repo / 'cuneiform':
             raise RuntimeError('imported cuneiform package is not the configured repository')
         self.adapters, self.model, self.projections, self.query, self.storage = adapters, model, projections, query, storage
-        # Backend 94af111+ exposes the trusted read path (content verification + ledger-format-2 publication check).
-        # The pinned d6049e2 does not; then the UI keeps its legacy (format 1) ledger reading and refuses format 2.
-        self.trusted_read = callable(getattr(storage, 'verified', None))
+        try:
+            from cuneiform import publication
+        except ImportError:
+            publication = None  # pre-ledger-2 backend: reported as incompatible below
+        self.publication = publication
+        # The only read path: StoreEntry (storage.store_path) + storage.verified(..., ledger='require'). The UI does not
+        # parse the ledger itself; it observes it with the backend's own Ledger.scan for change detection and display.
         required = {'projections': ['build', 'lookup', 'source_span', 'coverage', 'report', 'assert_fresh', 'ProjectionConfig'],
                     'query': ['motif', 'trace_rows', 'array_count', 'trace'],
-                    'storage': ['verify', 'read_bounded', 'validate_graph', 'Config'],
+                    'storage': ['verify', 'verified', 'store_path', 'read_bounded', 'validate_graph', 'Config'],
+                    'publication': ['Ledger', 'PublicationError'],
                     'adapters': ['Builder', 'ingest', 'RIGHTS'], 'model': ['identity', 'digest', 'canonical', 'EDGE_TYPES'],
                     'persisted': ['scope'], 'oracc': ['trace_word']}
         missing = [f'{mod}.{name}' for mod, names in required.items() for name in names
@@ -338,8 +367,8 @@ class Backend:
                 'research_root': str(self.research_root), 'python': sys.version.split()[0],
                 'duckdb': __import__('duckdb').__version__,
                 'frozen_fast_path': hasattr(projections, 'mark_frozen_verified'),
-                'publication_read': ('backend storage.verified (ledger formats 1 and 2)' if self.trusted_read
-                                     else 'backend storage.verify + legacy ledger (format 1 only; format 2 refused as unsupported)')}
+                'publication_read': "backend storage.store_path + storage.verified(ledger='require') (ledger formats 1 and 2)",
+                'oracc_adapters': sorted(ORACC_ADAPTERS)}
 
     CODE_PATHS = ('cuneiform', 'fixtures', 'pyproject.toml')
 
@@ -425,7 +454,7 @@ class Backend:
             now = time.time()
             snapshot_dir = self.research_root / 'snapshots'
             present = set()
-            self.ledger = read_ledger(snapshot_dir)
+            self.ledger = self._observe_ledger(snapshot_dir)
             if snapshot_dir.is_dir():
                 for p in sorted(snapshot_dir.iterdir()):
                     # is_dir() follows a symlinked entry on purpose: it is listed, then refused with a typed reason.
@@ -434,8 +463,9 @@ class Backend:
                         t = self._consider(p, now, deep)
                         if t:
                             started.append(t)
-            for key in [k for k, d in self.datasets.items() if d.kind == 'snapshot' and k not in present]:
-                self.datasets.pop(key)  # removed from disk: forget it (no connection is held)
+            listed = self._ledger_only(present)
+            for key in [k for k, d in self.datasets.items() if d.kind == 'snapshot' and k not in present and k not in listed]:
+                self.datasets.pop(key)  # removed from disk and nothing to say from the ledger: forget it (no connection is held)
             for key, kind, title, description, inputs, examples in self._sample_specs():
                 if key not in self.datasets and all(path.is_file() for _, path in inputs):
                     ds = Dataset(key, kind, title, description, examples=examples, builtin_examples=bool(examples))
@@ -447,8 +477,82 @@ class Backend:
             t.join(max(0.0, deadline - time.time()))
         return self.listing()
 
+    def _observe_ledger(self, snapshot_dir: Path) -> dict:
+        """Observe the publication ledger through the backend's own parser (Ledger.scan); never re-derived here.
+
+        Used for change detection (a ledger change re-evaluates the IDs it touches) and for display: a torn final
+        record or an unparseable record is reported explicitly, never skipped silently. Publication decisions are
+        made only by storage.verified(..., ledger='require').
+        """
+        out: dict = {'path': str(snapshot_dir / '.publication-ledger.jsonl'), 'exists': False, 'records': 0, 'tail': None,
+                     'tail_note': None, 'corrupt': None, 'by_id': {}, 'states': {}}
+        if self.publication is None:
+            return out
+        led = self.publication.Ledger(snapshot_dir)
+        out['exists'] = led.exists()
+        try:
+            entries, tail = led.scan()
+        except ValueError as exc:  # LedgerCorrupt (PublicationError): every decision is refused by the backend too
+            out['corrupt'] = str(exc)[:600]
+            return out
+        except OSError as exc:
+            out['corrupt'] = f'ledger unreadable ({type(exc).__name__})'
+            return out
+        out['records'] = len(entries)
+        if tail is not None:
+            out['tail'] = {k: tail.get(k) for k in ('offset', 'length', 'sha256', 'parsed')}
+            out['tail_note'] = tail_note(tail)
+        groups: dict[str, list] = {}
+        for e in entries:
+            sid = e.get('snapshot_id')
+            if isinstance(sid, str):
+                groups.setdefault(sid, []).append({k: v for k, v in e.items() if not k.startswith('_') or k == '_unterminated'})
+        for sid, group in groups.items():
+            out['by_id'][sid] = hashlib.sha256(json.dumps(group, sort_keys=True, default=str).encode()).hexdigest()
+            try:
+                out['states'][sid] = led.status(sid, entries).state
+            except ValueError:
+                out['states'][sid] = 'conflict'
+        return out
+
     def _ledger_key(self, key: str) -> list:
-        return [self.ledger.get(key), bool(self.ledger.get(LEDGER_CORRUPT))]
+        """Change-detection key for one ID: its own ledger records and whether the ledger as a whole is corrupt."""
+        return [self.ledger.get('by_id', {}).get(key), bool(self.ledger.get('corrupt'))]
+
+    def _ledger_only(self, present: set) -> set:
+        """List ledger IDs without a directory whose state matters (reserved, published-missing, abandoned, conflict).
+
+        The state comes from the backend: a store read of the absent entry raises a typed PublicationError.
+        """
+        listed: set = set()
+        if self.publication is None:
+            return listed
+        cfg = self.storage.Config(self.research_root)
+        for sid in sorted(self.ledger.get('states', {})):
+            if sid in present or not SNAPSHOT_RE.match(sid):
+                continue
+            try:
+                self.storage.verified(self.storage.store_path(cfg, sid), ledger='require')
+                continue  # cannot normally happen without a directory; the next scan lists it from disk
+            except ValueError as exc:
+                state = getattr(exc, 'state', None)
+            except OSError:
+                state = 'not-found'
+            if not isinstance(state, str):
+                state = 'not-found'
+            if state not in LEDGER_ONLY_STATES:
+                continue
+            listed.add(sid)
+            ds = self.datasets.get(sid)
+            if ds is None:
+                ds = Dataset(sid, 'snapshot', sid, 'Ledger record without a directory in the store')
+                self.datasets[sid] = ds
+            pub = publication_refusal(state)
+            if ds.publication.get('status') != state or ds.status == 'ready':
+                ds.publication = pub
+                self._retire(ds, pub['dataset_status'], pub['note'])
+                ds.fingerprint = None
+        return listed
 
     def _consider(self, path: Path, now: float, deep: bool) -> threading.Thread | None:
         key = path.name
@@ -456,6 +560,8 @@ class Backend:
         if ds is None:
             ds = Dataset(key, 'snapshot', key, 'Persisted snapshot (not yet verified)', path=path)
             self.datasets[key] = ds
+        if ds.path is None:  # was listed from the ledger only; its directory has appeared
+            ds.path = path
         if ds.verifying:
             return None
         fp = _fingerprint(path)
@@ -511,6 +617,7 @@ class Backend:
         demos_visible = self.show_demos == 'always' or (self.show_demos == 'auto' and not real_ready and not transient)
         order = {'snapshot': 0, 'sample': 1, 'synthetic': 2}
         spec_rank = {key: i for i, (key, *_rest) in enumerate(self._sample_specs())}
+        self._mark_supersession(real)
         shown = [d for d in self.datasets.values() if d.kind == 'snapshot' or demos_visible]
         # Richest first: real snapshots, then samples that carry text, in curated order.
         shown.sort(key=lambda d: (order[d.kind], not d.scopes, spec_rank.get(d.key, 0), d.title))
@@ -518,7 +625,35 @@ class Backend:
                 'demos_visible': demos_visible, 'demo_policy': self.show_demos,
                 'snapshot_dir': str(self.research_root / 'snapshots'),
                 'snapshot_dir_exists': (self.research_root / 'snapshots').is_dir(),
+                'ledger': {k: self.ledger.get(k) for k in ('path', 'exists', 'records', 'tail', 'tail_note', 'corrupt', 'states')},
                 'last_discovery': self.last_discovery, 'stable_s': self.stable_s, 'now': time.time()}
+
+    @staticmethod
+    def _mark_supersession(real: list) -> None:
+        """oracc-cdl-1 snapshots are superseded for sense provenance by an oracc-cdl-2 snapshot of the same inputs.
+
+        Both stay listed and servable (historical evidence is never hidden); only the label and the word view change.
+        """
+        newer: dict[str, Dataset] = {}
+        for d in real:
+            o = (d.selection or {}).get('oracc') or {}
+            if o.get('adapter') == 'oracc-cdl-2':
+                newer[o['same_inputs']] = d
+        for d in real:
+            o = (d.selection or {}).get('oracc') or {}
+            succ = newer.get(o.get('same_inputs')) if o.get('adapter') == 'oracc-cdl-1' else None
+            d.superseded = None if succ is None else {
+                'by': succ.key, 'by_status': succ.status, 'for': 'sense provenance', 'by_adapter': 'oracc-cdl-2',
+                'note': (f'Superseded for sense provenance by {succ.key} (oracc-cdl-2, same ZIP receipt and {o.get("texts")} texts'
+                         + ('' if succ.status == 'ready' else f'; that snapshot is currently {succ.status}')
+                         + '). This snapshot stays available as historical evidence; its Sense rows carry the first attesting '
+                           "instance's sig, not each word's own.")}
+            d.supersedes = None
+        for d in real:
+            if d.superseded:
+                succ = next(x for x in real if x.key == d.superseded['by'])
+                succ.supersedes = {'key': d.key, 'for': 'sense provenance',
+                                   'note': f'Supersedes {d.key} (oracc-cdl-1) for sense provenance; same ZIP receipt and texts. Both are listed.'}
 
     def _sample_specs(self):
         ev = self.research_root / 'evidence'
@@ -604,20 +739,24 @@ class Backend:
             pass
         return out
 
-    def _verify_and_publication(self, ds: Dataset, entries_key: list) -> tuple[dict | None, dict]:
+    def store_entry(self, key: str):
+        """Backend StoreEntry for a snapshot ID: every read of it runs with ledger='require' and expected_sid=key."""
+        return self.storage.store_path(self.storage.Config(self.research_root), key)
+
+    def verified(self, key: str) -> dict:
+        """Content verification (every payload hash) + ledger check, both by the backend. Raises typed PublicationError."""
+        return self.storage.verified(self.store_entry(key), ledger='require')
+
+    def _verify_and_publication(self, ds: Dataset) -> tuple[dict | None, dict]:
         """Content verification + publication status. Returns (manifest or None when refused, publication)."""
-        entries, corrupt = entries_key
-        if self.trusted_read:
-            try:
-                out = self.storage.verified(ds.path, ds.key, ledger='require')
-            except ValueError as exc:
-                state = getattr(exc, 'state', None)
-                if not isinstance(state, str):
-                    raise  # content/integrity failure: the snapshot failed, it was not merely unpublished
-                return None, {'status': state, 'servable': False, 'source': 'backend storage.verified', 'note': str(exc)}
-            return out['manifest'], publication_from_backend(out.get('publication') or {}, entries)
-        manifest = self.storage.verify(ds.path, ds.key)  # backend hashes every payload file and checks bindings
-        return manifest, publication_of(entries, manifest, corrupt=corrupt)
+        try:
+            out = self.verified(ds.key)
+        except ValueError as exc:
+            state = getattr(exc, 'state', None)
+            if not isinstance(state, str):
+                raise  # content/integrity failure: the snapshot failed, it was not merely unpublished
+            return None, publication_refusal(state, exc)
+        return out['manifest'], publication_from_backend(out.get('publication') or {})
 
     def _verify_snapshot(self, ds: Dataset, fp_before: dict, gen: int, routine: bool = False) -> None:
         """Verify one snapshot in a background thread.
@@ -632,7 +771,7 @@ class Backend:
         try:
             refusal = store_entry_refusal(ds.path, ds.key)
             if refusal:
-                commit = {'status': 'refused', 'error': refusal['note'], 'publication': refusal}
+                commit = {'status': refusal['dataset_status'], 'error': f"{refusal['note']} ({refusal['detail']})", 'publication': refusal}
                 return
             pre = json.loads((ds.path / 'manifest.json').read_text())
             schema, parser = pre.get('schema_version'), pre.get('parser_version')
@@ -643,15 +782,18 @@ class Backend:
             total = sum(v[0] for k, v in fp_before.items() if not k.startswith('@'))
             if total > MAX_VERIFY_BYTES:
                 raise UserError(f'snapshot is {total} bytes; UI verification cap is {MAX_VERIFY_BYTES}')
-            manifest, publication = self._verify_and_publication(ds, fp_before.get('@ledger') or [None, False])
+            manifest, publication = self._verify_and_publication(ds)
             if manifest is None or not publication.get('servable'):
-                status = 'incompatible' if publication.get('status') == 'unsupported-ledger-format' else 'unpublished'
-                commit = {'status': status, 'error': publication['note'], 'publication': publication}
+                commit = {'status': publication.get('dataset_status', 'refused'), 'error': publication['note'], 'publication': publication}
+                return
+            adapter_problem = oracc_adapter_problem(manifest)
+            if adapter_problem:
+                commit = {'status': 'incompatible', 'error': adapter_problem}
                 return
             if routine and manifest.get('manifest_sha256') == ds.version and _fingerprint_eq(ds.path, fp_before):
                 commit = {'status': 'ready', 'publication': publication, 'refresh_only': True}
                 return
-            selection = selection_of(self.persisted, manifest, ds.path)
+            selection = selection_of(self.persisted, manifest, self.store_entry(ds.key))
             db = self._open_snapshot_db(ds.path, manifest)
             try:
                 scopes = self.projections.rows(db, 'SELECT DISTINCT namespace,snapshot_id,field FROM ordered_position ORDER BY 1,2,3')
@@ -687,7 +829,8 @@ class Backend:
                         ds.stale = {'version': ds.version, 'reason': 'a different manifest verified under the same snapshot ID', 'at': time.time()}
                     ds.manifest, ds.selection, ds.scopes, ds.examples = manifest, selection, c['scopes'], c['examples']
                     ds.publication = c['publication']
-                    ds.title = f"{manifest.get('namespace', '?')} · {selection['label']} · {ds.key[9:21]}"
+                    adapter = (selection.get('oracc') or {}).get('adapter')
+                    ds.title = f"{manifest.get('namespace', '?')} · {selection['label']}{' · ' + adapter if adapter else ''} · {ds.key[9:21]}"
                     ds.description = selection['note']
                     ds.raws = {manifest['raw_sha256']: (manifest['source'], ds.path / 'raw')}
                     parent = selection.get('parent') or {}
@@ -781,9 +924,13 @@ class Backend:
             yield
             return
         version = ds.version
+        t = time.monotonic()
         self._check_unchanged(ds, version)
+        self._mark('stat_check_ms', t)
         yield
+        t = time.monotonic()
         self._check_unchanged(ds, version)
+        self._mark('stat_check_ms', t)
 
     def _check_unchanged(self, ds: Dataset, version: str | None) -> None:
         assert ds.path is not None
@@ -798,15 +945,38 @@ class Backend:
             raise VersionChanged('snapshot files changed since verification; the result was discarded and the snapshot will be re-verified')
 
     def _reverify_bytes(self, ds: Dataset, version: str | None) -> None:
-        """Per-request byte check: backend storage.verify re-hashes every file (~0.1 s for the 174 MB cohort)."""
+        """Per-request check by the backend: every payload hash plus the ledger (storage.verified, ledger='require').
+
+        A publication refusal (reserved, mismatch, corrupt ledger, symlinked entry...) retires the version with its typed
+        state; a byte failure invalidates it. Either way the result is refused (HTTP 409).
+        """
+        started = time.monotonic()
         try:
-            manifest = self.storage.verify(ds.path, ds.key)
-        except (OSError, ValueError) as exc:
+            out = self.verified(ds.key)
+        except ValueError as exc:
+            state = getattr(exc, 'state', None)
+            if isinstance(state, str):
+                pub = publication_refusal(state, exc)
+                with STATE_LOCK:
+                    if ds.version == version:
+                        ds.publication = pub
+                        self._retire(ds, pub['dataset_status'], pub['note'])
+                raise VersionChanged(f'snapshot is no longer served ({state}): {pub["note"]} Result refused.') from exc
             self._invalidate(ds, f'per-request verification failed: {exc}')
             raise VersionChanged(f'snapshot failed byte verification on this request ({exc}); result refused') from exc
-        if manifest.get('manifest_sha256') != version:
+        except OSError as exc:
+            self._invalidate(ds, f'per-request verification failed: {exc}')
+            raise VersionChanged(f'snapshot failed byte verification on this request ({exc}); result refused') from exc
+        finally:
+            self._mark('verify_ms', started)
+        if out['manifest'].get('manifest_sha256') != version:
             self._invalidate(ds, 'manifest changed under the same snapshot ID')
             raise VersionChanged('snapshot manifest changed under the same ID; result refused')
+        pub = publication_from_backend(out.get('publication') or {})
+        with STATE_LOCK:
+            if ds.version == version:
+                ds.publication = pub  # e.g. a torn ledger tail seen on this read is shown, not ignored
+        self.note_timing('publication_at_read', pub.get('status'))
 
     def run(self, ds: Dataset, fn: Callable[[Any], Any], timeout: float = QUERY_TIMEOUT_S):
         """One bounded unit of work on one dataset version.
@@ -815,20 +985,27 @@ class Backend:
         afterwards; the stat fingerprint is checked before opening and after closing, and the backend
         re-verifies every file hash before opening.
         """
+        t = time.monotonic()
         if not ds.lock.acquire(timeout=LOCK_WAIT_S):
             raise UserError('dataset busy; try again')
+        self._mark('lock_wait_ms', t)
         db = None
         timer = None
         try:
             if ds.kind == 'snapshot':
                 version = ds.version
+                t = time.monotonic()
                 self._check_unchanged(ds, version)
+                self._mark('stat_check_ms', t)
                 self._reverify_bytes(ds, version)
+                t = time.monotonic()
                 db = self._open_snapshot_db(ds.path, ds.manifest)
+                self._mark('open_ms', t)
             else:
                 db = ds.db
             timer = threading.Timer(timeout, db.interrupt)
             timer.start()
+            t = time.monotonic()
             try:
                 result = fn(db)
             except Exception as exc:
@@ -837,10 +1014,14 @@ class Backend:
                 if 'out of memory' in str(exc).lower():
                     raise UserError('query exceeded the DuckDB memory bound; narrow it') from exc
                 raise
+            finally:
+                self._mark('query_ms', t)
             if ds.kind == 'snapshot':
+                t = time.monotonic()
                 db.close()
                 db = None
                 self._check_unchanged(ds, version)
+                self._mark('stat_check_ms', t)
                 ds.checked_at = time.time()
             return result
         finally:

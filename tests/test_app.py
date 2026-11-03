@@ -95,6 +95,7 @@ class AppTest(unittest.TestCase):
     def drop_checked(self, graph):
         st, out, _ = self.req('POST', '/api/falkordb/drop', {'graph': graph})
         self.assertEqual(st, 200, out)
+        self.assertIn('end_to_end_ms', out.pop('timing'))
         self.assertEqual(out, {'dropped': graph})
         self.assertNotIn(graph, self.live_test_graphs() or [])
 
@@ -138,6 +139,9 @@ class AppTest(unittest.TestCase):
             self.assertIn('not evidence', r['scope_note'])
             if len(pattern) > 1:
                 self.assertTrue(r['parity']['ok'])
+            t = r['timing']  # end-to-end request time with an optional breakdown; query_ms is only part of it
+            self.assertGreaterEqual(t['end_to_end_ms'], t['breakdown']['query_ms'])
+            self.assertIn('not the request latency', t['note'])
             if policy == 'strict':
                 self.assertIn('intact AND certain', r['strict_note'])
 

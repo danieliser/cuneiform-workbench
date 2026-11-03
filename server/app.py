@@ -33,7 +33,10 @@ STATIC = {  # fixed allow-list; no filesystem path is derived from the URL
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 log = logging.getLogger('cuneiform-ui')
-# Backend 94af111+ refusal types, surfaced as typed states instead of a generic 400/500 (review N-2).
+UNTIMED = {'/api/status', '/api/health'}
+TIMING_NOTE = ('end_to_end_ms covers the whole request on the server, including re-hashing every snapshot file and the ledger '
+               'check; query_ms is only the SQL/graph part and is not the request latency.')
+# Backend 63f4221 refusal types, surfaced as typed states instead of a generic 400/500 (review N-2).
 TYPED_BACKEND_ERRORS = {
     'PublicationError': (409, 'publication-refused'), 'LedgerCorrupt': (409, 'publication-refused'),
     'ScopeMismatch': (400, 'scope-mismatch'), 'LayerUnavailable': (422, 'layer-unavailable'),
@@ -168,8 +171,17 @@ class Handler(BaseHTTPRequestHandler):
         return True
 
     def _dispatch(self, fn):
+        backend = self.app.backend
+        backend.timing_begin()
+        started = time.monotonic()
         try:
-            self._json(200, fn())
+            out = fn()
+            if isinstance(out, dict) and urlsplit(self.path).path not in UNTIMED:
+                # Whole server-side handling of this request (checks, full snapshot verification, query, post-checks,
+                # backend traces). The breakdown is optional detail; query_ms alone is never the request latency.
+                out['timing'] = {'end_to_end_ms': round((time.monotonic() - started) * 1000, 1), 'breakdown': backend.timing_parts(),
+                                 'scope': 'server-side, from request parsed to response built', 'note': TIMING_NOTE}
+            self._json(200, out)
         except NotFound:
             self._json(404, {'error': 'not found'})
         except PermissionError as exc:

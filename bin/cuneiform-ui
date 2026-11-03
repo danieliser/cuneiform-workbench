@@ -16,7 +16,7 @@ umask 077
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UI_HOME="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}"
 BACKEND_REPO="${CUNEIFORM_BACKEND_REPO:-$HOME/Projects/Fun/cuneiform-research}"  # read only (git archive / git status)
-PIN_COMMIT="d6049e21b05dcc9c96b03cb7ca722cea921031a4"  # tested backend commit (corpus pilot, manifest-3 ledger)
+PIN_COMMIT="63f42216243141f4b10cdfd3d7ddd514c85b63d7"  # tested backend commit (ledger format 2, ledger-bound store reads; accepted in corpus-pilot-review-v0.3)
 PIN_DIR="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}/backend-pin/$PIN_COMMIT"
 # Default: run against the read-only pinned export when it exists, so concurrent backend edits cannot change the UI.
 if [[ -z "${CUNEIFORM_SOURCE_REPO:-}" && -f "$PIN_DIR/.cuneiform-ui-pin.json" ]]; then SOURCE_REPO="$PIN_DIR"; else SOURCE_REPO="${CUNEIFORM_SOURCE_REPO:-$BACKEND_REPO}"; fi

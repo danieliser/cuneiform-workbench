@@ -226,10 +226,18 @@ class SnapshotPathTest(Roots, unittest.TestCase):
         ver = ds.version
         rm(ds.path)
         listing = b.discover()
-        self.assertNotIn(sid, [d['key'] for d in listing['datasets']])
+        # Still published in the ledger: listed with the backend's typed state, never served, stale version recorded.
+        row = next(d for d in listing['datasets'] if d['key'] == sid)
+        self.assertEqual((row['status'], row['publication']['status']), ('unavailable', 'published-missing'))
+        self.assertEqual(row['stale']['version'], ver)
         from server.bridge import VersionChanged
         with self.assertRaises(VersionChanged):
             b.get(sid, ver)
+        # A never-published, absent ID is simply gone.
+        ledger = self.research / 'snapshots' / '.publication-ledger.jsonl'
+        writable(ledger)
+        ledger.write_text('')
+        self.assertNotIn(sid, [d['key'] for d in b.discover()['datasets']])
 
     def test_partial_then_complete_becomes_ready(self):
         sid = self.import_fixture()
@@ -265,13 +273,14 @@ class SnapshotPathTest(Roots, unittest.TestCase):
         self.assertEqual(wait_ready(b, sid).status, 'ready')
 
     def test_legacy_incident_is_distinguished(self):
-        from server.bridge import publication_of
-        m = {'manifest_sha256': 'a' * 64}
-        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64, 'backfilled': True, 'incident': 'rebuilt'}], m)['status'], 'legacy-incident')
-        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64, 'backfilled': True}], m)['status'], 'ledgered-legacy')
-        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64}], m)['status'], 'ledgered')
-        self.assertFalse(publication_of([{'manifest_sha256': 'b' * 64}], m)['servable'])
-        self.assertFalse(publication_of([{'manifest_sha256': 'a' * 64}] * 2, m)['servable'])
+        from server.bridge import publication_from_backend
+        base = {'status': 'ledgered-legacy-backfilled', 'ledger_checked': True, 'binding': 'b'}
+        p = publication_from_backend(dict(base, incident='rebuilt under the same ID'))
+        self.assertEqual((p['status'], p['backend_status'], p['servable']), ('legacy-incident', 'ledgered-legacy-backfilled', True))
+        self.assertIn('rebuilt under the same ID', p['note'])
+        self.assertEqual(publication_from_backend(base)['status'], 'ledgered-legacy-backfilled')
+        t = publication_from_backend(dict(base, ledger_tail='unterminated final record (append in progress or torn write); ignored for this read'))
+        self.assertIn('unterminated', t['ledger_tail_note'])
 
     def test_symlinked_entries_and_id_mismatch_are_refused(self):
         """Q-020 B2 (UI side): a symlinked store entry, a symlink inside one, or a foreign manifest ID is never served."""
@@ -292,6 +301,11 @@ class SnapshotPathTest(Roots, unittest.TestCase):
             ds = wait_ready(b, key)
             self.assertEqual(ds.status, 'refused', (key, ds.status, ds.error))
             self.assertEqual(ds.publication['status'], 'symlinked-entry')
+        # The backend refuses the same entry on its own (not only the UI pre-check).
+        from cuneiform.publication import PublicationError
+        with self.assertRaises(PublicationError) as cm:
+            b.verified(sid)
+        self.assertEqual(cm.exception.state, 'symlinked-entry')
         (snaps / sid).unlink()
         shutil.move(str(moved), str(snaps / sid))
         (snaps / alias).unlink()
@@ -299,14 +313,17 @@ class SnapshotPathTest(Roots, unittest.TestCase):
         shutil.copytree(snaps / sid, copy)  # a plain directory whose manifest names another ID
         b2 = self.backend()
         b2.discover(wait=30)
-        self.assertEqual(wait_ready(b2, alias).publication['status'], 'id-mismatch')
+        mis = wait_ready(b2, alias)
+        self.assertEqual((mis.status, mis.publication['status']), ('refused', 'misplaced'))
         self.assertEqual(wait_ready(b2, sid).status, 'ready', b2.datasets[sid].error)
         raw = snaps / sid / 'raw'
         writable(snaps / sid)
         (snaps / sid / 'extra-link').symlink_to(raw)
         b3 = self.backend()
         b3.discover(wait=30)
-        self.assertEqual(wait_ready(b3, sid).publication['status'], 'symlink-inside-entry')
+        inside = wait_ready(b3, sid)
+        self.assertEqual((inside.status, inside.publication['status']), ('refused', 'symlinked-entry'))
+        self.assertIn('contains symbolic links', inside.error)
 
     def test_only_snapshot_dirs_are_discovered(self):
         sid = self.import_fixture()
@@ -335,13 +352,20 @@ class SlowVerify:
     def __getattr__(self, name):
         return getattr(self._real, name)
 
-    def verify(self, path, sid=None, **kw):
+    def _hold(self):
         if threading.current_thread() is not threading.main_thread():
             self.entered.set()
             self.release.wait(30)
             if self.fail:
                 raise self.fail
+
+    def verify(self, path, sid=None, **kw):
+        self._hold()
         return self._real.verify(path, sid, **kw)
+
+    def verified(self, path, sid=None, **kw):
+        self._hold()
+        return self._real.verified(path, sid, **kw)
 
 
 class ReverifyRaceTest(Roots, unittest.TestCase):
@@ -442,90 +466,168 @@ def wait_until(cond, timeout=30):
 
 
 class LedgerFormatTest(Roots, unittest.TestCase):
-    """Review N-2: ledger format 2 is refused under the d6049e2 pin with a typed reason; storage.verified is used when present."""
+    """Backend 63f4221: ledger format 2 through storage.verified(ledger='require'); typed states; torn ledger fails closed."""
 
-    def entries(self, sha='a' * 64):
-        return [{'ledger_format': 2, 'event': 'reserve', 'snapshot_id': 'snapshot:' + '1' * 32, 'manifest_sha256': sha},
-                {'ledger_format': 2, 'event': 'commit', 'snapshot_id': 'snapshot:' + '1' * 32, 'manifest_sha256': sha}]
+    def ledger(self):
+        led = self.research / 'snapshots' / '.publication-ledger.jsonl'
+        writable(led)
+        return led
 
-    def test_format2_publication_messages(self):
-        from server.bridge import publication_of
-        m = {'manifest_sha256': 'a' * 64}
-        p = publication_of(self.entries(), m)
-        self.assertEqual(p['status'], 'unsupported-ledger-format')
-        self.assertFalse(p['servable'])
-        self.assertIn('reserve → commit', p['note'])
-        self.assertIn('not an integrity failure', p['note'])
-        self.assertNotIn('differs', p['note'])
-        p = publication_of(self.entries()[:1], m)  # reserve without commit: still a format gap, never served
-        self.assertEqual(p['status'], 'unsupported-ledger-format')
-        self.assertFalse(p['servable'])
-        p = publication_of([{'manifest_sha256': 'b' * 64}], m)
-        self.assertEqual(p['status'], 'ledger-mismatch')
-        self.assertIn('bbbbbbbb', p['note'])
-        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64}] * 2, m)['status'], 'ledger-conflict')
-        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64}], m, corrupt=True)['status'], 'ledger-corrupt')
+    def lines(self, sid):
+        return [ln for ln in self.ledger().read_text().splitlines(keepends=True) if sid in ln]
 
-    def test_read_ledger_corrupt_and_torn_tail(self):
-        from server.bridge import LEDGER_CORRUPT, read_ledger
-        d = self.scratch / 'ledger'
-        d.mkdir()
-        good = json.dumps({'snapshot_id': 'snapshot:' + '2' * 32, 'manifest_sha256': 'c' * 64})
-        (d / '.publication-ledger.jsonl').write_text(good + '\n{"snapshot_id": "snapshot:3')  # unterminated append in progress
-        led = read_ledger(d)
-        self.assertNotIn(LEDGER_CORRUPT, led)
-        self.assertEqual(len(led['snapshot:' + '2' * 32]), 1)
-        (d / '.publication-ledger.jsonl').write_text(good + '\nnot json\n' + good + '\n')
-        self.assertIn(LEDGER_CORRUPT, read_ledger(d))
-
-    def test_format2_snapshot_is_typed_incompatible_under_old_pin(self):
+    def test_format2_snapshot_is_served_via_backend(self):
         sid = self.import_fixture()
-        ledger = self.research / 'snapshots' / '.publication-ledger.jsonl'
-        sha = json.loads((self.research / 'snapshots' / sid / 'manifest.json').read_text())['manifest_sha256']
-        writable(ledger)
-        ledger.write_text(''.join(json.dumps(dict(e, snapshot_id=sid)) + '\n' for e in self.entries(sha)))
+        events = [json.loads(ln).get('event') for ln in self.lines(sid)]
+        self.assertEqual(events, ['reserve', 'commit'])
         b = self.backend()
-        if b.trusted_read:
-            self.skipTest('backend provides storage.verified; format 2 is the backend\'s to judge')
-        b.discover(wait=30)
-        ds = wait_ready(b, sid)
-        self.assertEqual(ds.status, 'incompatible')
-        self.assertEqual(ds.publication['status'], 'unsupported-ledger-format')
-        self.assertIn('d6049e2', ds.error)
-        self.assertEqual(b.info['publication_read'].split(' ')[1], 'storage.verify')
-
-    def test_trusted_read_path_when_backend_provides_it(self):
-        sid = self.import_fixture()
-        b = self.backend()
-        real = b.storage
-
-        class PublicationError(ValueError):
-            def __init__(self, msg, state):
-                super().__init__(msg)
-                self.state = state
-
-        class Storage:
-            mode = 'ok'
-
-            def __getattr__(self, name):
-                return getattr(real, name)
-
-            def verified(self, path, sid=None, *, ledger='auto'):
-                assert ledger == 'require'
-                if self.mode == 'reserved':
-                    raise PublicationError(f'{sid} publication is not committed', 'reserved')
-                return {'manifest': real.verify(path, sid), 'publication': {'status': 'ledgered', 'ledger_checked': True, 'binding': 'test'}}
-        b.storage, b.trusted_read = Storage(), True
+        self.assertEqual(b.info['compatibility'], 'tested', b.info['problems'])
+        self.assertIn("ledger='require'", b.info['publication_read'])
         b.discover(wait=30)
         ds = wait_ready(b, sid)
         self.assertEqual(ds.status, 'ready', ds.error)
         self.assertEqual((ds.publication['status'], ds.publication['source']), ('ledgered', 'backend storage.verified'))
-        b.storage.mode = 'reserved'
-        b.discover(deep=True, wait=30)
+        self.assertTrue(ds.publication['manifest_file_bytes_bound'])
+
+    def test_reserved_is_not_yet_available_without_backend_prose(self):
+        sid = self.import_fixture()
+        reserve = self.lines(sid)[0]
+        self.ledger().write_text(reserve)  # reserve, no commit: a writer between reserve and commit (or interrupted)
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        self.assertEqual((ds.status, ds.publication['status']), ('not-yet-available', 'reserved'))
+        self.assertIn('Not yet available', ds.error)
+        public = json.dumps(b.listing())
+        self.assertNotIn('no live writer', public)
+        self.assertNotIn('interrupted: ', public)
+        self.assertNotIn('backend_message', ds.publication)
+
+    def test_torn_commit_tail_fails_closed_and_is_reported(self):
+        sid = self.import_fixture()
+        reserve, commit = self.lines(sid)
+        torn = commit[:len(commit) // 2]  # unterminated, unparseable: a torn commit for this ID
+        self.ledger().write_text(reserve + torn)
+        b = self.backend()
+        listing = b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        self.assertEqual((ds.status, ds.publication['status']), ('not-yet-available', 'reserved'))
+        tail = b.listing()['ledger']['tail']
+        self.assertIsNotNone(tail, 'a torn tail must be reported, never ignored silently')
+        self.assertFalse(tail['parsed'])
+        self.assertIn('unterminated record', b.listing()['ledger']['tail_note'])
+        self.assertIsNone(listing['ledger']['corrupt'])
+        self.ledger().write_text(reserve + commit)  # the append completes
+        b.discover(wait=30)
+        self.assertTrue(wait_until(lambda: b.datasets[sid].status == 'ready'), b.datasets[sid].error)
+        self.assertIsNone(b.listing()['ledger']['tail'])
+
+    def test_unrelated_torn_tail_is_shown_on_served_snapshot(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        with self.ledger().open('a') as f:
+            f.write('{"event": "reserve", "ledger_format": 2, "snapshot_id": "snapshot:' + '9' * 12)
+        b.discover(wait=30)
+        self.assertEqual(ds.status, 'ready', 'an unrelated torn tail does not refuse other IDs (backend semantics)')
+        self.assertIsNotNone(b.listing()['ledger']['tail'])
+        from server.explore import Explorer
+        Explorer(b).query({'dataset': sid, 'version': ds.version, 'pattern': ['A', 'B']})
+        self.assertIn('unterminated', ds.publication.get('ledger_tail_note', ''))
+
+    def test_corrupt_ledger_refuses_per_request_and_on_scan(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        version = ds.version
+        led = self.ledger()
+        saved = led.read_text()
+        led.write_text('not json\n' + saved)  # a terminated unparseable record: every decision refused
+        from server.bridge import VersionChanged
+        from server.explore import Explorer
+        with self.assertRaises(VersionChanged) as cm:
+            Explorer(b).query({'dataset': sid, 'version': version, 'pattern': ['A', 'B']})
+        self.assertIn('ledger-corrupt', str(cm.exception))
+        self.assertEqual((ds.status, ds.publication['status'], ds.stale['version']), ('refused', 'ledger-corrupt', version))
+        b.discover(wait=30)
         self.assertTrue(wait_until(lambda: not ds.verifying))
-        self.assertEqual(ds.status, 'unpublished')
-        self.assertEqual(ds.publication['status'], 'reserved')
-        self.assertEqual(ds.stale['reason'].split(':')[0], 're-verification of the served version failed')
+        self.assertEqual((ds.status, ds.publication['status']), ('refused', 'ledger-corrupt'))
+        self.assertTrue(b.listing()['ledger']['corrupt'])
+        led.write_text(saved)
+        b.discover(wait=30)
+        self.assertTrue(wait_until(lambda: ds.status == 'ready'), ds.error)
+
+    def test_ledger_only_ids_are_typed(self):
+        sid = self.import_fixture()
+        reserved, abandoned, aborted = ('snapshot:' + c * 32 for c in 'abc')
+        rec = lambda ev, i: json.dumps({'event': ev, 'ledger_format': 2, 'snapshot_id': i, 'manifest_sha256': 'f' * 64, 'stage': '.pending-x'}) + '\n'
+        with self.ledger().open('a') as f:
+            f.write(rec('reserve', reserved) + rec('reserve', abandoned) + rec('abandon', abandoned) + rec('reserve', aborted) + rec('abort', aborted))
+        b = self.backend()
+        listing = b.discover(wait=30)
+        rows = {d['key']: d for d in listing['datasets']}
+        self.assertEqual((rows[reserved]['status'], rows[reserved]['publication']['status']), ('not-yet-available', 'reserved'))
+        self.assertEqual((rows[abandoned]['status'], rows[abandoned]['publication']['status']), ('unavailable', 'abandoned'))
+        self.assertNotIn(aborted, rows)
+        self.assertEqual(wait_ready(b, sid).status, 'ready')
+        from server.bridge import UserError
+        with self.assertRaises(UserError):
+            b.get(reserved)
+
+    def test_request_timing_breakdown(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        from server.explore import Explorer
+        e = Explorer(b)
+        b.timing_begin()
+        r = e.query({'dataset': sid, 'version': ds.version, 'pattern': ['A', 'B', 'C']})
+        parts = b.timing_parts()
+        for k in ('verify_ms', 'open_ms', 'query_ms', 'stat_check_ms'):
+            self.assertIn(k, parts)
+        self.assertEqual(parts['publication_at_read'], 'ledgered')
+        b.timing_begin()
+        e.occurrence(sid, r['rows'][0]['occurrence_ids'][0], ds.version)
+        self.assertIn('end_to_end_ms', b.timing_parts()['backend_trace'])
+
+
+class OraccAdapterTest(unittest.TestCase):
+    """Both ORACC adapters are accepted; oracc-cdl-1 is labelled superseded for sense provenance, never hidden."""
+
+    def ds(self, key, adapter, same='k', status='ready'):
+        from server.bridge import ORACC_ADAPTERS, Dataset
+        d = Dataset(key, 'snapshot', key, '', status=status)
+        d.selection = {'oracc': dict(ORACC_ADAPTERS[adapter], adapter=adapter, same_inputs=same, texts=51)}
+        return d
+
+    def test_adapters_and_supersession(self):
+        from server.bridge import Backend, oracc_adapter_problem
+        self.assertIsNone(oracc_adapter_problem({'source': 'oracc-selection', 'adapter': 'oracc-cdl-1'}))
+        self.assertIsNone(oracc_adapter_problem({'source': 'oracc-selection', 'adapter': 'oracc-cdl-2'}))
+        self.assertIn('not one this UI understands', oracc_adapter_problem({'source': 'oracc-selection', 'adapter': 'oracc-cdl-9'}))
+        self.assertIsNone(oracc_adapter_problem({'source': 'ebl-cohort'}))
+        old, new, other = self.ds('snapshot:' + 'e' * 32, 'oracc-cdl-1'), self.ds('snapshot:' + '5' * 32, 'oracc-cdl-2'), self.ds('snapshot:' + '7' * 32, 'oracc-cdl-1', same='x')
+        Backend._mark_supersession([old, new, other])
+        self.assertEqual((old.superseded['by'], old.superseded['for']), (new.key, 'sense provenance'))
+        self.assertEqual(new.supersedes['key'], old.key)
+        self.assertIsNone(other.superseded)
+        self.assertEqual(old.status, 'ready', 'superseded snapshots stay served')
+
+    def test_sense_provenance_by_adapter(self):
+        from server.explore import sense_provenance
+        new = self.ds('snapshot:' + '5' * 32, 'oracc-cdl-2')
+        links = [{'kind': 'IN_SENSE', 'target_id': 'sense:1', 'qualification': {'sig': '@ccpo%akk:X=Y[1//1]N', 'inst': 'Y[1]N', 'payload_pointer': '/2/cdl/0'}}]
+        p = sense_provenance(new, links, [{'id': 'sense:1', 'source_locator': '{"locator_kind":"oracc-sense-key"}'}])
+        self.assertEqual((p['mode'], p['word_sig']), ('per-word', '@ccpo%akk:X=Y[1//1]N'))
+        self.assertNotIn('sense_row_sig_is', p)
+        old = self.ds('snapshot:' + 'e' * 32, 'oracc-cdl-1')
+        p = sense_provenance(old, [{'kind': 'IN_SENSE', 'target_id': 'sense:1', 'qualification': {'basis': 'b'}}], [{'id': 'sense:1', 'source_locator': '@ccpo%akk:first'}])
+        self.assertEqual((p['mode'], p['word_sig']), ('legacy', None))
+        self.assertIn('first attesting instance', p['sense_row_sig_is'])
+        self.assertEqual(p['sense_row_locator'], '@ccpo%akk:first')
 
 
 if __name__ == '__main__':

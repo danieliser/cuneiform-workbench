@@ -8,6 +8,7 @@ backend's scope note, so a count is never shown without the population it descri
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from .bridge import NODE_RE, TOKEN_RE, Backend, Dataset, UserError
@@ -188,7 +189,15 @@ class Explorer:
                 r = db.execute(f'SELECT id FROM {table} ORDER BY id LIMIT 1').fetchone()
                 if r:
                     first[kind] = r[0]
-            return {'registry': rep['registry'], 'scopes': rep['scopes'], 'nodes': rep['nodes'], 'edges': rep['edges'],
+            senses = None
+            if counts['sense']:
+                in_sense, with_sig, words = db.execute("SELECT count(*), count(*) FILTER (WHERE json_extract_string(qualification,'$.sig') IS NOT NULL), "
+                                                       "count(DISTINCT source_id) FROM edge WHERE kind='IN_SENSE'").fetchone()
+                row_sig = db.execute("SELECT count(*) FROM sense WHERE source_locator LIKE '@%'").fetchone()[0]
+                senses = {'in_sense_links': in_sense, 'links_with_own_sig': with_sig, 'words_with_sense': words, 'sense_rows': counts['sense'],
+                          'sense_rows_with_instance_sig': row_sig,
+                          'note': 'Per-word sense provenance lives on IN_SENSE links. A sig on a shared Sense row is one attesting instance (oracc-cdl-1), not every word\'s.'}
+            return {'registry': rep['registry'], 'scopes': rep['scopes'], 'nodes': rep['nodes'], 'edges': rep['edges'], 'sense_links': senses,
                     **cov, 'coverage_note': rep['coverage_note'], 'counts': counts, 'node_kinds': kinds,
                     'edge_kinds': edge_kinds, 'position_kinds': occ_kinds, 'rejections': rejections, 'exclusions': exclusions,
                     'entry_nodes': first}
@@ -376,7 +385,10 @@ class Explorer:
             # The backend's own verified trace: re-verifies the snapshot and, for cohorts, re-reads the parent raw object.
             try:
                 with self.b.guarded(ds):
-                    trace = Q.trace(ds.path, oid, parent_root=self.b.research_root)
+                    # StoreEntry: the backend re-verifies with ledger='require' and this exact ID.
+                    trace = Q.trace(self.b.store_entry(ds.key), oid, parent_root=self.b.research_root)
+                if isinstance(trace.get('timing'), dict):
+                    self.b.note_timing('backend_trace', trace['timing'])
                 trace['origin'] = ('cohort payload: byte-identical slices of the parent object (snapshot raw file)'
                                    if ds.selection.get('kind') == 'cohort' else 'snapshot raw payload')
                 out['trace'] = trace
@@ -394,16 +406,24 @@ class Explorer:
         P = self.b.projections
 
         def work(db):
-            rows = P.lookup(db, 'words', wid, limit=5)['rows']
-            return [r for r in rows if r['word_id'] == wid]
-        rows = self.b.run(ds, work)
+            rows = [r for r in P.lookup(db, 'words', wid, limit=5)['rows'] if r['word_id'] == wid]
+            links = _rows(db, "SELECT kind, target_id, qualification FROM edge WHERE source_id=? AND kind IN ('LEMMATIZED_AS','IN_SENSE') ORDER BY kind, target_id", [wid])
+            for link in links:
+                link['qualification'] = _json_or(link['qualification'])
+            sense_ids = [link['target_id'] for link in links if link['kind'] == 'IN_SENSE']
+            senses = _rows(db, f"SELECT id, source_locator FROM sense WHERE id IN ({','.join('?' * len(sense_ids))})", sense_ids) if sense_ids else []
+            return rows, links, senses
+        rows, links, senses = self.b.run(ds, work)
         if not rows:
             raise UserError('unknown word ID in this dataset')
-        out = {'word': rows[0], 'gloss_note': GLOSS_NOTE, 'trace': None, 'trace_error': None}
+        out = {'word': rows[0], 'gloss_note': GLOSS_NOTE, 'trace': None, 'trace_error': None,
+               'links': links, 'sense_provenance': sense_provenance(ds, links, senses)}
         if ds.kind == 'snapshot' and ds.manifest and ds.manifest.get('source') == 'oracc-selection':
             try:
                 with self.b.guarded(ds):
-                    out['trace'] = self.b.oracc.trace_word(ds.path, wid, parent_root=self.b.research_root)
+                    t0 = time.monotonic()
+                    out['trace'] = self.b.oracc.trace_word(self.b.store_entry(ds.key), wid, parent_root=self.b.research_root)
+                    self.b.note_timing('backend_word_trace_ms', round((time.monotonic() - t0) * 1000, 1))
             except UserError:
                 raise
             except (ValueError, OSError, KeyError, StopIteration) as exc:
@@ -547,6 +567,43 @@ def layer_states(counts: dict, exclusions: list[dict]) -> list[dict]:
                 r['state'] = 'unavailable — no text supplied by this source (not zero occurrences)'
     for t in AUDIT_TABLES:
         out.append({'layer': t, 'rows': counts[t], 'state': 'none recorded' if not counts[t] else ''})
+    return out
+
+
+def _json_or(v):
+    if isinstance(v, str):
+        try:
+            return json.loads(v)
+        except ValueError:
+            return v
+    return v
+
+
+def sense_provenance(ds: Dataset, links: list[dict], senses: list[dict]) -> dict:
+    """Where this word's sense attribution comes from, by ORACC adapter (oracc-cdl-1 vs oracc-cdl-2).
+
+    oracc-cdl-2 puts each word's own sig/inst/payload pointer on its IN_SENSE link; the shared Sense row holds a
+    sense-key locator only. oracc-cdl-1 stored the first attesting instance's sig on the shared Sense row, so that sig
+    is shown labelled as such, never as this word's own.
+    """
+    o = (ds.selection or {}).get('oracc') or {}
+    in_sense = next((link for link in links if link['kind'] == 'IN_SENSE'), None)
+    q = in_sense['qualification'] if in_sense and isinstance(in_sense['qualification'], dict) else {}
+    row = senses[0]['source_locator'] if senses else None
+    parsed = _json_or(row)
+    out = {'adapter': o.get('adapter'), 'mode': o.get('sense_provenance'), 'adapter_note': o.get('note'),
+           'word_sig': q.get('sig'), 'word_inst': q.get('inst'), 'word_payload_pointer': q.get('payload_pointer'),
+           'sense_row_locator': parsed, 'superseded': ds.superseded}
+    if not in_sense:
+        out['note'] = 'This word has no IN_SENSE link (no contextual sense supplied).'
+    elif q.get('sig'):
+        out['note'] = "This word's own sig, from its IN_SENSE link (per-word provenance)."
+    elif isinstance(parsed, str) and parsed:
+        out['note'] = ("No per-word sig on this word's IN_SENSE link. The shared Sense row's sig below belongs to the first "
+                       'attesting instance in the selection; it is not necessarily this word\'s own.')
+        out['sense_row_sig_is'] = 'first attesting instance (shared Sense row), not this word'
+    else:
+        out['note'] = 'No per-word sig recorded.'
     return out
 
 

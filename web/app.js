@@ -38,6 +38,20 @@
     }
     return dl;
   }
+  const TIMING_PARTS = [['lock_wait_ms', 'lock wait'], ['stat_check_ms', 'stat checks'], ['verify_ms', 'verify (every file hash + ledger)'],
+    ['open_ms', 'open'], ['query_ms', 'query'], ['backend_word_trace_ms', 'backend word trace']];
+  // End-to-end server time for the request; the breakdown is optional detail. Query time alone is never shown as the latency.
+  function timingLine(t) {
+    if (!t || typeof t.end_to_end_ms !== 'number') return null;
+    const b = t.breakdown || {};
+    const parts = TIMING_PARTS.filter(([k]) => typeof b[k] === 'number').map(([k, l]) => `${l} ${b[k]} ms`);
+    const bt = b.backend_trace;
+    if (bt && typeof bt.end_to_end_ms === 'number') parts.push(`backend trace ${bt.end_to_end_ms} ms (its own verify ${bt.verify_ms} ms, parent re-read ${bt.parent_trace_ms} ms)`);
+    return el('details', { class: 'timing' }, el('summary', { text: `End-to-end ${t.end_to_end_ms} ms (server, whole request)` }),
+      parts.length ? el('div', { class: 'hint', text: 'Breakdown: ' + parts.join(' · ') }) : null,
+      el('div', { class: 'hint', text: t.note }));
+  }
+  const SENSE_NOTE = 'superseded for sense provenance';
   function idLink(id, label) {
     return el('button', { class: 'link', title: id + ' — open in graph', onclick: () => openGraph(id) }, label || shortId(id));
   }
@@ -93,7 +107,7 @@
     chip.textContent = `backend ${b.commit ? b.commit.slice(0, 7) : '?'}${b.code_equivalent_to && b.code_equivalent_to !== b.commit ? ' (code = ' + b.code_equivalent_to.slice(0, 7) + ')' : ''}${b.dirty ? '+dirty code' : ''} · schema ${b.versions.schema} · ${b.versions.parser} · ${b.versions.projection} · ${b.compatibility}`;
     chip.title = b.repo + (b.problems.length ? '\n' + b.problems.join('\n') : '');
     const sel = clear($('#dataset'));
-    const label = d => `[${tagFor(d)}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status : d.reverifying ? ' — re-verifying' : ''}`;
+    const label = d => `[${tagFor(d)}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status + (d.publication && d.publication.status && d.publication.status !== d.status ? ` (${d.publication.status})` : '') : d.reverifying ? ' — re-verifying' : ''}${d.superseded ? ' — ' + SENSE_NOTE : ''}`;
     for (const d of st.datasets) {
       // The chosen dataset stays selected (shown) even while it is not ready, so the picker never jumps.
       sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready' && d.key !== state.ds, text: label(d) }));
@@ -137,7 +151,7 @@
     const reset = !!forceReset || switched;
     if (notice) msgs.push(notice);
     const sx = state.stale && state.stale.key === state.ds && !state.version ? state.stale : null;
-    if (sx) msgs.push(`STALE — ${state.ds}${sx.version ? ' version ' + String(sx.version).slice(0, 12) : ''} is not being served: ${sx.reason}. `
+    if (sx) msgs.push(`STALE — ${state.ds}${sx.version ? ' version ' + String(sx.version).slice(0, 12) : ''} is not being served: ${String(sx.reason).replace(/\.\s*$/, '')}. `
       + 'Earlier results were cleared; nothing else was selected. It returns automatically if it verifies again, or pick another dataset.');
     else if (cur && cur.reverifying) msgs.push(`Re-verifying ${state.ds.slice(0, 21)}… in the background. It keeps serving version ${String(state.version).slice(0, 12)}; every request is still hash-checked.`);
     if (b.compatibility === 'incompatible') msgs.push('Backend is incompatible with this UI build: ' + b.problems.join('; '));
@@ -149,8 +163,12 @@
     const pubTag = d => (d.publication && d.publication.status && d.publication.status !== 'not-a-snapshot' ? ` [${d.publication.status}]` : '');
     for (const d of failing) msgs.push(`Snapshot ${d.key.slice(0, 21)}…: ${d.status}${pubTag(d)}${d.error ? ' — ' + d.error : ''} (last scan ${scanned})`);
     if (cur && cur.status === 'ready' && cur.publication && cur.publication.status === 'legacy-incident') msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.publication.note}`);
+    if (cur && cur.superseded) msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.superseded.note}`);
+    const led = st.ledger || {};
+    if (led.corrupt) msgs.push(`Publication ledger refused by the backend: ${led.corrupt}`);
+    if (led.tail_note) msgs.push(`Publication ledger: ${led.tail_note}`);
     banner.hidden = !msgs.length;
-    banner.className = 'banner' + (b.compatibility === 'incompatible' || sx ? ' bad' : '');
+    banner.className = 'banner' + (b.compatibility === 'incompatible' || sx || led.corrupt ? ' bad' : '');
     clear(banner);
     msgs.forEach(m => banner.appendChild(el('div', { text: m })));
     $('#foot').textContent = `Server ${st.server.bind} · pid ${st.server.pid} · backend ${b.repo} · Python ${b.python} · DuckDB ${b.duckdb} · research root ${b.research_root} · last scan ${scanned}`;
@@ -167,9 +185,9 @@
       badge.title = `Not served: ${d.error || d.status}`; return;
     }
     badge.textContent = (d.kind === 'snapshot' ? (pub.status === 'legacy-incident' ? 'verified · legacy ID incident' : `verified · ${pub.status || 'snapshot'}`)
-      : d.kind === 'sample' ? 'in-memory sample' : 'synthetic') + (d.reverifying ? ' · re-verifying…' : '');
+      : d.kind === 'sample' ? 'in-memory sample' : 'synthetic') + (d.superseded ? ' · ' + SENSE_NOTE : '') + (d.reverifying ? ' · re-verifying…' : '');
     badge.className = 'badge ' + d.kind + (pub.status === 'legacy-incident' ? ' incident' : '') + (d.reverifying ? ' pending' : '');
-    badge.title = `${d.authority}\n${pub.note || ''}\n${(d.selection && d.selection.note) || ''}\nversion ${d.version || '—'}`;
+    badge.title = `${d.authority}\n${pub.note || ''}${pub.ledger_tail_note ? '\n' + pub.ledger_tail_note : ''}\n${(d.selection && d.selection.note) || ''}${d.superseded ? '\n' + d.superseded.note : ''}\nversion ${d.version || '—'}`;
   }
   function setHash() {
     const p = new URLSearchParams({ view: state.view });
@@ -270,6 +288,7 @@
       ds.kind !== 'snapshot' ? el('li', { text: ds.authority }) : null);
     sum.appendChild(notes);
     if (r.missing) sum.appendChild(el('div', { class: 'missing', text: r.missing }));
+    const tl = timingLine(r.timing); if (tl) sum.appendChild(tl);
     const thead = clear($('#results thead')), tbody = clear($('#results tbody'));
     thead.appendChild(el('tr', {}, el('th', { text: '#' }), el('th', { text: 'Artifact' }), el('th', { text: 'Line' }), el('th', { text: 'Window' }), el('th', { text: 'Positions' }), el('th', { text: 'Match ID' })));
     if (!r.rows.length) {
@@ -388,6 +407,7 @@
     box.appendChild(el('h3', { text: 'Canonical IDs' }));
     box.appendChild(kv([['Occurrence', idLink(o.id, o.id)], ['Line', idLink(o.line_id, o.line_id)], ['Sequence', idLink(o.sequence_id, o.sequence_id)],
       ['Witness', idLink(o.witness_id, o.witness_id)], ['Snapshot', el('span', { class: 'ids', text: o.snapshot_id })]]));
+    const tl = timingLine(d.timing); if (tl) box.appendChild(tl);
   }
 
   // ---------- examples / saved / frequent ----------
@@ -587,7 +607,9 @@
       box.appendChild(el('div', { class: 'panel wide' }, el('h2', {}, el('span', { class: 'badge ' + d.kind, text: tagFor(d) }), ' ', d.title),
         el('div', { class: 'callout scope', text: 'Scope: ' + (sel.note || '—') }), el('p', { class: 'muted', text: d.authority }),
         kv([['Dataset version', el('span', { class: 'ids', text: d.version || '—' })], ['Verified at', d.verified_at ? new Date(d.verified_at * 1000).toLocaleString() : '—'],
-          ['Publication', `${pub.status || '—'}${pub.note ? ' — ' + pub.note : ''}`]]),
+          ['Publication', `${pub.status || '—'}${pub.note ? ' — ' + pub.note : ''}${pub.ledger_tail_note ? ' · ' + pub.ledger_tail_note : ''}`],
+          d.superseded ? ['Superseded', d.superseded.note] : undefined, d.supersedes ? ['Supersedes', d.supersedes.note] : undefined,
+          sel.oracc ? ['ORACC adapter', `${sel.oracc.adapter} — ${sel.oracc.note}`] : undefined].filter(Boolean)),
         table([['source', 'Source'], ['file', 'Input'], ['bytes', 'Bytes'], ['sha256', 'SHA-256'], ['snapshot_id', 'Snapshot ID'], ['source_url', 'Source URL'], ['receipt', 'Receipt']], d.inputs, ['bytes']),
         d.manifest ? kv([['Rights', JSON.stringify(d.manifest.rights)], ['Imported', d.manifest.retrieved_or_imported_at], ['Coverage', d.manifest.coverage],
           ['Manifest SHA-256', el('span', { class: 'ids', text: d.manifest.manifest_sha256 || '—' })]]) : null));
@@ -608,6 +630,13 @@
         el('div', { class: 'hint', text: 'Sense glosses (words with sense) are lexical labels for single words, not translations. Translations are separate strings with unresolved spans.' }),
         covBox));
       renderCoveragePage(covBox, r);
+      if (r.sense_links) {
+        const sl = r.sense_links;
+        box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Sense links (per word)' }), el('div', { class: 'hint', text: sl.note }),
+          kv([['IN_SENSE links', fmt(sl.in_sense_links)], ['Links carrying the word’s own sig', fmt(sl.links_with_own_sig)], ['Words with a sense', fmt(sl.words_with_sense)],
+            ['Shared Sense rows', fmt(sl.sense_rows)], ['Sense rows holding one instance’s sig', fmt(sl.sense_rows_with_instance_sig)]])));
+      }
+      const tl = timingLine(r.timing); if (tl) box.appendChild(el('div', { class: 'panel' }, tl));
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Position states (why strict may be empty)' }),
         r.position_kinds.length ? table([['field', 'Field'], ['kind', 'Kind'], ['preservation', 'Preservation'], ['certainty', 'Certainty'], ['n', 'Positions']], r.position_kinds, ['n']) : el('div', { class: 'missing', text: 'No represented text positions in this dataset.' })));
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Graph shape' }),
@@ -743,6 +772,20 @@
         box.appendChild(kv([['Text ref', t.ref], ['Line', t.line_label], ['Source word ID', t.source_word_id], ['Gloss status', t.gloss_status],
           ['Rights', `${t.rights.status}${t.rights.reuse ? ' — ' + t.rights.reuse : ''}`]]));
       } else box.appendChild(el('div', { class: 'check bad', text: '✗ ' + (d.trace_error || 'no trace') }));
+      const sp = d.sense_provenance || {};
+      box.appendChild(el('h3', { text: `Sense provenance${sp.adapter ? ' (' + sp.adapter + ')' : ''}` }));
+      if (sp.superseded) box.appendChild(el('div', { class: 'callout incident', text: sp.superseded.note }));
+      if (sp.adapter_note) box.appendChild(el('div', { class: 'hint', text: sp.adapter_note }));
+      if (sp.note) box.appendChild(el('div', { class: 'check ' + (sp.word_sig ? 'ok' : 'warn'), text: (sp.word_sig ? '✓ ' : '• ') + sp.note }));
+      const spPairs = [];
+      if (sp.word_sig) spPairs.push(['This word’s sig', el('span', { class: 'mono', text: sp.word_sig })], ['Instance', sp.word_inst], ['Payload pointer', sp.word_payload_pointer]);
+      if (sp.sense_row_locator !== undefined && sp.sense_row_locator !== null) {
+        const loc = typeof sp.sense_row_locator === 'string' ? sp.sense_row_locator : JSON.stringify(sp.sense_row_locator, null, 1);
+        spPairs.push([sp.sense_row_sig_is ? 'Shared Sense row sig (first attesting instance, not this word)' : 'Shared Sense row locator', el('pre', { class: 'cell', text: loc })]);
+      }
+      for (const link of d.links || []) spPairs.push([`${link.kind} link`, el('span', {}, idLink(link.target_id), el('pre', { class: 'cell', text: JSON.stringify(link.qualification, null, 1) }))]);
+      if (spPairs.length) box.appendChild(kv(spPairs));
+      const tl = timingLine(d.timing); if (tl) box.appendChild(tl);
     } catch (e) { clear(box).appendChild(el('p', { class: 'error', text: e.message })); }
   }
   async function wordSearch(ev) {
@@ -781,6 +824,7 @@
     state.version = d && d.status === 'ready' ? d.version : null;
     if (state.stale && state.stale.key !== state.ds) state.stale = null;
     resetDatasetViews();
+    if (state.status) renderStatus();  // banner notes (incident, superseded, stale) follow the chosen dataset at once
   }
   async function init() {
     document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));

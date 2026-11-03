@@ -1,5 +1,50 @@
 # Checkpoint: cuneiform-ui
 
+## 2026-11-03 (final) — re-pinned to accepted backend 63f4221; deployed live
+
+Backend `63f42216243141f4b10cdfd3d7ddd514c85b63d7` was independently accepted in `cuneiform-research/reviews/corpus-pilot-review-v0.3.md` (70 tests on disk, R1–R5 closed, UI re-pin allowed). The UI now runs on a read-only `git archive` export of it (22 files, digest `bb926fbb8ab08af3`) at `~/.local/share/cuneiform-ui/backend-pin/63f4221…`. `TESTED_COMMITS` and `PIN_COMMIT` were set to it only after the suite passed. No backend, atlas or QUEUE edits. No delegates. No corpus rebuild, adoption, cohort build, canonical writes, downloads, images or embeddings. The three legacy cohorts stay unledgered.
+
+**Live:** http://127.0.0.1:8740/ (pid in `run/ui.pid`; restarted 2026-11-03), backend chip `63f4221 · tested`. FalkorDB and relay were not restarted (configuration unchanged). Browser 23001 is closed and the arbitrary Cypher endpoint returns 403.
+
+| Snapshot | Status | Publication (backend label) | Population |
+|---|---|---|---|
+| `ce127437…` | ready | legacy-incident (`ledgered-legacy-backfilled` + incident) | COHORT 30/20,896 eligible of 23,289 |
+| `84971360…` | ready | legacy-incident (`ledgered-legacy-backfilled` + incident) | COHORT 300/20,896 eligible of 23,289 |
+| `c316e7cb…` | ready | ledgered-legacy-backfilled | COHORT 51/51 eligible of 23,289 |
+| `fc7c3504…` | ready | ledgered-legacy-backfilled | CDLI SELECTION 51 |
+| `edaab55c…` | ready, **superseded for sense provenance** by `5e51403b…` | ledgered-legacy-backfilled | ORACC SELECTION 51 · oracc-cdl-1 |
+| `5e51403b…` | ready (was `incompatible` under d6049e2) | ledgered (format 2, manifest file bytes bound) | ORACC SELECTION 51 · oracc-cdl-2 |
+
+Ledger: 7 records, no torn tail, not corrupt.
+
+What changed:
+- **One read path.** Verification and every request go through `storage.verified(storage.store_path(config, id), ledger='require')`. Traces use the StoreEntry too (`query.trace`, `oracc.trace_word`, `persisted.scope`). The UI's own ledger parser and format-1 logic were removed. `storage.verified`, `storage.store_path` and `publication.Ledger` are now required APIs, so a backend without them reports `incompatible`.
+- **Typed states.** `reserved` → `not-yet-available`; the backend's "no live writer holds its build lock" wording is never shown (review v0.3 N1). `symlinked-entry`, `misplaced`, `ledger-mismatch`, `conflict` and `ledger-corrupt` → `refused`. `published-missing`, `abandoned` and `not-found` → `unavailable`. `not-in-ledger` → `unpublished`. Ledger IDs without a directory are listed with their state. The UI pre-check uses the backend's state names; it still refuses any symlink inside an entry and types a foreign manifest ID as `misplaced`.
+- **Torn ledger.** It is observed with the backend's `Ledger.scan`, never with a separate parser. An unparseable record before the end refuses every snapshot at scan time and on the next request (409). An unterminated tail is shown in the banner and in `publication.ledger_tail_note`. A torn commit leaves its ID `reserved`, so it is not served. This matches the backend, and nothing is skipped silently.
+- **ORACC.** Both adapters are accepted; an unknown one is `incompatible`. cdl-1 is labelled superseded for sense provenance (picker, badge, banner, Coverage, word view), and stays listed and served. The word view shows the word's own sig, inst and payload pointer from its IN_SENSE link (cdl-2), or labels the shared Sense row sig as the first attesting instance (cdl-1). Coverage has a per-word sense-link panel.
+- **Timing.** Every API response except status/health carries `timing.end_to_end_ms` (whole server request) and a breakdown (lock wait, stat checks, verify, open, query, backend trace with its own verify and parent re-read). The UI shows "End-to-end N ms" and puts the breakdown behind a toggle.
+- **Client fix found in the browser:** switching dataset kept the previous dataset's banner note until the next poll. Fixed.
+
+Evidence (logs and scripts in `~/Projects/skill-workspaces/cuneiform-ui-fixes/v0.4/`):
+- Baseline: the 37 existing tests against the 63f4221 export gave 4 failures, all in a test harness that proxied `verify` but not `verified`, plus 1 skip for the old-pin test (`baseline-63f4221.log`).
+- Final `bin/cuneiform-ui test`: 24/24 isolation checks (read-only; host/internet/DNS reachability printed as unprobed); **42 tests OK, 0 skipped** (`test-final.log`). Added cases: format 2 served via the backend; reserved shown as not yet available, without the backend's wording; torn commit tail fails closed and is reported, then becomes ready when the commit completes; an unrelated torn tail is shown on a served snapshot; a corrupt ledger refuses per request and on scan, then recovers; ledger-only reserved/abandoned IDs are typed and aborted ones hidden; removed published snapshot → `published-missing` with its stale version; backend's own `symlinked-entry` refusal; `misplaced`; ORACC adapter/supersession/sense-provenance units; timing breakdown; HTTP `timing` on queries.
+- Real store, read-only, in process (`real-integration.json`) and live HTTP (`live-http.json`): 6/6 ready, discovery 4.7 s. 300-cohort `ABZ480 ABZ13` signs: index 201 = graph 201, 38 witnesses, 300 sequences; graph engine 201 with 100 retrievable; last page 1 row, Next disabled. Trace: payload round trip, parent `verified`, Zenodo URL, `receipt:66b5c944…`. Coverage pages 1–200 and 201–300 of 300. ORACC cdl-2: 4,544 IN_SENSE links for 4,544 words, 4,508 carry their own sig (36 have none in the source node), 0 of 1,317 Sense rows carry an instance sig. ORACC cdl-1: 0 links with their own sig, 1,309 of 1,317 Sense rows hold one instance's sig. ZIP member traces `verified` on both. Live guards: stale version 409, foreign Host 421, foreign Origin 403, Cypher 403, port 23001 closed.
+- Real store fingerprint (snapshots, derived/cohorts, derived/exports, receipts; size, mtimes, mode, SHA-256): 262 entries, digest `101e44e3…`, identical before and after (`fp-before.json`, `fp-after-integration.json`).
+- Browser (T3 preview, own tab, closed afterwards): picker lists 6 snapshots with adapter and superseded labels; the query form shows 201, parity ✓, 38 witnesses / 300 sequences, and "End-to-end 208 ms" with breakdown. Row click shows the Zenodo parent trace verified at bytes [62293318, 62293324). "Open in graph" → SignOccurrence → Line clickthrough (10 nodes). Coverage pages 1–200 → 201–300. ORACC cdl-2 word shows its own sig `{d}MAŠ=Ninurta…` from IN_SENSE. The cdl-1 word shows the superseded callout and labels the shared Sense row sig `{d}MAŠ…` as the first attesting instance, while its own LEMMATIZED_AS sig is `{d}NIN.URTA…`. **Refresh & re-verify** kept the dataset and its 25 rows, showed "re-verifying", and no demos appeared. A simulated `reserved` status in that tab only gave STALE · not-yet-available, cleared results, refused to run, kept the dataset, and returned to verified.
+- `gitleaks protect --staged`: no leaks (~76 KB scanned).
+
+Rollback: `git checkout 30f1f45 -- server web bin tests README.md` then `bin/cuneiform-ui ui-stop && bin/cuneiform-ui ui-start`. That restores `PIN_COMMIT` d6049e2, whose export is still at `backend-pin/d6049e2…`. Not needed.
+
+Residual, non-blocking:
+1. The live pre-restart `/api/status` capture failed: the shell's `curl` is a wrapper that prints a schema summary. The predecessor's state is the previous section of this file.
+2. The "verified again" notice after a stale snapshot returns is transient: it is cleared on the next 1 s poll during Refresh. The badge and banner state are correct.
+3. In cdl-2, 36 IN_SENSE links carry no sig because the source node has none. The UI says "No per-word sig recorded".
+4. FalkorDB: the three snapshot projections (300-cohort, 30-cohort, ORACC cdl-1) are verifiable. The two demo graphs (README sample, synthetic) are in the old export format and show "rebuild required". `5e51403b…` has no projection yet. No rebuild was done this round.
+5. Backend review N2/N3 (cohort `ledger='store'` labels, `publication-clean-stage`) do not affect the UI, which reads no cohort store. The three legacy cohorts await the parent's explicit adoption decision.
+6. `reviews/ui-review-v0.2.md` is committed unchanged with this round.
+
+**Q008 (for the atlas/queue owner, task 1359e965):** UI integration complete against accepted backend `63f4221`. The UI consumes `storage.verified(store_path, ledger='require')`, typed `PublicationError.state`, `persisted.scope`, `query.trace(StoreEntry, parent_root)`, `oracc.trace_word(StoreEntry)` and `timing.end_to_end_ms`. It is deployed live with the evidence above. Suggested status: DONE (local pilot), pending only an independent UI re-review if the parent wants one.
+
 ## 2026-11-03 (later) — review v0.2 fixes N-1, N-3…N-7; N-2 prepared, not re-pinned
 
 Still pinned to backend `d6049e2` (Q-020: backend `94af111` B2 symlink-store bypass still open; parent fixing R1/R2; no upgrade until told). Review file `reviews/ui-review-v0.2.md` preserved unchanged (untracked, not committed by me). No backend/atlas/QUEUE edits, no delegates, no egress, no downloads, no canonical writes.
