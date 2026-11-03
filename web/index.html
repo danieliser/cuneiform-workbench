@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Cuneiform Workbench</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8l6 3-6 3zM14 6l6 3-6 3zM14 16l6 3-6 3zM22 11l6 3-6 3zM6 20l6 3-6 3z"/></svg>
+    <div><div class="brand-name">Cuneiform Workbench</div><div class="brand-sub">local · read-only · source-preserving</div></div>
+  </div>
+  <div class="dataset-picker">
+    <label for="dataset">Dataset</label>
+    <select id="dataset" aria-label="Dataset"></select>
+    <span id="dataset-badge" class="badge"></span>
+    <button id="refresh" class="ghost" title="Re-discover snapshots under the research root">Refresh data</button>
+  </div>
+  <div id="backend-chip" class="chip" role="status"></div>
+</header>
+<div id="banner" class="banner" hidden></div>
+<nav class="tabs" role="tablist">
+  <button role="tab" data-view="query" aria-selected="true">Query</button>
+  <button role="tab" data-view="graph">Graph</button>
+  <button role="tab" data-view="coverage">Coverage</button>
+  <button role="tab" data-view="falkordb">FalkorDB</button>
+</nav>
+<main>
+  <section id="view-query" class="view">
+    <div class="query-layout">
+      <aside class="panel query-form">
+        <h2>Motif query</h2>
+        <form id="qform" autocomplete="off">
+          <label for="pattern">Pattern <span class="hint">1–5 tokens; <code>?</code> = one represented position</span></label>
+          <input id="pattern" name="pattern" spellcheck="false" placeholder="A ? C" maxlength="340">
+          <div class="row2">
+            <div><label for="field">Sequence field</label>
+              <select id="field"><option value="atf">atf — editorial transliteration</option><option value="signs">signs — source-derived sign IDs</option></select></div>
+            <div><label for="engine">Engine</label>
+              <select id="engine"><option value="index">Index (paged, n-gram projection)</option><option value="graph">Graph walk (NEXT edges, gaps)</option></select></div>
+          </div>
+          <fieldset class="policy"><legend>Evidence policy</legend>
+            <label class="radio"><input type="radio" name="policy" value="source" checked> <span><b>Source text</b> — include uncertain/restored readings as edited</span></label>
+            <label class="radio"><input type="radio" name="policy" value="strict"> <span><b>Strict</b> — every position explicitly intact <i>and</i> certain</span></label>
+          </fieldset>
+          <div class="row2">
+            <div id="skip-wrap"><label for="maxskip">Skipped positions before last token</label>
+              <select id="maxskip"><option value="0">0 (exact)</option><option value="1">0–1</option><option value="2">0–2</option></select></div>
+            <div><label for="limit">Rows per page</label>
+              <select id="limit"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></div>
+          </div>
+          <div class="actions"><button type="submit" class="primary">Run query</button><button type="button" id="save-query" class="ghost">Save</button></div>
+        </form>
+        <h3>Examples</h3>
+        <ul id="examples" class="examples"></ul>
+        <h3>Saved <span class="hint">(this browser)</span></h3>
+        <ul id="saved" class="examples"></ul>
+        <h3>Frequent in dataset</h3>
+        <div id="frequent" class="frequent"></div>
+      </aside>
+      <div class="query-main">
+        <div id="qsummary" class="panel summary"><p class="muted">Pick an example or type a pattern.</p></div>
+        <div class="panel results"><table id="results" class="results-table"><thead></thead><tbody></tbody></table>
+          <div id="pager" class="pager"></div></div>
+      </div>
+      <aside id="detail" class="panel detail" aria-live="polite"><p class="muted">Select a result row, then a token, to see occurrence detail and raw-source evidence.</p></aside>
+    </div>
+  </section>
+
+  <section id="view-graph" class="view" hidden>
+    <div class="graph-layout">
+      <div class="panel graph-stage">
+        <div class="graph-toolbar">
+          <form id="gsearch" autocomplete="off"><input id="gq" placeholder="Search artifact, sign, source key, alias, or paste a node ID" maxlength="64" spellcheck="false"><button class="ghost">Find</button></form>
+          <label class="inline">Per type <select id="gper"><option>4</option><option selected>8</option><option>16</option></select></label>
+          <button id="gback" class="ghost" disabled>Back</button>
+          <div id="gcrumbs" class="crumbs"></div>
+        </div>
+        <div id="gresults" class="gresults" hidden></div>
+        <svg id="graph" role="img" aria-label="Bounded node neighborhood"></svg>
+        <div id="glegend" class="legend"></div>
+        <div id="gnote" class="gnote muted"></div>
+      </div>
+      <aside id="gdetail" class="panel detail"><p class="muted">Click a node to inspect it. Double-click (or “Focus”) to recenter. Aggregate nodes stand for hidden neighbors; they never merge identities.</p></aside>
+    </div>
+  </section>
+
+  <section id="view-coverage" class="view" hidden><div id="coverage" class="coverage"></div></section>
+
+  <section id="view-falkordb" class="view" hidden><div id="falkordb" class="falkordb"></div></section>
+</main>
+<footer class="foot"><span id="foot"></span></footer>
+<script src="/graph.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

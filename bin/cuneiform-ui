@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Lifecycle for the local Cuneiform query UI and its isolated FalkorDB projection.
+# Usage: bin/cuneiform-ui {start|stop|restart|status|logs|ui-start|ui-stop|falkordb-up|falkordb-down|test}
+set -euo pipefail
+
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+UI_HOME="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}"
+SOURCE_REPO="${CUNEIFORM_SOURCE_REPO:-$HOME/Projects/Fun/cuneiform-research}"
+RESEARCH_ROOT="${CUNEIFORM_RESEARCH_ROOT:-$HOME/.local/share/cuneiform-research}"
+PY="${CUNEIFORM_PY:-$RESEARCH_ROOT/venv/bin/python}"
+UI_PORT="${CUNEIFORM_UI_PORT:-8740}"
+FALKOR_PORT="${CUNEIFORM_FALKORDB_PORT:-26380}"
+BROWSER_PORT="${CUNEIFORM_FALKORDB_BROWSER_PORT:-23001}"
+CONTAINER="cuneiform-ui-falkordb"
+# FalkorDB 4.18.8 + FalkorDB Browser 2.0.5 (bundled image), pinned by digest.
+FALKOR_IMAGE="falkordb/falkordb@sha256:bbebe3dc3fd109f9a88a48fc97cd146bf4301410872d4dd5d4a755c2d71e37a7"
+PID_FILE="$UI_HOME/run/ui.pid"
+LOG_FILE="$UI_HOME/logs/ui.log"
+
+mkdir -p "$UI_HOME/run" "$UI_HOME/logs" "$UI_HOME/exports" "$UI_HOME/falkordb-data"
+
+ui_running() { [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; }
+
+ui_start() {
+  if ui_running; then echo "UI already running (pid $(cat "$PID_FILE")) at http://127.0.0.1:$UI_PORT/"; return 0; fi
+  [[ -x "$PY" ]] || { echo "python not found: $PY (set CUNEIFORM_PY)"; exit 1; }
+  cd "$APP_DIR"
+  PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_RESEARCH_ROOT="$RESEARCH_ROOT" \
+    CUNEIFORM_UI_HOME="$UI_HOME" CUNEIFORM_UI_PORT="$UI_PORT" CUNEIFORM_FALKORDB_PORT="$FALKOR_PORT" \
+    CUNEIFORM_FALKORDB_BROWSER_PORT="$BROWSER_PORT" \
+    nohup "$PY" -B -m server.app >>"$LOG_FILE" 2>&1 &
+  echo $! >"$PID_FILE"
+  for _ in $(seq 1 40); do
+    if curl -fsS -m 2 "http://127.0.0.1:$UI_PORT/api/health" >/dev/null 2>&1; then
+      echo "UI running (pid $(cat "$PID_FILE")) at http://127.0.0.1:$UI_PORT/"; return 0; fi
+    ui_running || { echo "UI exited; see $LOG_FILE"; tail -20 "$LOG_FILE"; exit 1; }
+    sleep 0.25
+  done
+  echo "UI did not become healthy; see $LOG_FILE"; exit 1
+}
+
+ui_stop() {
+  if ui_running; then kill "$(cat "$PID_FILE")"; sleep 0.5; echo "UI stopped"; else echo "UI not running"; fi
+  rm -f "$PID_FILE"
+}
+
+falkor_up() {
+  command -v docker >/dev/null || { echo "docker CLI not available; UI still works without FalkorDB"; return 0; }
+  docker info >/dev/null 2>&1 || { echo "container runtime not reachable; UI still works without FalkorDB"; return 0; }
+  if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+    owner="$(docker container inspect -f '{{index .Config.Labels "com.cuneiform-ui.owner"}}' "$CONTAINER")"
+    [[ "$owner" == "cuneiform-ui" ]] || { echo "refusing: $CONTAINER exists but is not owned by cuneiform-ui"; exit 1; }
+    [[ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER")" == "true" ]] || docker start "$CONTAINER" >/dev/null
+  else
+    docker run -d --name "$CONTAINER" \
+      --label com.cuneiform-ui.owner=cuneiform-ui \
+      --restart no --memory 1g \
+      -p "127.0.0.1:$FALKOR_PORT:6379" -p "127.0.0.1:$BROWSER_PORT:3000" \
+      -v "$UI_HOME/falkordb-data:/var/lib/falkordb/data" \
+      -e NEXT_TELEMETRY_DISABLED=1 \
+      -e "FALKORDB_ARGS=MAX_QUEUED_QUERIES 25 TIMEOUT 3000 RESULTSET_SIZE 10000" \
+      -e "REDIS_ARGS=--save 300 1 --maxmemory 512mb" \
+      "$FALKOR_IMAGE" >/dev/null
+  fi
+  for _ in $(seq 1 40); do
+    docker exec "$CONTAINER" redis-cli PING >/dev/null 2>&1 && { echo "FalkorDB up: redis://127.0.0.1:$FALKOR_PORT  Browser: http://127.0.0.1:$BROWSER_PORT"; return 0; }
+    sleep 0.5
+  done
+  echo "FalkorDB did not answer PING"; exit 1
+}
+
+falkor_down() {
+  if docker container inspect "$CONTAINER" >/dev/null 2>&1; then docker stop "$CONTAINER" >/dev/null && echo "FalkorDB stopped (container and data kept)"; else echo "FalkorDB container absent"; fi
+}
+
+status() {
+  if ui_running; then echo "UI: running pid $(cat "$PID_FILE") http://127.0.0.1:$UI_PORT/"; else echo "UI: stopped"; fi
+  if command -v docker >/dev/null && docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+    echo "FalkorDB: $(docker container inspect -f '{{.State.Status}}' "$CONTAINER") redis://127.0.0.1:$FALKOR_PORT browser http://127.0.0.1:$BROWSER_PORT"
+  else echo "FalkorDB: not created"; fi
+  echo "Logs: $LOG_FILE"
+  du -sh "$UI_HOME" 2>/dev/null | sed 's/^/Runtime storage: /'
+}
+
+case "${1:-}" in
+  start) falkor_up; ui_start ;;
+  stop) ui_stop; falkor_down ;;
+  restart) ui_stop; falkor_up; ui_start ;;
+  ui-start) ui_start ;;
+  ui-stop) ui_stop ;;
+  falkordb-up) falkor_up ;;
+  falkordb-down) falkor_down ;;
+  status) status ;;
+  logs) tail -n "${2:-80}" "$LOG_FILE" ;;
+  test) cd "$APP_DIR" && PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_RESEARCH_ROOT="$RESEARCH_ROOT" "$PY" -B -m unittest discover -s tests -v ;;
+  *) echo "usage: $0 {start|stop|restart|status|logs [n]|ui-start|ui-stop|falkordb-up|falkordb-down|test}"; exit 2 ;;
+esac
