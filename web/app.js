@@ -5,7 +5,9 @@
   const $ = sel => document.querySelector(sel);
   const SAVED_KEY = 'cuneiform-ui:saved-queries';
   const state = { status: null, ds: null, version: null, view: 'query', lastQuery: null, result: null, selectedRow: null,
-    graph: { center: null, data: null, history: [], selected: null, pos: null }, report: null, falkor: null };
+    graph: { center: null, data: null, history: [], selected: null, pos: null }, report: null, falkor: null,
+    epoch: 0,        // bumped whenever dataset-bound views are reset; late responses from an older epoch are dropped
+    stale: null };   // explicit stale state for the chosen dataset (review N-1): { key, version, reason }
 
   // ---------- DOM helpers ----------
   function el(tag, attrs, ...kids) {
@@ -42,10 +44,14 @@
 
   async function api(path, body) {
     const opts = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+    const epoch = state.epoch;
+    const datasetBound = /[?&]dataset=/.test(path) || (body && typeof body === 'object' && 'dataset' in body);
     const res = await fetch(path, opts);
     let data;
     try { data = await res.json(); } catch (_) { data = { error: `HTTP ${res.status}` }; }
-    if (res.status === 409) {  // the dataset version this view was built from is gone: never keep its results
+    // A response for a dataset view that was reset meanwhile must never render into the new view: drop it.
+    if (datasetBound && epoch !== state.epoch) return new Promise(() => {});
+    if (res.status === 409 && data.code === 'dataset-version-changed') {  // the version this view was built from is gone
       staleReset(data.error || 'dataset version changed');
       throw new Error('Results cleared: ' + (data.error || 'dataset version changed'));
     }
@@ -56,9 +62,11 @@
   // Every dataset-scoped request names the exact dataset version the view was built from.
   const bound = extra => Object.assign({ dataset: state.ds, version: state.version || '' }, extra || {});
   async function staleReset(why) {
+    // Keep the user's chosen dataset; mark its old version stale. Never switch to another dataset (review N-1).
+    if (state.ds) state.stale = { key: state.ds, version: state.version, reason: why };
+    state.version = null;
     try { state.status = await api('/api/status'); } catch (_) { /* keep old status */ }
-    state.ds = null; state.version = null;
-    renderStatus(`Earlier results were cleared because they belonged to a dataset version that is no longer served (${why}).`);
+    renderStatus(null, true);
   }
 
   // ---------- status / datasets ----------
@@ -66,11 +74,18 @@
     state.status = await api('/api/status');
     renderStatus();
   }
+  const statusSig = x => x.datasets.map(d => [d.key, d.status, d.version, d.reverifying, d.stale && d.stale.version].join('/')).join();
+  async function pollStatus() {
+    const st = await api('/api/status');
+    const changed = statusSig(st) !== statusSig(state.status);
+    state.status = st;
+    if (changed) renderStatus();
+  }
   function tagFor(d) {
     if (d.kind === 'snapshot') return 'SNAPSHOT' + (d.selection && d.selection.label ? ' · ' + d.selection.label : '');
     return d.kind === 'sample' ? 'SAMPLE' : 'SYNTHETIC';
   }
-  function renderStatus(notice) {
+  function renderStatus(notice, forceReset) {
     const st = state.status;
     const b = st.backend;
     const chip = $('#backend-chip');
@@ -78,50 +93,82 @@
     chip.textContent = `backend ${b.commit ? b.commit.slice(0, 7) : '?'}${b.code_equivalent_to && b.code_equivalent_to !== b.commit ? ' (code = ' + b.code_equivalent_to.slice(0, 7) + ')' : ''}${b.dirty ? '+dirty code' : ''} · schema ${b.versions.schema} · ${b.versions.parser} · ${b.versions.projection} · ${b.compatibility}`;
     chip.title = b.repo + (b.problems.length ? '\n' + b.problems.join('\n') : '');
     const sel = clear($('#dataset'));
+    const label = d => `[${tagFor(d)}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status : d.reverifying ? ' — re-verifying' : ''}`;
     for (const d of st.datasets) {
-      sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready', text: `[${tagFor(d)}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status : ''}` }));
+      // The chosen dataset stays selected (shown) even while it is not ready, so the picker never jumps.
+      sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready' && d.key !== state.ds, text: label(d) }));
     }
     const ready = st.datasets.filter(d => d.status === 'ready');
     const keys = ready.map(d => d.key);
     const fromHash = new URLSearchParams(location.hash.slice(1)).get('ds');
     const before = { ds: state.ds, version: state.version };
-    if (!state.ds || !keys.includes(state.ds)) state.ds = keys.includes(fromHash) ? fromHash : keys[0] || null;
-    const now = ready.find(d => d.key === state.ds);
-    state.version = now ? now.version : null;
+    let cur = st.datasets.find(d => d.key === state.ds);
+    const msgs = [];
+    if (!state.ds) {
+      // First load only: choose a default. After that the dataset changes only when the user picks one.
+      state.ds = keys.includes(fromHash) ? fromHash : keys[0] || null;
+      cur = st.datasets.find(d => d.key === state.ds);
+      state.version = cur ? cur.version : null;
+    } else if (!cur) {
+      // Removed from disk: explicit stale state; nothing else is selected for the user.
+      if (state.version) state.stale = { key: state.ds, version: state.version, reason: 'the snapshot was removed from the store' };
+      state.version = null;
+      sel.appendChild(el('option', { value: state.ds, disabled: true, text: `${state.ds} — removed` }));
+    } else if (cur.status === 'ready') {
+      if (state.version && cur.version !== state.version) {
+        state.stale = null;
+        msgs.push(`Dataset ${state.ds} now serves a new verified version (${String(cur.version).slice(0, 12)}); results from ${String(state.version).slice(0, 12)} were cleared.`);
+      } else if (!state.version && state.stale && state.stale.key === state.ds) {
+        msgs.push(`Dataset ${state.ds} verified again (version ${String(cur.version).slice(0, 12)}). Run your query again; earlier results stay cleared.`);
+        state.stale = null;
+      }
+      state.version = cur.version;
+    } else if (state.version) {
+      // Not ready any more (changed on disk, failed or refused re-verification): results can no longer be verified.
+      state.stale = { key: state.ds, version: state.version, reason: (cur.stale && cur.stale.reason) || cur.error || cur.status };
+      state.version = null;
+    } else if (!state.stale || state.stale.key !== state.ds) {
+      state.stale = { key: state.ds, version: null, reason: cur.error || cur.status };
+    }
     if (state.ds) sel.value = state.ds;
     const banner = $('#banner');
-    const msgs = [];
-    // Review F-5: a dataset switch or version change must never leave the old results under the new label.
+    // Review F-5 / N-1: a version change clears results; the dataset itself never switches by itself.
     const switched = before.ds !== null && (before.ds !== state.ds || before.version !== state.version);
+    const reset = !!forceReset || switched;
     if (notice) msgs.push(notice);
-    else if (switched) msgs.push(before.ds !== state.ds
-      ? `Dataset switched from ${before.ds} to ${state.ds || 'none'} (the previous one is no longer ready or demos were hidden). Earlier results were cleared.`
-      : `Dataset ${state.ds} has a new verified version (${String(state.version).slice(0, 12)}). Earlier results were cleared.`);
+    const sx = state.stale && state.stale.key === state.ds && !state.version ? state.stale : null;
+    if (sx) msgs.push(`STALE — ${state.ds}${sx.version ? ' version ' + String(sx.version).slice(0, 12) : ''} is not being served: ${sx.reason}. `
+      + 'Earlier results were cleared; nothing else was selected. It returns automatically if it verifies again, or pick another dataset.');
+    else if (cur && cur.reverifying) msgs.push(`Re-verifying ${state.ds.slice(0, 21)}… in the background. It keeps serving version ${String(state.version).slice(0, 12)}; every request is still hash-checked.`);
     if (b.compatibility === 'incompatible') msgs.push('Backend is incompatible with this UI build: ' + b.problems.join('; '));
     if (b.code_changed_since_start) msgs.push((b.problems_runtime || []).join('; '));
     else if (b.compatibility !== 'tested') msgs.push(`Backend revision ${b.commit ? b.commit.slice(0, 7) : 'unknown'}${b.dirty ? ' (uncommitted changes)' : ''} has matching versions but was not the tested revision; results come from it unchanged.`);
     const scanned = st.last_discovery ? new Date(st.last_discovery * 1000).toLocaleTimeString() : 'never';
     if (!st.real_snapshots) msgs.push(`No persisted snapshots found under ${st.snapshot_dir}${st.snapshot_dir_exists ? '' : ' (directory not created yet)'} as of the last scan at ${scanned} — showing labeled samples and synthetic fixtures.`);
-    const failing = st.datasets.filter(d => d.kind === 'snapshot' && d.status !== 'ready');
-    for (const d of failing) msgs.push(`Snapshot ${d.key.slice(0, 21)}…: ${d.status}${d.error ? ' — ' + d.error : ''} (last scan ${scanned})`);
-    const cur = now;
-    if (cur && cur.publication && cur.publication.status === 'legacy-incident') msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.publication.note}`);
+    const failing = st.datasets.filter(d => d.kind === 'snapshot' && d.status !== 'ready' && d.key !== state.ds);
+    const pubTag = d => (d.publication && d.publication.status && d.publication.status !== 'not-a-snapshot' ? ` [${d.publication.status}]` : '');
+    for (const d of failing) msgs.push(`Snapshot ${d.key.slice(0, 21)}…: ${d.status}${pubTag(d)}${d.error ? ' — ' + d.error : ''} (last scan ${scanned})`);
+    if (cur && cur.status === 'ready' && cur.publication && cur.publication.status === 'legacy-incident') msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.publication.note}`);
     banner.hidden = !msgs.length;
-    banner.className = 'banner' + (b.compatibility === 'incompatible' ? ' bad' : '');
+    banner.className = 'banner' + (b.compatibility === 'incompatible' || sx ? ' bad' : '');
     clear(banner);
     msgs.forEach(m => banner.appendChild(el('div', { text: m })));
     $('#foot').textContent = `Server ${st.server.bind} · pid ${st.server.pid} · backend ${b.repo} · Python ${b.python} · DuckDB ${b.duckdb} · research root ${b.research_root} · last scan ${scanned}`;
     renderDatasetBadge();
-    if (switched || notice) resetDatasetViews();
+    if (reset || notice) resetDatasetViews();
   }
   function current() { return state.status && state.status.datasets.find(d => d.key === state.ds); }
   function renderDatasetBadge() {
     const d = current(), badge = $('#dataset-badge');
-    if (!d) { badge.textContent = 'no data'; badge.className = 'badge'; return; }
+    if (!d) { badge.textContent = state.ds ? 'stale · removed' : 'no data'; badge.className = 'badge' + (state.ds ? ' stale' : ''); return; }
     const pub = d.publication || {};
-    badge.textContent = d.kind === 'snapshot' ? (pub.status === 'legacy-incident' ? 'verified · legacy ID incident' : `verified · ${pub.status || 'snapshot'}`)
-      : d.kind === 'sample' ? 'in-memory sample' : 'synthetic';
-    badge.className = 'badge ' + d.kind + (pub.status === 'legacy-incident' ? ' incident' : '');
+    if (d.status !== 'ready') {
+      badge.textContent = `stale · ${d.status}`; badge.className = 'badge stale';
+      badge.title = `Not served: ${d.error || d.status}`; return;
+    }
+    badge.textContent = (d.kind === 'snapshot' ? (pub.status === 'legacy-incident' ? 'verified · legacy ID incident' : `verified · ${pub.status || 'snapshot'}`)
+      : d.kind === 'sample' ? 'in-memory sample' : 'synthetic') + (d.reverifying ? ' · re-verifying…' : '');
+    badge.className = 'badge ' + d.kind + (pub.status === 'legacy-incident' ? ' incident' : '') + (d.reverifying ? ' pending' : '');
     badge.title = `${d.authority}\n${pub.note || ''}\n${(d.selection && d.selection.note) || ''}\nversion ${d.version || '—'}`;
   }
   function setHash() {
@@ -166,6 +213,10 @@
   async function runQuery(offset) {
     const v = formValues();
     if (!state.ds) return;
+    if (!state.version) {
+      clear($('#qsummary')).appendChild(el('p', { class: 'error', text: `${state.ds} has no verified version being served right now (see the banner). Pick another dataset or wait for it to verify.` }));
+      return;
+    }
     const body = Object.assign(bound({ offset: offset || 0 }), v);
     state.lastQuery = body;
     const sum = clear($('#qsummary'));
@@ -506,9 +557,27 @@
     t.appendChild(tb);
     return t;
   }
+  function renderCoveragePage(box, r) {
+    clear(box);
+    const pager = () => el('div', { class: 'pager' },
+      el('span', { class: 'hint', text: `Showing ${r.coverage_shown}${r.coverage_truncated ? ` (${r.coverage_page_size} per page)` : ''}` }), ' ',
+      r.coverage_prev_offset !== null && r.coverage_prev_offset !== undefined ? el('button', { class: 'ghost', onclick: () => coveragePage(box, r.coverage_prev_offset) }, '← Previous') : null, ' ',
+      r.coverage_next_offset !== null && r.coverage_next_offset !== undefined ? el('button', { class: 'ghost', onclick: () => coveragePage(box, r.coverage_next_offset) }, `Next ${Math.min(r.coverage_page_size, r.coverage_total - r.coverage_next_offset)} →`) : null);
+    box.appendChild(el('div', { class: 'count-line', text: `${fmt(r.coverage_total)} source records in this dataset` }));
+    if (r.coverage_truncated) box.appendChild(pager());
+    box.appendChild(r.coverage.length ? table([['source_record_id', 'Source record'], ['namespace', 'NS'], ['sequences', 'Seq'], ['words', 'Words'], ['lemmatized_words', 'Lemmatized'], ['words_with_sense', 'With sense gloss'], ['translations', 'Transl.'], ['unresolved_translations', 'Unresolved']],
+      r.coverage.map(c => ({ ...c, source_record_id: idLink(c.source_record_id) })), ['sequences', 'words', 'lemmatized_words', 'words_with_sense', 'translations', 'unresolved_translations']) : el('div', { class: 'missing', text: 'No source records.' }));
+    if (r.coverage_truncated) box.appendChild(pager());
+  }
+  async function coveragePage(box, offset) {
+    clear(box).appendChild(el('p', { class: 'muted', text: 'Loading records…' }));
+    try { renderCoveragePage(box, await api('/api/coverage' + q(bound({ offset })))); }
+    catch (e) { clear(box).appendChild(el('p', { class: 'error', text: e.message })); }
+  }
   async function renderCoverage() {
     const box = clear($('#coverage'));
     if (!state.ds) { box.appendChild(el('div', { class: 'panel missing', text: 'No dataset ready.' })); return; }
+    if (!state.version) { box.appendChild(el('div', { class: 'panel missing', text: `${state.ds} is not being served right now (see the banner); its report is unavailable.` })); return; }
     box.appendChild(el('div', { class: 'panel', text: 'Loading report…' }));
     try {
       const r = await api('/api/report' + q(bound()));
@@ -533,11 +602,12 @@
       const counts = r.layers;
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Canonical layers' }), table([['layer', 'Table'], ['rows', 'Rows'], ['state', 'Note']], counts, ['rows']),
         el('p', { class: 'hint', text: `${fmt(r.nodes)} nodes · ${fmt(r.edges)} portable edges` })));
+      const covBox = el('div');
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Translation & linguistic coverage per source record' }),
         el('div', { class: 'callout', text: r.coverage_note }),
         el('div', { class: 'hint', text: 'Sense glosses (words with sense) are lexical labels for single words, not translations. Translations are separate strings with unresolved spans.' }),
-        r.coverage.length ? table([['source_record_id', 'Source record'], ['namespace', 'NS'], ['sequences', 'Seq'], ['words', 'Words'], ['lemmatized_words', 'Lemmatized'], ['words_with_sense', 'With sense gloss'], ['translations', 'Transl.'], ['unresolved_translations', 'Unresolved']],
-          r.coverage.map(c => ({ ...c, source_record_id: idLink(c.source_record_id) })), ['sequences', 'words', 'lemmatized_words', 'words_with_sense', 'translations', 'unresolved_translations']) : el('div', { class: 'missing', text: 'No source records.' })));
+        covBox));
+      renderCoveragePage(covBox, r);
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Position states (why strict may be empty)' }),
         r.position_kinds.length ? table([['field', 'Field'], ['kind', 'Kind'], ['preservation', 'Preservation'], ['certainty', 'Certainty'], ['n', 'Positions']], r.position_kinds, ['n']) : el('div', { class: 'missing', text: 'No represented text positions in this dataset.' })));
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Graph shape' }),
@@ -602,10 +672,13 @@
       counts: g.receipt ? `${fmt(g.receipt.counts.nodes)} / ${fmt(g.receipt.counts.edges)}` : '—',
       backend: g.receipt ? `${(g.receipt.backend.commit || '').slice(0, 7)} ${g.receipt.backend.versions.parser}` : '—',
       act: el('span', {}, el('button', { onclick: () => { $('#cy-graph').value = g.graph; } }, 'Use'), ' ',
-        el('button', { class: 'ghost', onclick: async () => {
+        g.verifiable === false ? el('span', { class: 'pill warn', title: g.verify_note || '', text: g.verify_status === 'unsupported-format' ? 'old format · rebuild required' : 'rebuild required' })
+        : el('button', { class: 'ghost', onclick: async () => {
           clear(vres).appendChild(el('p', { class: 'muted', text: 'Reading back ' + g.graph + '…' }));
           try { const v = await api('/api/falkordb/verify', { graph: g.graph });
-            clear(vres).appendChild(el('p', { class: v.content_verified ? 'check ok' : 'check bad', text: v.content_verified ? `✓ ${g.graph}: contents equal the export (${fmt(v.counts.nodes)} nodes / ${fmt(v.counts.edges)} edges).` : `✗ ${g.graph}: ${v.problems.join('; ')}. Rebuild it.` }));
+            clear(vres).appendChild(el('p', { class: v.content_verified ? 'check ok' : 'check bad', text: v.content_verified
+              ? `✓ ${g.graph}: contents equal the export (${fmt(v.counts.nodes)} nodes / ${fmt(v.counts.edges)} edges; compared ${v.compared}).`
+              : `✗ ${g.graph} [${v.status}]: ${v.problems.join('; ')}${v.rebuild_required ? '' : '. Rebuild it.'}` }));
           } catch (e) { clear(vres).appendChild(el('p', { class: 'error', text: e.message })); } } }, 'Verify'), ' ',
         el('button', { class: 'ghost', onclick: async () => { try { await api('/api/falkordb/drop', { graph: g.graph }); renderFalkor(); } catch (e) { alert(e.message); } } }, 'Drop'))
     }))));
@@ -689,6 +762,7 @@
 
   // ---------- wiring ----------
   function resetDatasetViews() {
+    state.epoch += 1;
     state.report = null; state.graph = { center: null, data: null, history: [], selected: null, pos: null };
     state.result = null; state.lastQuery = null;
     clear($('#results thead')); clear($('#results tbody')); clear($('#pager'));
@@ -702,15 +776,27 @@
     if (state.view !== 'query') show(state.view);
   }
   function onDatasetChange() {
-    state.ds = $('#dataset').value;
+    state.ds = $('#dataset').value || null;
     const d = current();
-    state.version = d ? d.version : null;
+    state.version = d && d.status === 'ready' ? d.version : null;
+    if (state.stale && state.stale.key !== state.ds) state.stale = null;
     resetDatasetViews();
   }
   async function init() {
     document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
     $('#dataset').addEventListener('change', onDatasetChange);
-    $('#refresh').addEventListener('click', async () => { $('#refresh').disabled = true; try { await api('/api/refresh', { deep: true }); await loadStatus(); } finally { $('#refresh').disabled = false; } });
+    $('#refresh').addEventListener('click', async () => {
+      $('#refresh').disabled = true;
+      try {
+        await api('/api/refresh', { deep: true });
+        // Poll quickly while the re-check runs, so the pending -> done (or stale) transition shows promptly.
+        for (let i = 0; i < 120; i++) {
+          await pollStatus();
+          if (!state.status.datasets.some(d => d.reverifying || d.status === 'verifying')) break;
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      } catch (e) { renderStatus('Refresh failed: ' + e.message); } finally { $('#refresh').disabled = false; }
+    });
     $('#qform').addEventListener('submit', ev => { ev.preventDefault(); runQuery(0); });
     $('#wform').addEventListener('submit', wordSearch);
     $('#engine').addEventListener('change', syncSkip);
@@ -740,13 +826,7 @@
     show(['query', 'graph', 'coverage', 'falkordb'].includes(hashView) ? hashView : 'query');
     if (current() && current().examples.length) runQuery(0);
     // Poll status only; the server scans in the background (an open tab no longer triggers discovery).
-    setInterval(async () => {
-      try {
-        const st = await api('/api/status');
-        const sig = x => x.datasets.map(d => d.key + d.status + d.version).join();
-        if (sig(st) !== sig(state.status)) { state.status = st; renderStatus(); }
-      } catch (_) { /* server restarting */ }
-    }, 30000);
+    setInterval(() => pollStatus().catch(() => { /* server restarting */ }), 30000);
   }
   init().catch(e => { document.body.appendChild(el('p', { class: 'error', text: 'Startup failed: ' + e.message })); });
 })();

@@ -271,7 +271,9 @@ class Falkor:
             receipt = json.loads(rows[0][0]) if rows and rows[0] and rows[0][0] else None
         except (RespError, ValueError, IndexError, TypeError):
             receipt = None
-        return {'graph': g, 'receipt': receipt}
+        refusal = receipt_refusal(g, receipt)
+        return {'graph': g, 'receipt': receipt, 'verifiable': refusal is None,
+                'verify_status': refusal['status'] if refusal else None, 'verify_note': refusal['problems'][0] if refusal else None}
 
     # -- export ----------------------------------------------------------------
     def export(self, ds: Dataset) -> dict:
@@ -318,6 +320,7 @@ class Falkor:
                 if _sha_file(target / name) != expected:
                     raise UserError(f'existing export {export_id} failed hash check: {name}')
             receipt = json.loads((target / 'receipt.json').read_text())
+            receipt['content_digest'] = content_digest(nodes, edges)  # current comparison scheme; the stored file stays write-once
             receipt['reused_export_files'] = True
         else:
             stage = target.parent / f'.pending-{export_id}-{os.getpid()}'
@@ -382,7 +385,9 @@ class Falkor:
             raise UserError(f'FalkorDB load failed: {exc}') from exc
         check = self.verify_graph(g, nodes=nodes, edges=edges, receipt=receipt)
         if not check['content_verified']:
-            raise UserError(f'loaded graph contents differ from the export: {check["problems"][:3]}')
+            dropped = self._drop_quietly(g)  # never leave a just-built graph that failed its own read-back
+            raise UserError(f'loaded graph contents differ from the export ({"graph dropped" if dropped else "graph could NOT be dropped"}): '
+                            f'{check["problems"][:3]}')
         return {'graph': g, 'rebuilt': True, 'counts': check['counts'], 'content_verified': True, 'content_digest': check['digest'],
                 'seconds': round(time.time() - started, 2), 'receipt': receipt}
 
@@ -396,66 +401,89 @@ class Falkor:
                     raise UserError('graph not loaded')
                 if receipt is None:
                     receipt = self._graph_info(r, graph)['receipt']
-                    if not receipt:
-                        return {'graph': graph, 'content_verified': False, 'problems': ['no projection receipt in graph']}
+                    refusal = receipt_refusal(graph, receipt)
+                    if refusal:
+                        return refusal  # typed, read-only: the old graph is never modified here (review N-5)
                 if nodes is None or edges is None:
                     target = self._export_dir(receipt['dataset'], receipt['export_id'])
-                    for name, expected in receipt['files'].items():
-                        if _sha_file(target / name) != expected:
-                            return {'graph': graph, 'content_verified': False, 'problems': [f'export file {name} hash mismatch']}
-                    nodes = [json.loads(x) for x in (target / 'nodes.jsonl').read_text().splitlines()]
-                    edges = [json.loads(x) for x in (target / 'edges.jsonl').read_text().splitlines()]
-                got_nodes, got_edges = self._readback(r, graph, nodes, edges)
+                    try:
+                        for name, expected in receipt['files'].items():
+                            if _sha_file(target / name) != expected:
+                                return unverified(graph, 'export-mismatch', [f'export file {name} hash mismatch'])
+                        nodes = [json.loads(x) for x in (target / 'nodes.jsonl').read_text().splitlines()]
+                        edges = [json.loads(x) for x in (target / 'edges.jsonl').read_text().splitlines()]
+                    except FileNotFoundError:
+                        return unverified(graph, 'export-missing', ['the export files this graph was loaded from are gone; rebuild from the current dataset'])
+                got_nodes, got_edges, extra = self._readback(r, graph, nodes, edges)
         except (OSError, RespError) as exc:
             raise UserError(f'FalkorDB verify failed: {exc}') from exc
         want = content_digest(nodes, edges)
         have = digest_rows(got_nodes, got_edges)
-        problems = []
+        problems = list(extra)
         if len(got_nodes) != len(nodes):
             problems.append(f'node count {len(got_nodes)} != {len(nodes)}')
         if len(got_edges) != len(edges):
             problems.append(f'edge count {len(got_edges)} != {len(edges)}')
         if have != want:
-            want_n = {row[0]: row for row in node_rows(nodes)}
-            diff = [row[0] for row in got_nodes if want_n.get(row[0]) != row][:5]
-            problems.append(f'content digest differs (first differing nodes: {diff})')
-        return {'graph': graph, 'content_verified': not problems, 'digest': have, 'expected_digest': want, 'problems': problems,
+            problems += row_diffs('node', node_rows(nodes), got_nodes) + row_diffs('edge', edge_rows(edges), got_edges)
+            problems.append('content digest differs (values, labels or property sets)')
+        return {'graph': graph, 'content_verified': not problems, 'status': 'verified' if not problems else 'content-differs',
+                'digest': have, 'expected_digest': want, 'problems': problems, 'compared': COMPARED,
                 'counts': {'nodes': len(got_nodes), 'edges': len(got_edges)}}
 
-    def _readback(self, r: Resp, g: str, nodes: list[dict], edges: list[dict]) -> tuple[list, list]:
+    def _readback(self, r: Resp, g: str, nodes: list[dict], edges: list[dict]) -> tuple[list, list, list]:
+        """Read every node and edge back with its labels and full property-key set (review N-6).
+
+        Values are read for the exported columns; ``keys()`` proves no property was added or removed, and
+        ``labels()`` proves no label was added. The receipt node is checked separately.
+        """
+        kinds = sorted({n['node_kind'] for n in nodes})
+        extra: list[str] = []
         got_nodes: list = []
-        for kind in sorted({n['node_kind'] for n in nodes} | {'_extra'}):
-            if kind == '_extra':
-                # any node that is neither the receipt nor an exported kind is a content difference
-                q = 'MATCH (n) WHERE NOT n:ProjectionReceipt AND NOT (' + ' OR '.join(f'n:{k}' for k in sorted({n["node_kind"] for n in nodes}) or ['ProjectionReceipt']) + ') RETURN n.id'
-                res = r.cmd('GRAPH.RO_QUERY', g, q + ' LIMIT 10', 'TIMEOUT', RO_TIMEOUT_MS)
-                got_nodes += [[row[0], 'unexpected'] for row in (res[1] if len(res) == 3 else [])]
-                continue
+        q = ('MATCH (n) WHERE NOT n:ProjectionReceipt AND NOT (' + ' OR '.join(f'n:{k}' for k in kinds or ['ProjectionReceipt']) +
+             ') RETURN n.id, labels(n) LIMIT 10')
+        res = r.cmd('GRAPH.RO_QUERY', g, q, 'TIMEOUT', RO_TIMEOUT_MS)
+        got_nodes += [[row[0], 'unexpected:' + '|'.join(sorted(row[1] or []))] for row in (res[1] if len(res) == 3 else [])]
+        for kind in kinds:
             if not LABEL_RE.match(kind):
                 raise UserError('unsafe node label')
-            cols = node_columns(kind)
-            ret = ', '.join(f'n.{c}' for c in cols)
+            ret = ', '.join(f'n.{c}' for c in node_columns(kind))
             skip = 0
             while True:
-                res = r.cmd('GRAPH.RO_QUERY', g, f'MATCH (n:{kind}) RETURN {ret} ORDER BY n.id SKIP {skip} LIMIT {READBACK_PAGE}', 'TIMEOUT', RO_TIMEOUT_MS)
+                res = r.cmd('GRAPH.RO_QUERY', g, f'MATCH (n:{kind}) RETURN {ret}, labels(n), keys(n) ORDER BY n.id SKIP {skip} LIMIT {READBACK_PAGE}',
+                            'TIMEOUT', RO_TIMEOUT_MS)
                 rows = res[1] if len(res) == 3 else []
-                got_nodes += [[row[0], kind] + row[1:] for row in rows]
+                got_nodes += [[row[0], kind] + row[1:-2] + [_shape(row[-2]), _shape(row[-1])] for row in rows]
                 if len(rows) < READBACK_PAGE:
                     break
                 skip += READBACK_PAGE
         got_edges: list = []
         skip = 0
         while True:
-            res = r.cmd('GRAPH.RO_QUERY', g, f'MATCH (a)-[e]->(b) RETURN e.id, a.id, b.id, type(e), e.source_record_id, e.qualification '
+            res = r.cmd('GRAPH.RO_QUERY', g, f'MATCH (a)-[e]->(b) RETURN e.id, a.id, b.id, type(e), e.source_record_id, e.qualification, keys(e) '
                                              f'ORDER BY e.id SKIP {skip} LIMIT {READBACK_PAGE}', 'TIMEOUT', RO_TIMEOUT_MS)
             rows = res[1] if len(res) == 3 else []
-            got_edges += [list(row) for row in rows]
+            got_edges += [list(row[:-1]) + [_shape(row[-1])] for row in rows]
             if len(rows) < READBACK_PAGE:
                 break
             skip += READBACK_PAGE
+        res = r.cmd('GRAPH.RO_QUERY', g, 'MATCH (p:ProjectionReceipt) RETURN labels(p), keys(p) LIMIT 3', 'TIMEOUT', RO_TIMEOUT_MS)
+        receipts = res[1] if len(res) == 3 else []
+        if len(receipts) != 1:
+            extra.append(f'{len(receipts)} ProjectionReceipt nodes (expected exactly 1)')
+        for row in receipts:
+            if _shape(row[0]) != 'ProjectionReceipt' or _shape(row[1]) != RECEIPT_KEYS:
+                extra.append(f'ProjectionReceipt node has labels [{_shape(row[0])}] and properties [{_shape(row[1])}]; expected [ProjectionReceipt] / [{RECEIPT_KEYS}]')
         got_nodes.sort(key=lambda x: (str(x[0]), x[1]))
         got_edges.sort(key=lambda x: str(x[0]))
-        return got_nodes, got_edges
+        return got_nodes, got_edges, extra
+
+    def _drop_quietly(self, graph: str) -> bool:
+        try:
+            self.drop(graph)
+            return True
+        except UserError:
+            return False
 
     def drop(self, graph: str) -> dict:
         if not isinstance(graph, str) or not GRAPH_RE.match(graph):
@@ -514,19 +542,83 @@ class Falkor:
                 'mode': 'allowlisted template via GRAPH.RO_QUERY (cuneiform-ro ACL user) on a disposable projection; not canonical data'}
 
 
+COMPARED = ('every node: exported column values, its exact label set and its exact property-key set; every edge: endpoints, type, '
+            'exported values and exact property-key set; exactly one ProjectionReceipt node with its fixed shape')
+RECEIPT_KEYS = 'dataset|dataset_version|export_id|receipt'
+
+
+def _shape(names) -> str:
+    """Order-independent label/key set (FalkorDB does not store null properties, so exported nulls have no key).
+
+    FalkorDB's verbose reply renders a list as one string ``[a, b]``; labels and property keys are plain identifiers
+    (LABEL_RE / KEY_RE on the export side), so splitting on ", " is unambiguous. Anything else is kept verbatim and
+    therefore cannot match an expected shape.
+    """
+    if isinstance(names, str):
+        inner = names[1:-1] if names.startswith('[') and names.endswith(']') else names
+        names = [x for x in inner.split(', ')] if inner else []
+    return '|'.join(sorted(str(x) for x in (names or [])))
+
+
 def node_rows(nodes: list[dict]) -> list[list]:
     out = []
     for n in nodes:
         cols = node_columns(n['node_kind'])
-        out.append([n['id'], n['node_kind']] + [_norm(n.get(c)) for c in cols[1:]])
+        out.append([n['id'], n['node_kind']] + [_norm(n.get(c)) for c in cols[1:]]
+                   + [n['node_kind'], _shape(k for k, v in n.items() if v is not None)])
     out.sort(key=lambda x: (str(x[0]), x[1]))
     return out
 
 
+EDGE_PROPS = {'id': 'id', 'source_record_id': 'source_record_id', 'qualification': 'qualification'}
+
+
 def edge_rows(edges: list[dict]) -> list[list]:
-    out = [[e['id'], e['source_id'], e['target_id'], e['kind'], _norm(e['source_record_id']), _norm(e['qualification'])] for e in edges]
+    out = [[e['id'], e['source_id'], e['target_id'], e['kind'], _norm(e['source_record_id']), _norm(e['qualification']),
+            _shape(k for k in EDGE_PROPS if e.get(k) is not None)] for e in edges]
     out.sort(key=lambda x: str(x[0]))
     return out
+
+
+def row_diffs(what: str, want: list[list], got: list[list], limit: int = 5) -> list[str]:
+    """Human-readable first differences: missing, unexpected, or changed (values vs labels/property set)."""
+    w = {(str(r[0]), r[1] if what == 'node' else ''): r for r in want}
+    g = {(str(r[0]), r[1] if what == 'node' else ''): r for r in got}
+    out = []
+    for k in sorted(set(w) | set(g)):
+        a, b = w.get(k), g.get(k)
+        if a == b:
+            continue
+        if a is None:
+            out.append(f'unexpected {what} {k[0]} ({k[1] or "edge"})')
+        elif b is None:
+            out.append(f'missing {what} {k[0]}')
+        elif a[-1] != b[-1] or (what == 'node' and a[-2] != b[-2]):
+            out.append(f'{what} {k[0]}: labels/properties [{b[-2] + " / " if what == "node" else ""}{b[-1]}] '
+                       f'differ from the export [{a[-2] + " / " if what == "node" else ""}{a[-1]}]')
+        else:
+            out.append(f'{what} {k[0]}: property values differ from the export')
+        if len(out) >= limit:
+            break
+    return out
+
+
+def unverified(graph: str, status: str, problems: list[str], **extra) -> dict:
+    return dict({'graph': graph, 'content_verified': False, 'status': status, 'problems': problems}, **extra)
+
+
+def receipt_refusal(graph: str, receipt: dict | None) -> dict | None:
+    """Typed refusal for graphs this build cannot verify: no receipt, an older export format, or an incomplete receipt."""
+    if not receipt:
+        return unverified(graph, 'no-receipt', ['no projection receipt in graph; drop it or rebuild from a dataset'], rebuild_required=True)
+    fmt = receipt.get('format')
+    if fmt != EXPORT_FORMAT:
+        return unverified(graph, 'unsupported-format', [f'legacy export format {fmt or "unrecorded"}; this UI verifies {EXPORT_FORMAT} only. '
+                                                        'Rebuild it from the current dataset version (the old graph was not modified).'],
+                          format=fmt, supported_format=EXPORT_FORMAT, rebuild_required=True)
+    if not all(isinstance(receipt.get(k), str) for k in ('dataset', 'export_id')) or not isinstance(receipt.get('files'), dict):
+        return unverified(graph, 'receipt-incomplete', ['projection receipt lacks dataset/export_id/files; rebuild it'], rebuild_required=True)
+    return None
 
 
 def digest_rows(nodes: list, edges: list) -> str:

@@ -53,6 +53,7 @@ STABLE_S = float(os.environ.get('CUNEIFORM_UI_STABLE_S', '30'))  # quiet period 
 REVERIFY_S = 900.0  # full re-hash of ready snapshots at most this often (stat fingerprint is checked per request)
 SELECTION_SOURCES = {'oracc-selection', 'cdli-selection'}
 LEDGER = '.publication-ledger.jsonl'
+STATE_LOCK = threading.RLock()  # dataset state transitions: verification commits vs request-time invalidation
 
 
 class UserError(ValueError):
@@ -69,7 +70,7 @@ class Dataset:
     kind: str  # snapshot | sample | synthetic
     title: str
     description: str
-    status: str = 'pending'  # pending | settling | verifying | ready | failed | incompatible | unpublished
+    status: str = 'pending'  # pending | settling | verifying | ready | failed | incompatible | unpublished | refused
     error: str | None = None
     db: Any = None  # in-memory datasets only; snapshots open per request
     lock: threading.Lock = field(default_factory=threading.Lock)
@@ -86,6 +87,10 @@ class Dataset:
     verified_at: float | None = None
     checked_at: float | None = None
     verifying: bool = False
+    reverifying: bool = False  # routine re-hash of an unchanged ready snapshot: it keeps serving its version meanwhile
+    generation: int = 0  # bumped on every invalidation; a verification started earlier never commits over it
+    ever_ready: bool = False
+    stale: dict | None = None  # why the last served version stopped being served (explicit stale state for clients)
     attempts: int = 0
     next_retry: float = 0.0
     builtin_examples: bool = False
@@ -96,6 +101,7 @@ class Dataset:
                 'status': self.status, 'error': self.error, 'scopes': self.scopes, 'inputs': self.inputs,
                 'examples': self.examples, 'authority': AUTHORITY[self.kind], 'version': self.version,
                 'selection': self.selection, 'verified_at': self.verified_at, 'checked_at': self.checked_at,
+                'reverifying': self.reverifying, 'stale': self.stale,
                 'publication': self.publication or {'status': 'not-a-snapshot', 'note': PUBLICATION[self.kind]},
                 'manifest': _manifest_summary(self.manifest) if self.manifest else None}
 
@@ -138,6 +144,39 @@ def _fingerprint(path: Path) -> dict:
     return out
 
 
+def store_entry_refusal(path: Path, key: str) -> dict | None:
+    """Refuse store entries that are not plain directories holding their own ID (Q-020 B2 hardening, UI side).
+
+    A symlinked entry, a symlink anywhere inside it, or a manifest naming another snapshot ID could make the bytes
+    served differ from the ones the ledger published under this ID. Checked before any hashing; nothing is followed.
+    """
+    def refuse(status: str, note: str) -> dict:
+        return {'status': status, 'servable': False, 'note': note}
+    if path.is_symlink():
+        return refuse('symlinked-entry', 'store entry is a symbolic link; only plain snapshot directories are served')
+    store = path.parent
+    try:
+        if path.resolve().parent != store.resolve():
+            return refuse('outside-store', 'store entry resolves outside the snapshot store; refused')
+        links = [str(p.relative_to(path)) for p in path.rglob('*') if p.is_symlink()]
+    except OSError as exc:
+        return refuse('unreadable-entry', f'could not inspect store entry ({type(exc).__name__}); refused')
+    if links:
+        return refuse('symlink-inside-entry', f'store entry contains symbolic links ({", ".join(sorted(links)[:3])}); refused')
+    try:
+        sid = json.loads((path / 'manifest.json').read_text()).get('snapshot_id')
+    except (OSError, ValueError, AttributeError):
+        return None  # unreadable/incomplete manifest: verification reports it (and retries if it settles)
+    if sid != key:
+        return refuse('id-mismatch', f'manifest names {str(sid)[:41]}, but the store entry is {key}; refused')
+    return None
+
+
+def _fingerprint_eq(path: Path, fp: dict) -> bool:
+    now = _fingerprint(path)
+    return now == {k: v for k, v in fp.items() if not k.startswith('@')}
+
+
 def _newest(fp: dict) -> float:
     return max((v[1] for k, v in fp.items() if not k.startswith('@')), default=0) / 1e9
 
@@ -150,40 +189,94 @@ def selection_of(persisted, manifest: dict, path: Path) -> dict:
                 size=sc.get('cohort_size', sc.get('selected')), rule_name=(sc.get('rule') or {}).get('name') or sc.get('selection_rule'))
 
 
+LEDGER_CORRUPT = '@corrupt'  # read_ledger key for an unparseable record (fails every ID closed)
+
+
 def read_ledger(snapshot_dir: Path) -> dict[str, list[dict]]:
-    """Backend publication ledger (append-only; read here, never written). snapshot_id -> entries."""
+    """Backend publication ledger (append-only; read here, never written). snapshot_id -> entries.
+
+    An unparseable *terminated* line fails every ID closed (``LEDGER_CORRUPT``): skipping it could hide a second
+    record for an ID. An unparseable final line without a newline is a concurrent append in progress and is ignored.
+    """
     out: dict[str, list[dict]] = {}
     try:
-        for line in (snapshot_dir / LEDGER).read_text().splitlines():
-            if line.strip():
-                e = json.loads(line)
-                out.setdefault(e.get('snapshot_id'), []).append(e)
-    except (OSError, ValueError):
-        pass
+        data = (snapshot_dir / LEDGER).read_bytes()
+    except OSError:
+        return out
+    lines = data.split(b'\n')
+    for i, line in enumerate(lines):
+        if not line.strip():
+            continue
+        try:
+            e = json.loads(line)
+            if not isinstance(e, dict):
+                raise ValueError('not an object')
+        except ValueError:
+            if i == len(lines) - 1:
+                continue  # unterminated tail: an append in progress (or torn); never trusted
+            out[LEDGER_CORRUPT] = [{'line': i + 1}]
+            continue
+        out.setdefault(e.get('snapshot_id'), []).append(e)
     return out
 
 
-def publication_of(entries: list[dict] | None, manifest: dict) -> dict:
-    """Separate trusted immutability (ledgered once, read-only) from the legacy same-ID rebuild incident."""
+def _is_format2(e: dict) -> bool:
+    return 'event' in e or (isinstance(e.get('ledger_format'), int) and e['ledger_format'] >= 2)
+
+
+def publication_of(entries: list[dict] | None, manifest: dict, corrupt: bool = False) -> dict:
+    """Publication status from the legacy (format 1) ledger, as written by the pinned backend d6049e2.
+
+    Separates trusted immutability (ledgered once, read-only) from the legacy same-ID rebuild incident. Ledger
+    format 2 (reserve + commit, backend 94af111+) is recognised and refused with its own typed status: this UI's
+    pinned backend predates it, and its semantics are the backend's to decide (``storage.verified``), not re-derived here.
+    """
+    if corrupt:
+        return {'status': 'ledger-corrupt', 'servable': False,
+                'note': 'the publication ledger has an unparseable record; every snapshot is refused until the corpus owner repairs it'}
     if not entries:
         return {'status': 'not-in-ledger', 'servable': False,
                 'note': 'not listed in the backend publication ledger; not served until the corpus owner publishes it'}
-    if len(entries) != 1 or entries[0].get('manifest_sha256') != manifest.get('manifest_sha256'):
-        return {'status': 'ledger-mismatch', 'servable': False,
-                'note': 'manifest SHA-256 differs from the publication ledger (or the ID was published more than once); refused'}
+    if any(_is_format2(e) for e in entries):
+        events = ' → '.join(str(e.get('event', 'legacy')) for e in entries)
+        return {'status': 'unsupported-ledger-format', 'servable': False, 'ledger_events': events,
+                'note': (f'published with publication-ledger format 2 ({events}) by a newer backend. This UI runs the pinned backend '
+                         'd6049e2, which predates that format, so it is not served yet. This is a version gap, not an integrity '
+                         'failure; it becomes servable once the UI is re-pinned to a reviewed backend that provides storage.verified.')}
+    if len(entries) != 1:
+        return {'status': 'ledger-conflict', 'servable': False,
+                'note': f'{len(entries)} legacy publication records for this ID (exactly one is allowed); refused'}
     e = entries[0]
+    if e.get('manifest_sha256') != manifest.get('manifest_sha256'):
+        return {'status': 'ledger-mismatch', 'servable': False,
+                'note': (f"the ledger published manifest {str(e.get('manifest_sha256'))[:16]}…, but this directory holds manifest "
+                         f"{str(manifest.get('manifest_sha256'))[:16]}…; refused")}
     contract = manifest.get('snapshot_contract')
     base = {'published_at': e.get('published_at'), 'backfilled': bool(e.get('backfilled')), 'snapshot_contract': contract,
             'ledger_manifest_sha256': e.get('manifest_sha256'), 'servable': True}
     if e.get('incident'):
-        return dict(base, status='legacy-incident',
-                    note=('Ledgered after the fact. This ID was deleted and rebuilt under the same ID before the ledger existed; '
-                          'first-version bytes were not retained. Current bytes verify, but results produced from this ID before '
-                          'the rebuild cannot be reproduced. Incident: ' + str(e.get('incident'))))
+        return dict(base, status='legacy-incident', note=incident_note(e))
     if e.get('backfilled'):
         return dict(base, status='ledgered-legacy',
                     note='Published once before the ledger existed (backfilled, legacy pre-manifest-3 identity); read-only since.')
     return dict(base, status='ledgered', note=f'Published once through the ledger ({contract or "contract unrecorded"}); read-only and never republishable.')
+
+
+def incident_note(e: dict) -> str:
+    return ('Ledgered after the fact. This ID was deleted and rebuilt under the same ID before the ledger existed; '
+            'first-version bytes were not retained. Current bytes verify, but results produced from this ID before '
+            'the rebuild cannot be reproduced. Incident: ' + str(e.get('incident')))
+
+
+def publication_from_backend(pub: dict, entries: list[dict] | None) -> dict:
+    """Map ``storage.verified(...)['publication']`` (backend 94af111+) to the UI label; the legacy incident stays visible."""
+    incident = next((e for e in entries or [] if e.get('incident')), None)
+    out = dict(pub, servable=True, source='backend storage.verified')
+    if incident is not None:
+        out.update(status='legacy-incident', note=incident_note(incident), backend_status=pub.get('status'))
+    else:
+        out.setdefault('note', pub.get('binding') or 'published (backend ledger check)')
+    return out
 
 
 class Backend:
@@ -218,6 +311,9 @@ class Backend:
         if Path(cuneiform.__file__).resolve().parent != self.repo / 'cuneiform':
             raise RuntimeError('imported cuneiform package is not the configured repository')
         self.adapters, self.model, self.projections, self.query, self.storage = adapters, model, projections, query, storage
+        # Backend 94af111+ exposes the trusted read path (content verification + ledger-format-2 publication check).
+        # The pinned d6049e2 does not; then the UI keeps its legacy (format 1) ledger reading and refuses format 2.
+        self.trusted_read = callable(getattr(storage, 'verified', None))
         required = {'projections': ['build', 'lookup', 'source_span', 'coverage', 'report', 'assert_fresh', 'ProjectionConfig'],
                     'query': ['motif', 'trace_rows', 'array_count', 'trace'],
                     'storage': ['verify', 'read_bounded', 'validate_graph', 'Config'],
@@ -241,7 +337,9 @@ class Backend:
                 'compatibility': compat, 'problems': problems, 'tested_commits': sorted(TESTED_COMMITS),
                 'research_root': str(self.research_root), 'python': sys.version.split()[0],
                 'duckdb': __import__('duckdb').__version__,
-                'frozen_fast_path': hasattr(projections, 'mark_frozen_verified')}
+                'frozen_fast_path': hasattr(projections, 'mark_frozen_verified'),
+                'publication_read': ('backend storage.verified (ledger formats 1 and 2)' if self.trusted_read
+                                     else 'backend storage.verify + legacy ledger (format 1 only; format 2 refused as unsupported)')}
 
     CODE_PATHS = ('cuneiform', 'fixtures', 'pyproject.toml')
 
@@ -330,6 +428,7 @@ class Backend:
             self.ledger = read_ledger(snapshot_dir)
             if snapshot_dir.is_dir():
                 for p in sorted(snapshot_dir.iterdir()):
+                    # is_dir() follows a symlinked entry on purpose: it is listed, then refused with a typed reason.
                     if p.is_dir() and SNAPSHOT_RE.match(p.name) and (p / 'manifest.json').is_file():
                         present.add(p.name)
                         t = self._consider(p, now, deep)
@@ -348,6 +447,9 @@ class Backend:
             t.join(max(0.0, deadline - time.time()))
         return self.listing()
 
+    def _ledger_key(self, key: str) -> list:
+        return [self.ledger.get(key), bool(self.ledger.get(LEDGER_CORRUPT))]
+
     def _consider(self, path: Path, now: float, deep: bool) -> threading.Thread | None:
         key = path.name
         ds = self.datasets.get(key)
@@ -357,16 +459,25 @@ class Backend:
         if ds.verifying:
             return None
         fp = _fingerprint(path)
-        fp['@ledger'] = self.ledger.get(key)  # a ledger change re-evaluates publication status
+        fp['@ledger'] = self._ledger_key(key)  # a ledger change re-evaluates publication status
         changed = fp != ds.fingerprint
+        routine = ds.status == 'ready' and not changed and (deep or now - (ds.verified_at or 0) > REVERIFY_S)
         due = (ds.status in ('pending', 'settling')
                or changed
                or (ds.status == 'failed' and now >= ds.next_retry)
-               or (ds.status == 'ready' and (deep or now - (ds.verified_at or 0) > REVERIFY_S)))
+               or routine)
         if not due:
             return None
+        if routine:
+            # Review N-1: nothing changed on disk, so the served version stays ready while the bytes are re-hashed.
+            # Every request still re-verifies every file itself; this pass only refreshes verified_at (or, if the
+            # bytes turn out different, invalidates the version with an explicit stale reason).
+            ds.verifying = ds.reverifying = True
+            t = threading.Thread(target=self._verify_snapshot, args=(ds, fp, ds.generation, True), daemon=True)
+            t.start()
+            return t
         if changed and ds.status == 'ready':
-            self._invalidate(ds, 'snapshot files changed since verification; waiting for them to settle')
+            self._invalidate(ds, 'snapshot files or its ledger entry changed since verification; waiting for them to settle')
         if now - _newest(fp) < self.stable_s:
             ds.status, ds.version = 'settling', None
             ds.error = f'files changed {now - _newest(fp):.0f}s ago; verifying after {self.stable_s:.0f}s without changes'
@@ -374,18 +485,30 @@ class Backend:
             return None
         ds.verifying = True
         ds.status = 'verifying'
-        t = threading.Thread(target=self._verify_snapshot, args=(ds, fp), daemon=True)
+        t = threading.Thread(target=self._verify_snapshot, args=(ds, fp, ds.generation, False), daemon=True)
         t.start()
         return t
 
     @staticmethod
     def _invalidate(ds: Dataset, why: str) -> None:
-        ds.status, ds.version, ds.error = 'settling', None, why
+        Backend._retire(ds, 'settling', why)
+
+    @staticmethod
+    def _retire(ds: Dataset, status: str, why: str) -> None:
+        """Stop serving the current version; record which version became stale and why (explicit stale state)."""
+        with STATE_LOCK:
+            if ds.version is not None:
+                ds.stale = {'version': ds.version, 'reason': why, 'at': time.time()}
+            ds.generation += 1
+            ds.status, ds.version, ds.error = status, None, why
 
     def listing(self) -> dict:
         real = [d for d in self.datasets.values() if d.kind == 'snapshot']
         real_ready = any(d.status == 'ready' for d in real)
-        demos_visible = self.show_demos == 'always' or (self.show_demos == 'auto' and not real_ready)
+        # A snapshot that was ready and is only settling/re-verifying keeps demos hidden: demos appearing and
+        # disappearing during a re-check would reshuffle the picker (review N-1).
+        transient = any(d.ever_ready and d.status in ('settling', 'verifying') for d in real)
+        demos_visible = self.show_demos == 'always' or (self.show_demos == 'auto' and not real_ready and not transient)
         order = {'snapshot': 0, 'sample': 1, 'synthetic': 2}
         spec_rank = {key: i for i, (key, *_rest) in enumerate(self._sample_specs())}
         shown = [d for d in self.datasets.values() if d.kind == 'snapshot' or demos_visible]
@@ -481,26 +604,52 @@ class Backend:
             pass
         return out
 
-    def _verify_snapshot(self, ds: Dataset, fp_before: dict) -> None:
+    def _verify_and_publication(self, ds: Dataset, entries_key: list) -> tuple[dict | None, dict]:
+        """Content verification + publication status. Returns (manifest or None when refused, publication)."""
+        entries, corrupt = entries_key
+        if self.trusted_read:
+            try:
+                out = self.storage.verified(ds.path, ds.key, ledger='require')
+            except ValueError as exc:
+                state = getattr(exc, 'state', None)
+                if not isinstance(state, str):
+                    raise  # content/integrity failure: the snapshot failed, it was not merely unpublished
+                return None, {'status': state, 'servable': False, 'source': 'backend storage.verified', 'note': str(exc)}
+            return out['manifest'], publication_from_backend(out.get('publication') or {}, entries)
+        manifest = self.storage.verify(ds.path, ds.key)  # backend hashes every payload file and checks bindings
+        return manifest, publication_of(entries, manifest, corrupt=corrupt)
+
+    def _verify_snapshot(self, ds: Dataset, fp_before: dict, gen: int, routine: bool = False) -> None:
+        """Verify one snapshot in a background thread.
+
+        ``gen`` is the dataset generation when the pass started; if anything invalidated the dataset meanwhile
+        (a request saw changed files, a newer scan), this pass commits nothing. A *routine* pass runs while the
+        dataset keeps serving its current version; it only refreshes ``verified_at`` when the same version
+        verifies again, and otherwise retires that version with an explicit stale reason.
+        """
         assert ds.path is not None
+        commit = {}
         try:
+            refusal = store_entry_refusal(ds.path, ds.key)
+            if refusal:
+                commit = {'status': 'refused', 'error': refusal['note'], 'publication': refusal}
+                return
             pre = json.loads((ds.path / 'manifest.json').read_text())
             schema, parser = pre.get('schema_version'), pre.get('parser_version')
             rev = (pre.get('projection_spec') or {}).get('revision')
             if schema not in SUPPORTED['schema'] or parser not in SUPPORTED['parser'] or rev not in SUPPORTED['projection']:
-                ds.status, ds.version = 'incompatible', None
-                ds.error = f'schema {schema} / parser {parser} / projection {rev}: not supported by this UI build'
-                ds.fingerprint = fp_before
+                commit = {'status': 'incompatible', 'error': f'schema {schema} / parser {parser} / projection {rev}: not supported by this UI build'}
                 return
             total = sum(v[0] for k, v in fp_before.items() if not k.startswith('@'))
             if total > MAX_VERIFY_BYTES:
                 raise UserError(f'snapshot is {total} bytes; UI verification cap is {MAX_VERIFY_BYTES}')
-            manifest = self.storage.verify(ds.path, ds.key)  # backend hashes every payload file and checks bindings
-            publication = publication_of(fp_before.get('@ledger'), manifest)
-            if not publication['servable']:
-                ds.status, ds.version, ds.publication = 'unpublished', None, publication
-                ds.error = publication['note']
-                ds.fingerprint = fp_before
+            manifest, publication = self._verify_and_publication(ds, fp_before.get('@ledger') or [None, False])
+            if manifest is None or not publication.get('servable'):
+                status = 'incompatible' if publication.get('status') == 'unsupported-ledger-format' else 'unpublished'
+                commit = {'status': status, 'error': publication['note'], 'publication': publication}
+                return
+            if routine and manifest.get('manifest_sha256') == ds.version and _fingerprint_eq(ds.path, fp_before):
+                commit = {'status': 'ready', 'publication': publication, 'refresh_only': True}
                 return
             selection = selection_of(self.persisted, manifest, ds.path)
             db = self._open_snapshot_db(ds.path, manifest)
@@ -510,39 +659,66 @@ class Backend:
                 examples = self._auto_examples(probe, db)
             finally:
                 db.close()
-            fp_after = _fingerprint(ds.path)
-            fp_after['@ledger'] = fp_before.get('@ledger')
-            if fp_after != fp_before:
-                self._invalidate(ds, 'snapshot changed while it was being verified; will retry once it settles')
-                ds.fingerprint = fp_after
+            if not _fingerprint_eq(ds.path, fp_before):
+                commit = {'status': 'settling', 'error': 'snapshot changed while it was being verified; will retry once it settles',
+                          'fingerprint': _fingerprint(ds.path)}
                 return
-            ds.manifest, ds.selection, ds.scopes, ds.examples = manifest, selection, scopes, examples
-            ds.publication = publication
-            ds.title = f"{manifest.get('namespace', '?')} · {selection['label']} · {ds.key[9:21]}"
-            ds.description = selection['note']
-            ds.raws = {manifest['raw_sha256']: (manifest['source'], ds.path / 'raw')}
-            parent = selection.get('parent') or {}
-            payload_label = {'cohort': 'raw (cohort payload: byte-identical parent slices)',
-                             'selection': 'raw (selection payload)'}.get(selection['kind'], 'raw')
-            ds.inputs = [{'source': manifest['source'], 'file': payload_label, 'bytes': manifest['source_bytes'],
-                          'sha256': manifest['raw_sha256'], 'snapshot_id': ds.key, 'source_url': manifest.get('source_url'),
-                          'receipt': 'derived from parent (see next row)' if parent else 'none recorded in manifest'}]
-            if parent:
-                ds.inputs.append({'source': 'parent', 'file': parent.get('label') or 'parent raw object', 'bytes': parent.get('bytes'),
-                                  'sha256': parent.get('sha256'), 'snapshot_id': '—', 'source_url': parent.get('url'),
-                                  'receipt': parent.get('receipt_id') or 'none recorded'})
-            ds.version = manifest['manifest_sha256']
-            ds.fingerprint = fp_after
-            ds.verified_at = ds.checked_at = ds.loaded_at = time.time()
-            ds.status, ds.error, ds.attempts = 'ready', None, 0
+            commit = {'status': 'ready', 'manifest': manifest, 'selection': selection, 'scopes': scopes, 'examples': examples,
+                      'publication': publication}
         except Exception as exc:
-            ds.attempts += 1
-            ds.next_retry = time.time() + min(300.0, 15.0 * 2 ** min(ds.attempts, 5))
-            ds.status, ds.version = 'failed', None
-            ds.error = f'{type(exc).__name__}: {exc} (retry {ds.attempts} scheduled)'
-            ds.fingerprint = fp_before
+            commit = {'status': 'failed', 'error': f'{type(exc).__name__}: {exc}', 'exc': True}
         finally:
-            ds.verifying = False
+            self._commit(ds, fp_before, gen, routine, commit)
+
+    def _commit(self, ds: Dataset, fp_before: dict, gen: int, routine: bool, c: dict) -> None:
+        with STATE_LOCK:
+            try:
+                if ds.generation != gen:
+                    return  # invalidated while verifying: a newer scan decides (never resurrect an old result)
+                status = c.get('status', 'failed')
+                if status == 'ready' and c.get('refresh_only'):
+                    ds.publication = c['publication']
+                    ds.verified_at = ds.checked_at = time.time()
+                    ds.error, ds.attempts = None, 0
+                    return
+                if status == 'ready':
+                    manifest, selection = c['manifest'], c['selection']
+                    if ds.version is not None and ds.version != manifest['manifest_sha256']:
+                        ds.stale = {'version': ds.version, 'reason': 'a different manifest verified under the same snapshot ID', 'at': time.time()}
+                    ds.manifest, ds.selection, ds.scopes, ds.examples = manifest, selection, c['scopes'], c['examples']
+                    ds.publication = c['publication']
+                    ds.title = f"{manifest.get('namespace', '?')} · {selection['label']} · {ds.key[9:21]}"
+                    ds.description = selection['note']
+                    ds.raws = {manifest['raw_sha256']: (manifest['source'], ds.path / 'raw')}
+                    parent = selection.get('parent') or {}
+                    payload_label = {'cohort': 'raw (cohort payload: byte-identical parent slices)',
+                                     'selection': 'raw (selection payload)'}.get(selection['kind'], 'raw')
+                    ds.inputs = [{'source': manifest['source'], 'file': payload_label, 'bytes': manifest['source_bytes'],
+                                  'sha256': manifest['raw_sha256'], 'snapshot_id': ds.key, 'source_url': manifest.get('source_url'),
+                                  'receipt': 'derived from parent (see next row)' if parent else 'none recorded in manifest'}]
+                    if parent:
+                        ds.inputs.append({'source': 'parent', 'file': parent.get('label') or 'parent raw object', 'bytes': parent.get('bytes'),
+                                          'sha256': parent.get('sha256'), 'snapshot_id': '—', 'source_url': parent.get('url'),
+                                          'receipt': parent.get('receipt_id') or 'none recorded'})
+                    ds.version = manifest['manifest_sha256']
+                    ds.fingerprint = fp_before
+                    ds.verified_at = ds.checked_at = ds.loaded_at = time.time()
+                    ds.status, ds.error, ds.attempts, ds.ever_ready = 'ready', None, 0, True
+                    if ds.stale and ds.stale.get('version') == ds.version:
+                        ds.stale = None
+                    return
+                why = c.get('error') or status
+                if c.get('exc'):
+                    ds.attempts += 1
+                    ds.next_retry = time.time() + min(300.0, 15.0 * 2 ** min(ds.attempts, 5))
+                    why = f'{why} (retry {ds.attempts} scheduled)'
+                if 'publication' in c:
+                    ds.publication = c['publication']
+                prefix = 're-verification of the served version failed: ' if routine else ''
+                self._retire(ds, status, prefix + why)
+                ds.fingerprint = c.get('fingerprint', fp_before)
+            finally:
+                ds.verifying = ds.reverifying = False
 
     def _open_snapshot_db(self, path: Path, manifest: dict):
         import duckdb

@@ -33,6 +33,11 @@ STATIC = {  # fixed allow-list; no filesystem path is derived from the URL
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 log = logging.getLogger('cuneiform-ui')
+# Backend 94af111+ refusal types, surfaced as typed states instead of a generic 400/500 (review N-2).
+TYPED_BACKEND_ERRORS = {
+    'PublicationError': (409, 'publication-refused'), 'LedgerCorrupt': (409, 'publication-refused'),
+    'ScopeMismatch': (400, 'scope-mismatch'), 'LayerUnavailable': (422, 'layer-unavailable'),
+}
 
 
 class NotFound(Exception):
@@ -78,6 +83,8 @@ class App:
             return self.status()
         if path == '/api/report':
             return self.explorer.report(one('dataset'), ver)
+        if path == '/api/coverage':
+            return self.explorer.coverage(one('dataset'), ver, one('offset'))
         if path == '/api/top':
             return self.explorer.top(one('dataset'), one('field') or 'atf', one('policy') or 'source', ver)
         if path == '/api/occurrence':
@@ -172,7 +179,11 @@ class Handler(BaseHTTPRequestHandler):
         except UserError as exc:
             self._json(400, {'error': str(exc)})
         except ValueError as exc:  # backend validation messages are plain, data-free strings
-            self._json(400, {'error': f'backend refused: {exc}'})
+            status, code = TYPED_BACKEND_ERRORS.get(type(exc).__name__, (400, 'backend-refused'))
+            body = {'error': f'backend refused: {exc}', 'code': code}
+            if isinstance(getattr(exc, 'state', None), str):
+                body['state'] = exc.state
+            self._json(status, body)
         except Exception:
             log.error('unhandled error\n%s', traceback.format_exc())
             self._json(500, {'error': 'internal error; see server log'})

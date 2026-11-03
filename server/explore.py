@@ -16,6 +16,7 @@ FIELDS = {'atf', 'signs'}
 POLICIES = {'source', 'strict'}
 MAX_LIST = 100
 GROUP_SAMPLE = 200  # per (edge kind, direction): rows fetched for ordering; the group count is exact
+COVERAGE_PAGE = 200  # per-record coverage rows per page; the total is always exact (review N-4)
 
 # kind -> (table, columns) for display properties. Columns are fixed identifiers.
 PROPS = {
@@ -47,6 +48,17 @@ def _rows(db, sql: str, args=()) -> list[dict]:
     cur = db.execute(sql, args)
     names = [d[0] for d in cur.description]
     return [dict(zip(names, r)) for r in cur.fetchall()]
+
+
+def coverage_page(rows: list[dict], offset: int, page: int = COVERAGE_PAGE) -> dict:
+    total = len(rows)
+    chunk = rows[offset:offset + page]
+    end = offset + len(chunk)
+    return {'coverage': chunk, 'coverage_total': total, 'coverage_offset': offset, 'coverage_page_size': page,
+            'coverage_truncated': total > end or offset > 0,
+            'coverage_next_offset': end if end < total else None,
+            'coverage_prev_offset': max(0, offset - page) if offset > 0 else None,
+            'coverage_shown': f'records {offset + 1}–{end} of {total}' if chunk else f'no records at offset {offset} (total {total})'}
 
 
 def _clip(v: Any, n: int = 400) -> Any:
@@ -146,13 +158,20 @@ class Explorer:
         return out
 
     # -- dataset report -----------------------------------------------------
+    def coverage(self, key: str, version=None, offset=None) -> dict:
+        """One page of the backend's per-source-record coverage, with the exact total."""
+        ds = self._ds(key, version)
+        off = self._int(offset, 0, 10**7, 'offset', 0)
+        out = self.b.run(ds, lambda db: coverage_page(self.b.projections.coverage(db), off))
+        return _jsonable(self._bind(ds, out))
+
     def report(self, key: str, version=None) -> dict:
         ds = self._ds(key, version)
         P = self.b.projections
 
         def work(db):
             rep = P.report(db)
-            cov = P.coverage(db)[:200]
+            cov = coverage_page(P.coverage(db), 0)
             counts = {t: db.execute(f'SELECT count(*) FROM {t}').fetchone()[0] for t in DATA_LAYERS + AUDIT_TABLES}
             kinds = {}
             for kind, (table, _c) in PROPS.items():
@@ -170,7 +189,7 @@ class Explorer:
                 if r:
                     first[kind] = r[0]
             return {'registry': rep['registry'], 'scopes': rep['scopes'], 'nodes': rep['nodes'], 'edges': rep['edges'],
-                    'coverage': cov, 'coverage_note': rep['coverage_note'], 'counts': counts, 'node_kinds': kinds,
+                    **cov, 'coverage_note': rep['coverage_note'], 'counts': counts, 'node_kinds': kinds,
                     'edge_kinds': edge_kinds, 'position_kinds': occ_kinds, 'rejections': rejections, 'exclusions': exclusions,
                     'entry_nodes': first}
         out = self.b.run(ds, work)

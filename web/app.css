@@ -169,3 +169,6 @@ pre.cell { margin: 0; white-space: pre-wrap; font: 11.5px var(--mono); max-heigh
 .gnote.error { color: var(--bad); }
 #wform { display: flex; gap: 6px; }
 #wform input { flex: 1; min-width: 0; }
+.badge.stale { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+.badge.pending { outline: 1px dashed currentColor; outline-offset: 1px; }
+.count-line { font-size: 12.5px; color: var(--muted); margin: 6px 0; }

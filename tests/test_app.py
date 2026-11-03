@@ -42,9 +42,27 @@ class AppTest(unittest.TestCase):
         cls.httpd = appmod.Server(('127.0.0.1', cls.port), appmod.Handler)
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
         cls.thread.start()
+        cls.leftovers = cls.drop_test_graphs()  # review N-7: an earlier interrupted run must not leak into this one
+
+    @classmethod
+    def live_test_graphs(cls) -> list[str] | None:
+        fk = cls.app.falkor
+        try:
+            with fk.conn('cuneiform-ro', timeout=5) as r:
+                return sorted(g for g in (r.cmd('GRAPH.LIST') or []) if g.startswith('cuneiform_test_'))
+        except Exception:
+            return None  # FalkorDB not running: the FalkorDB tests skip
+
+    @classmethod
+    def drop_test_graphs(cls) -> list[str]:
+        found = cls.live_test_graphs() or []
+        for g in found:
+            assert cls.app.falkor.drop(g) == {'dropped': g}
+        return found
 
     @classmethod
     def tearDownClass(cls):
+        left = cls.live_test_graphs()
         cls.httpd.shutdown()
         cls.httpd.server_close()
         cls.app.backend.close()
@@ -54,6 +72,8 @@ class AppTest(unittest.TestCase):
             else:
                 os.environ[k] = v
         rm(cls.scratch)
+        if left:
+            raise AssertionError(f'test graphs left behind: {left}')
 
     def req(self, method, path, body=None, headers=None, raw=None):
         c = http.client.HTTPConnection('127.0.0.1', self.port, timeout=60)
@@ -71,6 +91,12 @@ class AppTest(unittest.TestCase):
         except ValueError:
             payload = data
         return r.status, payload, dict(r.getheaders())
+
+    def drop_checked(self, graph):
+        st, out, _ = self.req('POST', '/api/falkordb/drop', {'graph': graph})
+        self.assertEqual(st, 200, out)
+        self.assertEqual(out, {'dropped': graph})
+        self.assertNotIn(graph, self.live_test_graphs() or [])
 
     def ds(self, key):
         st, body, _ = self.req('GET', '/api/status')
@@ -264,7 +290,7 @@ class AppTest(unittest.TestCase):
         evil = ['a"b', 'c\\"d', "x'y", 'nl\nx', '") MATCH (n) DETACH DELETE n //', 'KA×A {d}EN.LIL₂']
         with fk.conn('cuneiform-rw') as r:
             res = r.cmd('GRAPH.QUERY', 'cuneiform_test_escape', 'CYPHER xs=' + cy(evil) + ' UNWIND $xs AS x RETURN x')
-            r.cmd('GRAPH.DELETE', 'cuneiform_test_escape')
+            self.assertEqual(r.cmd('GRAPH.DELETE', 'cuneiform_test_escape'), 'OK')
         self.assertEqual([row[0] for row in res[1]], evil)
         anon = Resp(fk.host, fk.port, timeout=2)
         try:
@@ -307,7 +333,94 @@ class AppTest(unittest.TestCase):
                 self.assertEqual(self.req('POST', '/api/falkordb/template', bad)[0], 400, bad)
             self.assertEqual(self.req('POST', '/api/falkordb/drop', {'graph': 'social'})[0], 400)
         finally:
-            self.req('POST', '/api/falkordb/drop', {'graph': g})
+            self.drop_checked(g)  # review N-7: cleanup success is asserted, a failure is reported, not swallowed
+
+    def falkor_or_skip(self):
+        fk = self.app.falkor
+        if not fk.status()['reachable']:
+            self.skipTest('isolated FalkorDB not running (bin/cuneiform-ui falkordb-up)')
+        return fk
+
+    def test_falkordb_verify_detects_added_properties_and_labels(self):
+        """Review N-6: an added property, label or extra receipt must fail verification, not just a changed value."""
+        fk = self.falkor_or_skip()
+        ver = self.ds('synthetic-fixtures')['version']
+        st, out, _ = self.req('POST', '/api/falkordb/load', {'dataset': 'synthetic-fixtures', 'version': ver})
+        self.assertEqual(st, 200, out)
+        g = out['graph']
+        self.addCleanup(self.drop_checked, g)
+        tampers = [
+            ("MATCH (n:SignOccurrence) WITH n ORDER BY n.id LIMIT 1 SET n.injected = 'x'", 'labels/properties'),
+            ("MATCH (n:Artifact) WITH n ORDER BY n.id LIMIT 1 SET n:Extra", 'labels/properties'),
+            ("MATCH ()-[e:NEXT]->() WITH e ORDER BY e.id LIMIT 1 SET e.weight = 1", 'labels/properties'),
+            ("MATCH (n:Line) WITH n ORDER BY n.id LIMIT 1 SET n.display = NULL", 'labels/properties'),
+            ("CREATE (:ProjectionReceipt {export_id: 'x', dataset: 'y', dataset_version: 'z', receipt: '{}'})", 'ProjectionReceipt'),
+        ]
+        for cypher, expect in tampers:
+            with fk.conn('cuneiform-rw') as r:
+                r.cmd('GRAPH.QUERY', g, cypher)
+            st, v, _ = self.req('POST', '/api/falkordb/verify', {'graph': g})
+            self.assertEqual(st, 200, v)
+            self.assertFalse(v['content_verified'], cypher)
+            self.assertEqual(v['status'], 'content-differs')
+            self.assertTrue(any(expect in p for p in v['problems']), (cypher, v['problems']))
+            st, out2, _ = self.req('POST', '/api/falkordb/load', {'dataset': 'synthetic-fixtures', 'version': ver})
+            self.assertEqual(st, 200, out2)
+            self.assertTrue(out2['content_verified'])
+        st, v, _ = self.req('POST', '/api/falkordb/verify', {'graph': g})
+        self.assertTrue(v['content_verified'], v)
+        self.assertIn('property-key set', v['compared'])
+
+    def test_falkordb_legacy_projection_verify_is_typed_and_read_only(self):
+        """Review N-5: a format-1 projection gets a typed rebuild-required answer (not 500) and is left unchanged."""
+        fk = self.falkor_or_skip()
+        g = 'cuneiform_test_legacy_format1'
+        legacy = json.dumps({'format': 'cuneiform-ui-graph-export-1', 'export_id': 'a' * 24, 'dataset': 'synthetic-fixtures',
+                             'files': {'nodes.jsonl': 'b' * 64, 'edges.jsonl': 'c' * 64}, 'counts': {'nodes': 1, 'edges': 0}})
+        with fk.conn('cuneiform-rw') as r:
+            r.cmd('GRAPH.QUERY', g, "CREATE (:SignOccurrence {id: 'occurrence:" + '0' * 32 + "', kind: 'SignOccurrence'})")
+            r.cmd('GRAPH.QUERY', g, 'CYPHER p={export_id: "' + 'a' * 24 + '", dataset: "synthetic-fixtures", receipt: ' + json.dumps(legacy) + '} '
+                                    'CREATE (x:ProjectionReceipt) SET x = $p')
+        self.addCleanup(self.drop_checked, g)
+        with fk.conn('cuneiform-ro') as r:
+            before = r.cmd('GRAPH.RO_QUERY', g, 'MATCH (n) RETURN count(n), collect(keys(n))')[1]
+        st, v, _ = self.req('POST', '/api/falkordb/verify', {'graph': g})
+        self.assertEqual(st, 200, v)
+        self.assertEqual((v['status'], v['content_verified'], v['rebuild_required']), ('unsupported-format', False, True))
+        self.assertEqual(v['format'], 'cuneiform-ui-graph-export-1')
+        self.assertIn('Rebuild', v['problems'][0])
+        with fk.conn('cuneiform-ro') as r:
+            self.assertEqual(r.cmd('GRAPH.RO_QUERY', g, 'MATCH (n) RETURN count(n), collect(keys(n))')[1], before)
+        listed = {x['graph']: x for x in self.req('GET', '/api/falkordb/status')[1]['graphs']}[g]
+        self.assertEqual((listed['verifiable'], listed['verify_status']), (False, 'unsupported-format'))
+
+    # -- coverage paging (review N-4) -------------------------------------------------
+    def test_coverage_page_is_explicit(self):
+        from server.explore import coverage_page
+        rows = [{'source_record_id': i} for i in range(300)]
+        p = coverage_page(rows, 0)
+        self.assertEqual((len(p['coverage']), p['coverage_total'], p['coverage_truncated'], p['coverage_next_offset']), (200, 300, True, 200))
+        self.assertEqual(p['coverage_shown'], 'records 1–200 of 300')
+        p = coverage_page(rows, 200)
+        self.assertEqual((len(p['coverage']), p['coverage_next_offset'], p['coverage_prev_offset']), (100, None, 0))
+        self.assertEqual(p['coverage_shown'], 'records 201–300 of 300')
+        p = coverage_page(rows[:3], 0)
+        self.assertEqual((p['coverage_truncated'], p['coverage_next_offset']), (False, None))
+
+    def test_coverage_endpoint_reports_exact_total(self):
+        ver = self.ds('synthetic-fixtures')['version']
+        st, rep, _ = self.req('GET', f'/api/report?dataset=synthetic-fixtures&version={ver}')
+        self.assertEqual(st, 200, rep)
+        total = rep['coverage_total']
+        self.assertEqual(len(rep['coverage']), min(total, 200))
+        self.assertEqual(rep['coverage_truncated'], total > 200)
+        st, page, _ = self.req('GET', f'/api/coverage?dataset=synthetic-fixtures&version={ver}&offset=1')
+        self.assertEqual(st, 200, page)
+        self.assertEqual((page['coverage_total'], page['coverage_offset']), (total, 1))
+        self.assertEqual(page['coverage'], rep['coverage'][1:201])
+        self.assertEqual(page['dataset']['version'], ver)
+        self.assertEqual(self.req('GET', f'/api/coverage?dataset=synthetic-fixtures&version={ver}&offset=-1')[0], 400)
+        self.assertEqual(self.req('GET', f'/api/coverage?dataset=synthetic-fixtures&version={"0" * 32}')[0], 409)
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ import hashlib
 import json
 import shutil
 import sys
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -32,7 +33,9 @@ def wait_ready(b, key, timeout=30):
     return b.datasets.get(key)
 
 
-class SnapshotPathTest(unittest.TestCase):
+class Roots:
+    """Scratch research root + UI home per test, with backend-published fixtures."""
+
     def setUp(self):
         self.scratch, self.research, self.home = make_roots('snap')
 
@@ -78,6 +81,8 @@ class SnapshotPathTest(unittest.TestCase):
         out = import_cohort(Path(cohort['directory']), Config(self.research), parent_path=parent_path, memory='256MB')
         return out['snapshot'], sha
 
+
+class SnapshotPathTest(Roots, unittest.TestCase):
     # -- basic path -----------------------------------------------------------
     def test_discover_verify_query_trace_single_input(self):
         sid = self.import_fixture()
@@ -268,6 +273,41 @@ class SnapshotPathTest(unittest.TestCase):
         self.assertFalse(publication_of([{'manifest_sha256': 'b' * 64}], m)['servable'])
         self.assertFalse(publication_of([{'manifest_sha256': 'a' * 64}] * 2, m)['servable'])
 
+    def test_symlinked_entries_and_id_mismatch_are_refused(self):
+        """Q-020 B2 (UI side): a symlinked store entry, a symlink inside one, or a foreign manifest ID is never served."""
+        sid = self.import_fixture()
+        snaps = self.research / 'snapshots'
+        writable(snaps)
+        alias = 'snapshot:' + 'e' * 32
+        (snaps / alias).symlink_to(snaps / sid, target_is_directory=True)  # same bytes under another ID, via a link
+        elsewhere = self.scratch / 'elsewhere'
+        shutil.copytree(snaps / sid, elsewhere / sid, symlinks=True)
+        writable(snaps / sid)
+        moved = self.scratch / 'moved'
+        shutil.move(str(snaps / sid), str(moved))
+        (snaps / sid).symlink_to(elsewhere / sid, target_is_directory=True)  # the published ID itself is a link
+        b = self.backend()
+        b.discover(wait=30)
+        for key in (alias, sid):
+            ds = wait_ready(b, key)
+            self.assertEqual(ds.status, 'refused', (key, ds.status, ds.error))
+            self.assertEqual(ds.publication['status'], 'symlinked-entry')
+        (snaps / sid).unlink()
+        shutil.move(str(moved), str(snaps / sid))
+        (snaps / alias).unlink()
+        copy = snaps / alias
+        shutil.copytree(snaps / sid, copy)  # a plain directory whose manifest names another ID
+        b2 = self.backend()
+        b2.discover(wait=30)
+        self.assertEqual(wait_ready(b2, alias).publication['status'], 'id-mismatch')
+        self.assertEqual(wait_ready(b2, sid).status, 'ready', b2.datasets[sid].error)
+        raw = snaps / sid / 'raw'
+        writable(snaps / sid)
+        (snaps / sid / 'extra-link').symlink_to(raw)
+        b3 = self.backend()
+        b3.discover(wait=30)
+        self.assertEqual(wait_ready(b3, sid).publication['status'], 'symlink-inside-entry')
+
     def test_only_snapshot_dirs_are_discovered(self):
         sid = self.import_fixture()
         snaps = self.research / 'snapshots'
@@ -277,6 +317,215 @@ class SnapshotPathTest(unittest.TestCase):
         b = self.backend()
         listing = b.discover(wait=30)
         self.assertEqual([d['key'] for d in listing['datasets']], [sid])
+
+
+class SlowVerify:
+    """Proxy for the backend storage module: background verification passes block until released.
+
+    Request-time verification (the HTTP/Explorer thread) runs unblocked, so a test can query a dataset while
+    its routine re-verification is still in flight (review N-1 race).
+    """
+
+    def __init__(self, real):
+        self._real = real
+        self.release = threading.Event()
+        self.entered = threading.Event()
+        self.fail = None
+
+    def __getattr__(self, name):
+        return getattr(self._real, name)
+
+    def verify(self, path, sid=None, **kw):
+        if threading.current_thread() is not threading.main_thread():
+            self.entered.set()
+            self.release.wait(30)
+            if self.fail:
+                raise self.fail
+        return self._real.verify(path, sid, **kw)
+
+
+class ReverifyRaceTest(Roots, unittest.TestCase):
+    """Review N-1: routine re-verification must not take a ready, unchanged snapshot out of service."""
+
+    def ready_snapshot(self, show_demos='never'):
+        sid = self.import_fixture()
+        from server.bridge import Backend
+        self.b = Backend(REPO, self.research, show_demos=show_demos, home=self.home, stable_s=0.0)
+        self.b.discover(wait=30)
+        ds = wait_ready(self.b, sid)
+        self.assertEqual(ds.status, 'ready', ds.error)
+        return sid, ds
+
+    def start_routine(self, b):
+        slow = SlowVerify(b.storage)
+        b.storage = slow
+        b.discover(deep=True)  # returns immediately; the routine pass blocks inside verify
+        self.assertTrue(slow.entered.wait(10), 'routine verification did not start')
+        return slow
+
+    def test_deep_refresh_keeps_version_serving(self):
+        sid, ds = self.ready_snapshot()
+        version, verified_at = ds.version, ds.verified_at
+        slow = self.start_routine(self.b)
+        try:
+            self.assertEqual(ds.status, 'ready')
+            self.assertTrue(ds.reverifying)
+            self.assertIs(self.b.get(sid, version), ds)  # no 409 during the routine pass
+            from server.explore import Explorer
+            r = Explorer(self.b).query({'dataset': sid, 'version': version, 'pattern': ['A', 'B', 'C']})
+            self.assertEqual(r['count'], 6)
+            self.assertEqual(r['dataset']['version'], version)
+            pub = next(d for d in self.b.listing()['datasets'] if d['key'] == sid)
+            self.assertEqual((pub['status'], pub['reverifying']), ('ready', True))
+        finally:
+            slow.release.set()
+        self.assertTrue(wait_until(lambda: not ds.verifying))
+        self.assertEqual((ds.status, ds.version, ds.reverifying, ds.stale), ('ready', version, False, None))
+        self.assertGreater(ds.verified_at, verified_at)
+
+    def test_demos_stay_hidden_during_routine_pass(self):
+        sid, ds = self.ready_snapshot(show_demos='auto')
+        self.assertFalse(self.b.listing()['demos_visible'])
+        slow = self.start_routine(self.b)
+        try:
+            self.assertFalse(self.b.listing()['demos_visible'])
+            self.assertEqual([d['key'] for d in self.b.listing()['datasets']], [sid])
+        finally:
+            slow.release.set()
+
+    def test_routine_failure_is_explicit_stale_state(self):
+        sid, ds = self.ready_snapshot()
+        version = ds.version
+        slow = self.start_routine(self.b)
+        slow.fail = ValueError('integrity failure (injected)')
+        slow.release.set()
+        self.assertTrue(wait_until(lambda: not ds.verifying))
+        self.assertEqual(ds.status, 'failed')
+        self.assertIsNone(ds.version)
+        self.assertEqual(ds.stale['version'], version)
+        self.assertIn('re-verification of the served version failed', ds.stale['reason'])
+        from server.bridge import VersionChanged
+        with self.assertRaises(VersionChanged):
+            self.b.get(sid, version)
+        pub = next(d for d in self.b.listing()['datasets'] if d['key'] == sid)
+        self.assertEqual(pub['stale']['version'], version)
+
+    def test_invalidation_during_routine_pass_is_not_overwritten(self):
+        sid, ds = self.ready_snapshot()
+        version = ds.version
+        slow = self.start_routine(self.b)
+        target = sorted((ds.path / 'parquet').glob('*.parquet'))[0]
+        writable(ds.path / 'parquet')
+        writable(target)
+        target.write_bytes(target.read_bytes() + b'\0')  # changed while the routine pass is in flight
+        from server.bridge import VersionChanged
+        from server.explore import Explorer
+        with self.assertRaises(VersionChanged):
+            Explorer(self.b).query({'dataset': sid, 'version': version, 'pattern': ['A', 'B']})
+        self.assertEqual(ds.status, 'settling')
+        slow.release.set()  # the routine pass now "passes" on stale reads; it must not resurrect the old version
+        self.assertTrue(wait_until(lambda: not ds.verifying))
+        self.assertNotEqual(ds.status, 'ready')
+        self.assertIsNone(ds.version)
+        self.assertEqual(ds.stale['version'], version)
+        with self.assertRaises(VersionChanged):
+            self.b.get(sid, version)
+
+
+def wait_until(cond, timeout=30):
+    end = time.time() + timeout
+    while time.time() < end:
+        if cond():
+            return True
+        time.sleep(0.02)
+    return False
+
+
+class LedgerFormatTest(Roots, unittest.TestCase):
+    """Review N-2: ledger format 2 is refused under the d6049e2 pin with a typed reason; storage.verified is used when present."""
+
+    def entries(self, sha='a' * 64):
+        return [{'ledger_format': 2, 'event': 'reserve', 'snapshot_id': 'snapshot:' + '1' * 32, 'manifest_sha256': sha},
+                {'ledger_format': 2, 'event': 'commit', 'snapshot_id': 'snapshot:' + '1' * 32, 'manifest_sha256': sha}]
+
+    def test_format2_publication_messages(self):
+        from server.bridge import publication_of
+        m = {'manifest_sha256': 'a' * 64}
+        p = publication_of(self.entries(), m)
+        self.assertEqual(p['status'], 'unsupported-ledger-format')
+        self.assertFalse(p['servable'])
+        self.assertIn('reserve → commit', p['note'])
+        self.assertIn('not an integrity failure', p['note'])
+        self.assertNotIn('differs', p['note'])
+        p = publication_of(self.entries()[:1], m)  # reserve without commit: still a format gap, never served
+        self.assertEqual(p['status'], 'unsupported-ledger-format')
+        self.assertFalse(p['servable'])
+        p = publication_of([{'manifest_sha256': 'b' * 64}], m)
+        self.assertEqual(p['status'], 'ledger-mismatch')
+        self.assertIn('bbbbbbbb', p['note'])
+        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64}] * 2, m)['status'], 'ledger-conflict')
+        self.assertEqual(publication_of([{'manifest_sha256': 'a' * 64}], m, corrupt=True)['status'], 'ledger-corrupt')
+
+    def test_read_ledger_corrupt_and_torn_tail(self):
+        from server.bridge import LEDGER_CORRUPT, read_ledger
+        d = self.scratch / 'ledger'
+        d.mkdir()
+        good = json.dumps({'snapshot_id': 'snapshot:' + '2' * 32, 'manifest_sha256': 'c' * 64})
+        (d / '.publication-ledger.jsonl').write_text(good + '\n{"snapshot_id": "snapshot:3')  # unterminated append in progress
+        led = read_ledger(d)
+        self.assertNotIn(LEDGER_CORRUPT, led)
+        self.assertEqual(len(led['snapshot:' + '2' * 32]), 1)
+        (d / '.publication-ledger.jsonl').write_text(good + '\nnot json\n' + good + '\n')
+        self.assertIn(LEDGER_CORRUPT, read_ledger(d))
+
+    def test_format2_snapshot_is_typed_incompatible_under_old_pin(self):
+        sid = self.import_fixture()
+        ledger = self.research / 'snapshots' / '.publication-ledger.jsonl'
+        sha = json.loads((self.research / 'snapshots' / sid / 'manifest.json').read_text())['manifest_sha256']
+        writable(ledger)
+        ledger.write_text(''.join(json.dumps(dict(e, snapshot_id=sid)) + '\n' for e in self.entries(sha)))
+        b = self.backend()
+        if b.trusted_read:
+            self.skipTest('backend provides storage.verified; format 2 is the backend\'s to judge')
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        self.assertEqual(ds.status, 'incompatible')
+        self.assertEqual(ds.publication['status'], 'unsupported-ledger-format')
+        self.assertIn('d6049e2', ds.error)
+        self.assertEqual(b.info['publication_read'].split(' ')[1], 'storage.verify')
+
+    def test_trusted_read_path_when_backend_provides_it(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        real = b.storage
+
+        class PublicationError(ValueError):
+            def __init__(self, msg, state):
+                super().__init__(msg)
+                self.state = state
+
+        class Storage:
+            mode = 'ok'
+
+            def __getattr__(self, name):
+                return getattr(real, name)
+
+            def verified(self, path, sid=None, *, ledger='auto'):
+                assert ledger == 'require'
+                if self.mode == 'reserved':
+                    raise PublicationError(f'{sid} publication is not committed', 'reserved')
+                return {'manifest': real.verify(path, sid), 'publication': {'status': 'ledgered', 'ledger_checked': True, 'binding': 'test'}}
+        b.storage, b.trusted_read = Storage(), True
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        self.assertEqual(ds.status, 'ready', ds.error)
+        self.assertEqual((ds.publication['status'], ds.publication['source']), ('ledgered', 'backend storage.verified'))
+        b.storage.mode = 'reserved'
+        b.discover(deep=True, wait=30)
+        self.assertTrue(wait_until(lambda: not ds.verifying))
+        self.assertEqual(ds.status, 'unpublished')
+        self.assertEqual(ds.publication['status'], 'reserved')
+        self.assertEqual(ds.stale['reason'].split(':')[0], 're-verification of the served version failed')
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Lifecycle for the local Cuneiform query UI and its isolated FalkorDB projection.
-# Usage: bin/cuneiform-ui {start|stop|restart|status|logs|ui-start|ui-stop|falkordb-up|falkordb-down|security-check|test}
+# Usage: bin/cuneiform-ui {start|stop|restart|status|logs|ui-start|ui-stop|falkordb-up|falkordb-down|security-check [--active-probes]|test}
+#   security-check and test are read-only and local; outbound probes run only with security-check --active-probes.
 #
 # FalkorDB isolation (review F-1/F-7):
 #   cuneiform-ui-falkordb        FalkorDB only (BROWSER=0), on the --internal network cuneiform-ui-internal:
@@ -24,6 +25,7 @@ PY="${CUNEIFORM_PY:-$RESEARCH_ROOT/venv/bin/python}"
 UI_PORT="${CUNEIFORM_UI_PORT:-8740}"
 FALKOR_PORT="${CUNEIFORM_FALKORDB_PORT:-26380}"
 OLD_BROWSER_PORT=23001  # published by the pre-review build; must stay closed
+ACTIVE_PROBES=0  # security-check --active-probes only; never set by `test`
 CONTAINER="cuneiform-ui-falkordb"
 RELAY="cuneiform-ui-falkordb-relay"
 NET_INT="cuneiform-ui-internal"
@@ -208,16 +210,41 @@ security_check() {  # exits non-zero on any isolation regression
     procs="$(docker exec "$CONTAINER" sh -c 'for p in /proc/[0-9]*; do tr "\0" " " < $p/cmdline 2>/dev/null; echo; done' 2>/dev/null || echo PROC_READ_FAILED)"
     if [[ "$procs" == *PROC_READ_FAILED* || "$procs" != *redis-server* ]]; then bad "could not read container process list"
     elif [[ "$procs" == *"node server.js"* ]]; then bad "Browser process running"; else ok "no Browser process (only redis-server)"; fi
-    # Egress probes go to the UI's own host port and a public address, never to another service's port.
-    if docker exec "$CONTAINER" bash -c "timeout 3 bash -c 'echo > /dev/tcp/host.docker.internal/$UI_PORT'" 2>/dev/null; then bad "falkordb can reach the host"; else ok "falkordb cannot reach the host"; fi
-    if docker exec "$CONTAINER" bash -c "timeout 3 bash -c 'echo > /dev/tcp/1.1.1.1/443'" 2>/dev/null; then bad "falkordb can reach the internet"; else ok "falkordb cannot reach the internet"; fi
-    if docker exec "$CONTAINER" sh -c 'getent hosts example.com' >/dev/null 2>&1; then bad "falkordb resolves external DNS"; else ok "no external DNS from falkordb"; fi
+    # Default checks are read-only and local: no connection leaves the container, no configuration is changed (review N-3).
+    route="$(docker exec "$CONTAINER" cat /proc/net/route 2>/dev/null || echo ROUTE_READ_FAILED)"
+    if [[ "$route" == *ROUTE_READ_FAILED* || "$route" != *Iface* ]]; then bad "could not read falkordb routing table"
+    elif awk 'NR>1 && $2=="00000000" {found=1} END {exit !found}' <<<"$route"; then bad "falkordb has a default route"
+    else ok "falkordb has no default route (/proc/net/route)"; fi
+    [[ "$(docker container inspect -f '{{.HostConfig.NetworkMode}}' "$CONTAINER")" == "$NET_INT" ]] && ok "falkordb network mode is $NET_INT" || bad "falkordb network mode"
+    docker container inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$CONTAINER" | grep -q "^REDIS_ARGS=--aclfile /run/cuneiform-ui/users.acl" \
+      && ok "server started with the cuneiform-ui ACL file" || bad "server ACL file argument"
+    docker container inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$CONTAINER" | grep -q "^FALKORDB_ARGS=.*TIMEOUT_MAX 3000" \
+      && ok "TIMEOUT_MAX 3000 configured (container arguments)" || bad "TIMEOUT_MAX not configured"
+    echo "  unprobed  host, internet and DNS reachability from falkordb: no connection was attempted. No-egress rests on the"
+    echo "            internal network and the missing default route checked above. Live probes: $0 security-check --active-probes"
+    if [[ "$ACTIVE_PROBES" == 1 ]]; then
+      echo "  active probes (explicit opt-in; these attempt outbound connections from the container):"
+      if docker exec "$CONTAINER" bash -c "timeout 3 bash -c 'echo > /dev/tcp/host.docker.internal/$UI_PORT'" 2>/dev/null; then bad "falkordb can reach the host"; else ok "falkordb cannot reach the host (probed)"; fi
+      if docker exec "$CONTAINER" bash -c "timeout 3 bash -c 'echo > /dev/tcp/1.1.1.1/443'" 2>/dev/null; then bad "falkordb can reach the internet"; else ok "falkordb cannot reach the internet (probed)"; fi
+      if docker exec "$CONTAINER" sh -c 'getent hosts example.com' >/dev/null 2>&1; then bad "falkordb resolves external DNS"; else ok "no external DNS from falkordb (probed)"; fi
+    fi
     out="$(docker exec "$CONTAINER" redis-cli PING 2>&1 || true)"
     [[ "$out" == *NOAUTH* ]] && ok "unauthenticated PING refused (NOAUTH)" || bad "unauthenticated PING: $out"
-    out="$(REDISCLI_AUTH="$(cat "$SECRETS/falkordb-ro.password")" docker exec -e REDISCLI_AUTH "$CONTAINER" redis-cli --no-auth-warning --user cuneiform-ro GRAPH.QUERY cuneiform_x 'RETURN 1' 2>&1 || true)"
-    [[ "$out" == *NOPERM* ]] && ok "read-only user cannot GRAPH.QUERY" || bad "read-only user GRAPH.QUERY: $out"
-    out="$(REDISCLI_AUTH="$(cat "$SECRETS/falkordb-rw.password")" docker exec -e REDISCLI_AUTH "$CONTAINER" redis-cli --no-auth-warning --user cuneiform-rw GRAPH.CONFIG SET TIMEOUT_MAX 0 2>&1 || true)"
-    [[ "$out" == *NOPERM* ]] && ok "loader user cannot GRAPH.CONFIG" || bad "loader GRAPH.CONFIG: $out"
+    # Permission checks use only commands that change nothing even if a regression allowed them.
+    acl_cmd() { local user="$1"; shift; REDISCLI_AUTH="$(cat "$SECRETS/falkordb-${user#cuneiform-}.password")" docker exec -e REDISCLI_AUTH "$CONTAINER" redis-cli --no-auth-warning --user "$user" "$@" 2>&1 || true; }
+    out="$(acl_cmd cuneiform-ro GRAPH.LIST)"; [[ "$out" != *NOPERM* && "$out" != *WRONGPASS* ]] && ok "read-only user logs in and may GRAPH.LIST" || bad "read-only GRAPH.LIST: $out"
+    for spec in "cuneiform-ro GRAPH.CONFIG GET TIMEOUT_MAX" "cuneiform-rw GRAPH.CONFIG GET TIMEOUT_MAX" "cuneiform-rw CONFIG GET maxmemory" "cuneiform-rw KEYS *" "cuneiform-ro ACL LIST"; do
+      read -r -a words <<<"$spec"
+      out="$(acl_cmd "${words[@]}")"
+      [[ "$out" == *NOPERM* ]] && ok "${words[0]} cannot ${words[*]:1}" || bad "${words[0]} ${words[*]:1}: $out"
+    done
+    # GRAPH.QUERY for the read-only user is checked in the ACL file (a live attempt could create a graph key on a regression).
+    ro_line="$(grep '^user cuneiform-ro ' "$CONF/users.acl" 2>/dev/null || true)"
+    [[ -n "$ro_line" && "$ro_line" != *"+graph.query"* && "$ro_line" != *"+@"* && "$ro_line" != *"allcommands"* ]] \
+      && ok "read-only user has no GRAPH.QUERY / command-category grant (ACL file)" || bad "read-only ACL line"
+    rw_line="$(grep '^user cuneiform-rw ' "$CONF/users.acl" 2>/dev/null || true)"
+    [[ -n "$rw_line" && "$rw_line" != *"graph.config"* && "$rw_line" != *"+config"* && "$rw_line" != *"+@"* && "$rw_line" != *"allcommands"* ]] \
+      && ok "loader user has no GRAPH.CONFIG / CONFIG / category grant (ACL file)" || bad "loader ACL line"
   else
     echo "  skip FalkorDB container absent"
   fi
@@ -273,7 +300,7 @@ case "${1:-}" in
   ui-stop) ui_stop ;;
   falkordb-up) falkor_up ;;
   falkordb-down) falkor_down ;;
-  security-check) security_check ;;
+  security-check) [[ "${2:-}" == --active-probes ]] && ACTIVE_PROBES=1; security_check ;;
   status) status; echo "Backend source: $SOURCE_REPO" ;;
   pin-backend) pin_backend "${2:-}" ;;
   logs) tail -n "${2:-80}" "$LOG_FILE" ;;
@@ -281,5 +308,5 @@ case "${1:-}" in
     security_check || { echo "isolation checks failed"; exit 1; }
     cd "$APP_DIR" && PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_FALKORDB_SECRET_DIR="$SECRETS" \
       CUNEIFORM_FALKORDB_PORT="$FALKOR_PORT" CUNEIFORM_UI_REAL_HOME="$UI_HOME" "$PY" -B -m unittest discover -s tests -v ;;
-  *) echo "usage: $0 {start|stop|restart|status|logs [n]|ui-start|ui-stop|falkordb-up|falkordb-down|security-check|pin-backend [commit]|test}"; exit 2 ;;
+  *) echo "usage: $0 {start|stop|restart|status|logs [n]|ui-start|ui-stop|falkordb-up|falkordb-down|security-check [--active-probes]|pin-backend [commit]|test}"; exit 2 ;;
 esac
