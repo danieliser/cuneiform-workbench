@@ -162,3 +162,10 @@ pre.cell { margin: 0; white-space: pre-wrap; font: 11.5px var(--mono); max-heigh
 @media (max-width: 900px) { .query-layout, .graph-layout { grid-template-columns: 1fr; } .query-form, .detail { position: static; max-height: none; } .topbar { flex-wrap: wrap; } }
 .results:has(tbody:empty) { display: none; }
 .examples button.ex, .frequent button, .tok { white-space: normal; }
+
+/* review fixes: scope, incident and graph-error states */
+.badge.incident { background: color-mix(in srgb, var(--warn) 22%, transparent); color: var(--warn); }
+.callout.scope { font-weight: 600; }
+.gnote.error { color: var(--bad); }
+#wform { display: flex; gap: 6px; }
+#wform input { flex: 1; min-width: 0; }

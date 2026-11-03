@@ -15,12 +15,13 @@ from urllib.parse import parse_qs, urlsplit
 
 sys.dont_write_bytecode = True
 
-from .bridge import Backend, UserError  # noqa: E402
+from .bridge import Backend, UserError, VersionChanged  # noqa: E402
 from .explore import Explorer  # noqa: E402
 from .falkor import Falkor  # noqa: E402
 
 HOST = '127.0.0.1'  # never configurable: no public exposure
 MAX_BODY = 64 * 1024
+SCAN_S = 30.0  # server-side stat scan; pages only poll /api/status (review F-4)
 WEB = Path(__file__).resolve().parent.parent / 'web'
 STATIC = {  # fixed allow-list; no filesystem path is derived from the URL
     '/': ('index.html', 'text/html; charset=utf-8'),
@@ -34,19 +35,35 @@ CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' 
 log = logging.getLogger('cuneiform-ui')
 
 
+class NotFound(Exception):
+    """Unknown route (distinct from KeyError, which is a server bug and must surface as 500)."""
+
+
 class App:
-    def __init__(self, port: int):
+    def __init__(self, port: int, discover_wait: float = 0.0):
         self.port = port
         self.started = time.time()
+        home = Path(os.environ.get('CUNEIFORM_UI_HOME', str(Path.home() / '.local/share/cuneiform-ui'))).expanduser()
         self.backend = Backend(Path(os.environ.get('CUNEIFORM_SOURCE_REPO', str(Path.home() / 'Projects/Fun/cuneiform-research'))),
                                Path(os.environ.get('CUNEIFORM_RESEARCH_ROOT', str(Path.home() / '.local/share/cuneiform-research'))),
-                               os.environ.get('CUNEIFORM_UI_SHOW_DEMOS', 'auto'))
-        home = Path(os.environ.get('CUNEIFORM_UI_HOME', str(Path.home() / '.local/share/cuneiform-ui'))).expanduser()
+                               os.environ.get('CUNEIFORM_UI_SHOW_DEMOS', 'auto'), home=home)
         self.explorer = Explorer(self.backend)
-        self.falkor = Falkor(self.backend, home, port=int(os.environ.get('CUNEIFORM_FALKORDB_PORT', '26380')),
-                             browser_port=int(os.environ.get('CUNEIFORM_FALKORDB_BROWSER_PORT', '23001')))
+        self.falkor = Falkor(self.backend, home, port=int(os.environ.get('CUNEIFORM_FALKORDB_PORT', '26380')))
         self.allowed_hosts = {f'127.0.0.1:{port}', f'localhost:{port}'}
-        self.backend.discover()
+        self.backend.discover(wait=discover_wait)
+        self._stop = threading.Event()
+
+    def start_scanner(self) -> None:
+        def loop():
+            while not self._stop.wait(SCAN_S):
+                try:
+                    self.backend.discover()
+                except Exception:
+                    log.error('background discovery failed\n%s', traceback.format_exc())
+        threading.Thread(target=loop, name='discovery', daemon=True).start()
+
+    def stop_scanner(self) -> None:
+        self._stop.set()
 
     def status(self) -> dict:
         return {'backend': self.backend.info, **self.backend.listing(), 'uptime_s': round(time.time() - self.started),
@@ -54,40 +71,50 @@ class App:
 
     def get(self, path: str, q: dict) -> dict:
         one = lambda k: (q.get(k) or [None])[0]  # noqa: E731
+        ver = one('version')
         if path == '/api/health':
             return {'ok': True, 'compatibility': self.backend.info['compatibility']}
         if path == '/api/status':
             return self.status()
         if path == '/api/report':
-            return self.explorer.report(one('dataset'))
+            return self.explorer.report(one('dataset'), ver)
         if path == '/api/top':
-            return self.explorer.top(one('dataset'), one('field') or 'atf', one('policy') or 'source')
+            return self.explorer.top(one('dataset'), one('field') or 'atf', one('policy') or 'source', ver)
         if path == '/api/occurrence':
-            return self.explorer.occurrence(one('dataset'), one('id'))
+            return self.explorer.occurrence(one('dataset'), one('id'), ver)
         if path == '/api/node':
-            return self.explorer.node(one('dataset'), one('id'))
+            return self.explorer.node(one('dataset'), one('id'), ver)
         if path == '/api/neighborhood':
-            return self.explorer.neighborhood(one('dataset'), one('id'), one('per'))
+            return self.explorer.neighborhood(one('dataset'), one('id'), one('per'), ver)
         if path == '/api/search':
-            return self.explorer.search_nodes(one('dataset'), one('q'))
+            return self.explorer.search_nodes(one('dataset'), one('q'), ver)
+        if path == '/api/word':
+            return self.explorer.word(one('dataset'), one('id'), ver)
+        if path == '/api/words':
+            return self.explorer.words(one('dataset'), one('q'), ver, one('offset'))
         if path == '/api/falkordb/status':
             return self.falkor.status()
-        raise LookupError
+        raise NotFound
 
     def post(self, path: str, body) -> dict:
+        if not isinstance(body, dict):
+            raise UserError('JSON object body required')
         if path == '/api/refresh':
-            return self.backend.discover()
+            return self.backend.discover(deep=bool(body.get('deep')))
         if path == '/api/query':
             return self.explorer.query(body)
         if path == '/api/falkordb/load':
-            out = self.falkor.load(self.backend.get((body or {}).get('dataset')))
-            out['receipt'] = {k: v for k, v in out['receipt'].items()}
-            return out
+            return self.falkor.load(self.backend.get(body.get('dataset'), body.get('version')))
+        if path == '/api/falkordb/verify':
+            return self.falkor.verify_graph(body.get('graph'))
+        if path == '/api/falkordb/template':
+            return self.falkor.template(body.get('graph'), body.get('template'), body.get('params'), body.get('limit'))
         if path == '/api/falkordb/query':
-            return self.falkor.ro_query((body or {}).get('graph'), (body or {}).get('query'))
+            raise PermissionError('arbitrary Cypher is disabled (LOAD CSV https egress and range() OOM are possible under GRAPH.RO_QUERY); '
+                                  'use /api/falkordb/template')
         if path == '/api/falkordb/drop':
-            return self.falkor.drop((body or {}).get('graph'))
-        raise LookupError
+            return self.falkor.drop(body.get('graph'))
+        raise NotFound
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -136,8 +163,12 @@ class Handler(BaseHTTPRequestHandler):
     def _dispatch(self, fn):
         try:
             self._json(200, fn())
-        except LookupError:
+        except NotFound:
             self._json(404, {'error': 'not found'})
+        except PermissionError as exc:
+            self._json(403, {'error': str(exc)})
+        except VersionChanged as exc:
+            self._json(409, {'error': str(exc), 'code': 'dataset-version-changed'})
         except UserError as exc:
             self._json(400, {'error': str(exc)})
         except ValueError as exc:  # backend validation messages are plain, data-free strings
@@ -159,7 +190,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.wfile.write(data)
         if not url.path.startswith('/api/'):
             return self._json(404, {'error': 'not found'})
-        q = parse_qs(url.query, max_num_fields=20)
+        try:
+            q = parse_qs(url.query, max_num_fields=20, strict_parsing=False)
+        except ValueError:
+            return self._json(400, {'error': 'too many or malformed query fields'})
         self._dispatch(lambda: self.app.get(url.path, q))
 
     def do_POST(self):
@@ -177,8 +211,8 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         try:
             body = json.loads(raw or b'{}')
-        except ValueError:
-            return self._json(400, {'error': 'invalid JSON'})
+        except (ValueError, RecursionError):
+            return self._json(400, {'error': 'invalid or too deeply nested JSON'})
         self._dispatch(lambda: self.app.post(url.path, body))
 
     def do_PUT(self):
@@ -200,6 +234,7 @@ def main():
     httpd = Server((HOST, port), Handler)
     log.info('backend %s commit %s compatibility %s', app.backend.info['repo'], app.backend.info['commit'], app.backend.info['compatibility'])
     log.info('serving http://%s:%d/ pid %d', HOST, port, os.getpid())
+    app.start_scanner()
 
     def stop(*_):
         threading.Thread(target=httpd.shutdown, daemon=True).start()
@@ -208,6 +243,7 @@ def main():
     try:
         httpd.serve_forever()
     finally:
+        app.stop_scanner()
         app.backend.close()
         log.info('stopped')
 

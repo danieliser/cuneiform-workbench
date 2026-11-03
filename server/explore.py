@@ -1,8 +1,9 @@
-"""Bounded read-only exploration over one dataset, using backend lookup/query functions.
+"""Bounded read-only exploration over one dataset version, using backend lookup/query/trace functions.
 
-Fixed, parameterized SQL is used only to read display properties from the
-backend's typed tables and views; matching, counting, tracing and projection
-logic stays in the backend.
+Fixed, parameterized SQL is used only to read display properties and group counts from
+the backend's typed tables and views; matching, counting, tracing and projection logic
+stays in the backend. Every response carries the dataset binding (key + version) and the
+backend's scope note, so a count is never shown without the population it describes.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from .bridge import NODE_RE, TOKEN_RE, Backend, Dataset, UserError
 FIELDS = {'atf', 'signs'}
 POLICIES = {'source', 'strict'}
 MAX_LIST = 100
-EDGE_PAGES = 3  # neighbors pages of 100 => at most 300 incident edges inspected per node
+GROUP_SAMPLE = 200  # per (edge kind, direction): rows fetched for ordering; the group count is exact
 
 # kind -> (table, columns) for display properties. Columns are fixed identifiers.
 PROPS = {
@@ -33,6 +34,13 @@ PROPS = {
     'SignType': ('sign_type', ['label', 'namespace', 'revision']),
     'Claim': ('claim', ['predicate', 'object_key', 'status', 'rationale', 'subject_id', 'source_record_id', 'details']),
 }
+
+# Data layers: zero rows means the layer is unavailable for this dataset (not supplied, or supplied empty).
+DATA_LAYERS = ['source_record', 'artifact', 'witness', 'composition', 'passage', 'sequence_version', 'line', 'occurrence',
+               'sign_type', 'word_token', 'lemma', 'sense', 'translation_segment', 'claim', 'edge']
+# Audit tables: zero rows is a true zero ("none recorded").
+AUDIT_TABLES = ['rejection', 'exclusion']
+GLOSS_NOTE = 'English sense glosses are lexical labels for one word in context; they are not translations of the text.'
 
 
 def _rows(db, sql: str, args=()) -> list[dict]:
@@ -64,6 +72,12 @@ def label_for(kind: str, p: dict) -> str:
         return f"{p.get('namespace')}:{p.get('source_key')}"
     if kind == 'Claim':
         return f"{p.get('predicate')} → {p.get('object_key')}"
+    if kind == 'WordToken':
+        return f"word {p.get('form')}"
+    if kind == 'Lemma':
+        return f"{p.get('citation_form')} ({p.get('pos')})"
+    if kind == 'Sense':
+        return f"sense: {p.get('gloss')} (gloss, not translation)"
     if kind == 'Witness':
         return 'witness'
     return kind
@@ -74,8 +88,8 @@ class Explorer:
         self.b = backend
 
     # -- helpers ------------------------------------------------------------
-    def _ds(self, key) -> Dataset:
-        return self.b.get(key)
+    def _ds(self, key, version=None) -> Dataset:
+        return self.b.get(key, version or None)
 
     @staticmethod
     def _node_id(value) -> str:
@@ -87,6 +101,8 @@ class Explorer:
     def _int(value, lo: int, hi: int, name: str, default: int) -> int:
         if value is None or value == '':
             return default
+        if isinstance(value, bool):
+            raise UserError(f'{name} must be an integer')
         try:
             v = int(value)
         except (TypeError, ValueError):
@@ -95,14 +111,25 @@ class Explorer:
             raise UserError(f'{name} must be {lo}–{hi}')
         return v
 
+    @staticmethod
+    def _bind(ds: Dataset, out: dict) -> dict:
+        out['dataset'] = dict(ds.binding(), **{k: v for k, v in (out.get('dataset') or {}).items() if k not in ds.binding()})
+        return out
+
     def kinds(self, db, ids: list[str]) -> dict[str, str]:
+        """Resolve node kinds per typed table (not through the 14-way nodes UNION view; review F-6)."""
         ids = list(dict.fromkeys(ids))[:400]
+        out: dict[str, str] = {}
         if not ids:
-            return {}
-        out = {}
-        for i in range(0, len(ids), 100):
-            chunk = ids[i:i + 100]
-            out.update(dict(db.execute(f"SELECT id, kind FROM nodes WHERE id IN ({','.join('?' * len(chunk))})", chunk).fetchall()))
+            return out
+        for kind, (table, _cols) in PROPS.items():
+            rest = [i for i in ids if i not in out]
+            if not rest:
+                break
+            for i in range(0, len(rest), 100):
+                chunk = rest[i:i + 100]
+                for (nid,) in db.execute(f"SELECT id FROM {table} WHERE id IN ({','.join('?' * len(chunk))})", chunk).fetchall():
+                    out[nid] = kind
         return out
 
     def describe(self, db, ids: list[str]) -> dict[str, dict]:
@@ -119,24 +146,27 @@ class Explorer:
         return out
 
     # -- dataset report -----------------------------------------------------
-    def report(self, key: str) -> dict:
-        ds = self._ds(key)
+    def report(self, key: str, version=None) -> dict:
+        ds = self._ds(key, version)
         P = self.b.projections
 
         def work(db):
             rep = P.report(db)
             cov = P.coverage(db)[:200]
-            counts = {t: db.execute(f'SELECT count(*) FROM {t}').fetchone()[0] for t in
-                      ['source_record', 'artifact', 'witness', 'composition', 'passage', 'sequence_version', 'line', 'occurrence',
-                       'sign_type', 'word_token', 'lemma', 'sense', 'translation_segment', 'claim', 'rejection', 'exclusion', 'edge']}
-            kinds = dict(db.execute('SELECT kind, count(*) FROM nodes GROUP BY kind ORDER BY kind').fetchall())
+            counts = {t: db.execute(f'SELECT count(*) FROM {t}').fetchone()[0] for t in DATA_LAYERS + AUDIT_TABLES}
+            kinds = {}
+            for kind, (table, _c) in PROPS.items():
+                n = db.execute(f'SELECT count(*) FROM {table}').fetchone()[0]
+                if n:
+                    kinds[kind] = n
             edge_kinds = dict(db.execute('SELECT kind, count(*) FROM portable_edge GROUP BY kind ORDER BY kind').fetchall())
             occ_kinds = _rows(db, 'SELECT field, kind, preservation, certainty, count(*) n FROM token_context GROUP BY ALL ORDER BY field, n DESC LIMIT 60')
             rejections = _rows(db, 'SELECT locator, reason FROM rejection ORDER BY locator LIMIT 20')
             exclusions = _rows(db, 'SELECT reason, count(*) n FROM exclusion GROUP BY reason ORDER BY n DESC LIMIT 20')
             first = {}
-            for kind in ('Artifact', 'SequenceVersion', 'SourceRecord', 'Claim', 'TranslationSegment'):
-                r = db.execute('SELECT id FROM nodes WHERE kind=? ORDER BY id LIMIT 1', [kind]).fetchone()
+            for kind in ('Artifact', 'SequenceVersion', 'SourceRecord', 'Claim', 'TranslationSegment', 'WordToken'):
+                table = PROPS[kind][0]
+                r = db.execute(f'SELECT id FROM {table} ORDER BY id LIMIT 1').fetchone()
                 if r:
                     first[kind] = r[0]
             return {'registry': rep['registry'], 'scopes': rep['scopes'], 'nodes': rep['nodes'], 'edges': rep['edges'],
@@ -144,13 +174,14 @@ class Explorer:
                     'edge_kinds': edge_kinds, 'position_kinds': occ_kinds, 'rejections': rejections, 'exclusions': exclusions,
                     'entry_nodes': first}
         out = self.b.run(ds, work)
-        unavailable = [k for k in ('composition', 'passage', 'word_token', 'lemma', 'sense') if out['counts'][k] == 0]
-        out['unavailable_layers'] = unavailable
+        out['layers'] = layer_states(out['counts'], out['exclusions'])
+        out['unavailable_layers'] = [r['layer'] for r in out['layers'] if r['state'].startswith('unavailable')]
         out['dataset'] = ds.public()
-        return out
+        out['binding'] = ds.binding()
+        return _jsonable(out)
 
-    def top(self, key: str, field: str, policy: str) -> dict:
-        ds = self._ds(key)
+    def top(self, key: str, field: str, policy: str, version=None) -> dict:
+        ds = self._ds(key, version)
         if field not in FIELDS or policy not in POLICIES:
             raise UserError('invalid field/policy')
         scope = self._scope(ds, field, None)
@@ -164,7 +195,7 @@ class Explorer:
             for g in grams:
                 g['readings'] = json.loads(g['readings'])
             return {'postings': posts, 'bigrams': grams}
-        return self.b.run(ds, work)
+        return self._bind(ds, self.b.run(ds, work))
 
     def _scope(self, ds: Dataset, field: str, snapshot: str | None) -> dict | None:
         scopes = [s for s in ds.scopes if s['field'] == field]
@@ -178,7 +209,7 @@ class Explorer:
     def query(self, body: dict) -> dict:
         if not isinstance(body, dict):
             raise UserError('JSON object required')
-        ds = self._ds(body.get('dataset'))
+        ds = self._ds(body.get('dataset'), body.get('version'))
         pattern = body.get('pattern')
         if isinstance(pattern, str):
             pattern = pattern.split()
@@ -192,21 +223,23 @@ class Explorer:
         offset = self._int(body.get('offset'), 0, 100000, 'offset', 0)
         max_skip = self._int(body.get('max_skip'), 0, 2, 'max_skip', 0)
         parity = bool(body.get('parity', True))
-        scope = self._scope(ds, field, body.get('snapshot'))
+        snapshot = body.get('snapshot')
+        if snapshot is not None and not isinstance(snapshot, str):
+            raise UserError('invalid snapshot scope')
+        scope = self._scope(ds, field, snapshot)
         P, Q, M = self.b.projections, self.b.query, self.b.model
-        base = {'dataset': ds.key, 'dataset_kind': ds.kind, 'pattern': pattern, 'field': field, 'policy': policy, 'engine': engine,
+        base = {'pattern': pattern, 'field': field, 'policy': policy, 'engine': engine,
                 'evidence': 'source editorial readings' if field == 'atf' else 'source-derived sign IDs, not image evidence',
                 'policy_note': ('strict: every position explicitly intact AND certain' if policy == 'strict'
                                 else 'source readings, including uncertain/restored readings'),
-                'gap_extent': 'represented positions, not ancient sign count; an unknown-length loss is one position'}
+                'gap_extent': 'represented positions, not ancient sign count; an unknown-length loss is one position',
+                'scope_note': ds.selection.get('note'), 'selection_label': ds.selection.get('label')}
         if scope is None:
-            return dict(base, scope=None, count=0, rows=[], truncated=False, next_offset=None,
-                        missing=f'no {field} sequences in this dataset (layer unavailable, not zero occurrences)')
+            return self._bind(ds, dict(base, scope=None, count=0, rows=[], truncated=False, next_offset=None,
+                                       missing=f'no {field} sequences in this dataset (layer unavailable, not zero occurrences)'))
         base['scope'] = scope
         if len(pattern) == 1 and (pattern[0] == '?' or engine == 'graph'):
             raise UserError('single-token search uses the posting index and needs a concrete token')
-        if engine == 'graph' and policy == 'strict' and max_skip:
-            pass  # backend applies strict to inserted wildcard positions as well
 
         def work(db):
             if len(pattern) == 1:
@@ -217,24 +250,20 @@ class Explorer:
                 hits = [{'match_id': r['occurrence_id'], 'occurrence_ids': [r['occurrence_id']], 'sequence_id': r['sequence_id'],
                          'line_id': r['line_id'], 'start_position': r['position'], 'end_position': r['position'],
                          'artifact_id': r['artifact_id'], 'witness_id': r['witness_id'], 'source_record_id': r['source_record_id']} for r in res['rows']]
-                out = {'count': cnt, 'truncated': res['truncated'], 'next_offset': res['next_offset'], 'kind': 'postings'}
+                out = {'count': cnt, 'retrievable': cnt, 'truncated': res['truncated'], 'next_offset': res['next_offset'], 'kind': 'postings'}
             elif engine == 'index':
                 res = P.lookup(db, 'motifs', M.canonical(pattern), namespace=scope['namespace'], snapshot=scope['snapshot_id'],
                                field=field, policy=policy, limit=limit, offset=offset)
                 hits = [{'match_id': r['match_id'], 'occurrence_ids': json.loads(r['occurrence_ids']), 'sequence_id': r['sequence_id'],
                          'line_id': r['line_id'], 'start_position': r['start_position'], 'end_position': r['end_position'],
                          'artifact_id': r['artifact_id'], 'witness_id': r['witness_id'], 'source_record_id': r['source_record_id']} for r in res['rows']]
-                out = {'count': res['count'], 'truncated': res['truncated'], 'next_offset': res['next_offset'], 'kind': 'motifs'}
+                out = {'count': res['count'], 'retrievable': res['count'], 'truncated': res['truncated'], 'next_offset': res['next_offset'], 'kind': 'motifs'}
             else:
                 res = Q.motif(db, pattern, field, policy == 'strict', max_skip)
-                allm = res['matches']
-                page = allm[offset:offset + limit]
+                out = dict(graph_page(res, offset, limit), kind='graph-motif',
+                           graph_summary={k: res[k] for k in ('witnesses', 'artifacts', 'denominators', 'certain_physical_evidence_count', 'bounds', 'matches_truncated', 'cross_line')})
                 hits = [{'match_id': m['id'], 'occurrence_ids': m['occurrences'], 'sequence_id': m['sequence'], 'line_id': m['line'],
-                         'artifact_id': m['artifact'], 'witness_id': m['witness'], 'skipped': m['skipped_represented_positions']} for m in page]
-                out = {'count': res['occurrences'], 'truncated': offset + limit < len(allm), 'next_offset': offset + limit if offset + limit < len(allm) else None,
-                       'kind': 'graph-motif', 'graph_summary': {k: res[k] for k in ('witnesses', 'artifacts', 'denominators', 'certain_physical_evidence_count', 'bounds', 'matches_truncated', 'cross_line')}}
-                if res['matches_truncated']:
-                    out['note'] = 'backend graph motif returns at most 100 matches; count covers all'
+                         'artifact_id': m['artifact'], 'witness_id': m['witness'], 'skipped': m['skipped_represented_positions']} for m in out.pop('page')]
             if parity and len(pattern) >= 2 and engine == 'index' and max_skip == 0:
                 try:
                     g = Q.motif(db, pattern, field, policy == 'strict', 0)
@@ -242,10 +271,16 @@ class Explorer:
                     out['parity'] = {'index': out['count'], 'graph': g['occurrences'], 'ok': g['occurrences'] == out['count']}
                 except ValueError as exc:
                     out['parity'] = {'skipped': str(exc)}
+            if policy == 'strict' and out['count'] == 0:
+                certain = db.execute("SELECT count(*) FROM token_context WHERE field=? AND preservation='intact' AND certainty='certain'", [field]).fetchone()[0]
+                out['strict_note'] = (f'Strict = 0 here because no {field} position in this dataset is marked intact AND certain by the source'
+                                      + (' (eBL does not assert certainty from an absence of editorial marks).' if str(scope['namespace']).startswith('ebl') else '.')
+                                      + ' See Coverage → position states.') if certain == 0 else \
+                    f'{certain} {field} positions are intact AND certain, but none form this pattern.'
             self._enrich(db, hits)
             out['rows'] = hits
             return out
-        return dict(base, **self.b.run(ds, work), limit=limit, offset=offset, max_skip=max_skip)
+        return self._bind(ds, dict(base, **self.b.run(ds, work), limit=limit, offset=offset, max_skip=max_skip))
 
     def _enrich(self, db, hits: list[dict]) -> None:
         occ_ids = [o for h in hits for o in h['occurrence_ids']]
@@ -268,8 +303,8 @@ class Explorer:
             h['artifact'] = arts.get(h['artifact_id'])
 
     # -- occurrence detail ----------------------------------------------------
-    def occurrence(self, key: str, oid: str) -> dict:
-        ds = self._ds(key)
+    def occurrence(self, key: str, oid: str, version=None) -> dict:
+        ds = self._ds(key, version)
         oid = self._node_id(oid)
         P, Q = self.b.projections, self.b.query
 
@@ -286,23 +321,21 @@ class Explorer:
             excerpt = {'before': fb[line['start_byte']:o['start_byte']].decode('utf-8', 'replace'),
                        'token': fb[o['start_byte']:o['end_byte']].decode('utf-8', 'replace'),
                        'after': fb[o['end_byte']:line['end_byte']].decode('utf-8', 'replace'),
-                       'line_span': [line['start_byte'], line['end_byte']]}
+                       'line_span': [line['start_byte'], line['end_byte']],
+                       'origin': 'parsed record field stored in the canonical DB (source_record.raw_json); display only — the trace below re-reads raw bytes'}
             trace, trace_error = None, None
-            source_kind, raw = ds.raws.get(o['raw_sha256'], (None, None))
-            if raw is None:
-                trace_error = 'raw source bytes not available to the UI for this binding'
-            else:
-                try:
-                    data = raw
-                    if not isinstance(raw, bytes):
-                        if raw.stat().st_size > 64 * 1024**2:
-                            raise UserError('raw source too large for interactive trace')
-                        data = raw.read_bytes()
-                    manifest = ds.manifest or {'source': source_kind, 'raw_sha256': o['raw_sha256'],
-                                               'rights': self.b.adapters.RIGHTS.get(source_kind, {'status': 'unknown'}), 'snapshot_id': o['snapshot_id']}
-                    trace = Q.trace_rows(db, data, manifest, oid, verified_manifest=ds.kind == 'snapshot')
-                except ValueError as exc:
-                    trace_error = str(exc)
+            if ds.kind != 'snapshot':
+                source_kind, raw = ds.raws.get(o['raw_sha256'], (None, None))
+                if raw is None:
+                    trace_error = 'raw source bytes not available to the UI for this binding'
+                else:
+                    try:
+                        manifest = {'source': source_kind, 'raw_sha256': o['raw_sha256'],
+                                    'rights': self.b.adapters.RIGHTS.get(source_kind, {'status': 'unknown'}), 'snapshot_id': o['snapshot_id']}
+                        trace = Q.trace_rows(db, raw, manifest, oid, verified_manifest=False)
+                        trace['origin'] = 'in-memory input bytes (hashed; not a verified snapshot)'
+                    except ValueError as exc:
+                        trace_error = str(exc)
             translations = _source_order([t for t in P.lookup(db, 'translations', o['sequence_id'], limit=50)['rows'] if t['sequence_id'] == o['sequence_id']])
             postings = P.lookup(db, 'reverse-postings', oid, limit=20)
             motifs = P.lookup(db, 'reverse-motifs', oid, limit=30)
@@ -310,21 +343,69 @@ class Explorer:
                 m['readings'] = json.loads(m['readings'])
             translation_total = db.execute('SELECT count(*) FROM translation_segment WHERE source_record_id=?', [o['source_record_id']]).fetchone()[0]
             words = db.execute('SELECT count(*) FROM word_token WHERE sequence_id=?', [o['sequence_id']]).fetchone()[0]
+            words_in_dataset = db.execute('SELECT count(*) FROM word_token').fetchone()[0]
             sign = db.execute("SELECT e.target_id, s.label, s.namespace, e.qualification FROM edge e JOIN sign_type s ON s.id=e.target_id WHERE e.kind='MAPS_TO_SIGN' AND e.source_id=?", [oid]).fetchone()
             art = db.execute('SELECT catalog_key FROM artifact WHERE id=?', [o['artifact_id']]).fetchone()
             return {'occurrence': o, 'line': line, 'line_positions': context, 'source': {'source_key': rec[0], 'locator': rec[1]},
                     'excerpt': excerpt, 'trace': trace, 'trace_error': trace_error, 'translations': translations,
                     'translation_note': 'Translation strings are placed in this sequence; their span is unresolved. This is context, not word-level alignment.',
-                    'translation_total_in_record': translation_total, 'word_tokens_in_sequence': words,
+                    'translation_total_in_record': translation_total, 'word_tokens_in_sequence': words, 'word_tokens_in_dataset': words_in_dataset,
                     'sign': {'id': sign[0], 'label': sign[1], 'namespace': sign[2], 'qualification': json.loads(sign[3])} if sign else None,
                     'artifact_catalog_key': art[0] if art else None, 'postings': postings, 'motifs': motifs}
         out = self.b.run(ds, work)
-        out['dataset'] = {'key': ds.key, 'kind': ds.kind, 'authority': ds.public()['authority']}
-        return _jsonable(out)
+        if ds.kind == 'snapshot':
+            # The backend's own verified trace: re-verifies the snapshot and, for cohorts, re-reads the parent raw object.
+            try:
+                with self.b.guarded(ds):
+                    trace = Q.trace(ds.path, oid, parent_root=self.b.research_root)
+                trace['origin'] = ('cohort payload: byte-identical slices of the parent object (snapshot raw file)'
+                                   if ds.selection.get('kind') == 'cohort' else 'snapshot raw payload')
+                out['trace'] = trace
+            except UserError:
+                raise
+            except (ValueError, OSError, KeyError) as exc:
+                out['trace_error'] = f'{type(exc).__name__}: {exc}'
+        out['dataset'] = {'authority': ds.public()['authority']}
+        return _jsonable(self._bind(ds, out))
+
+    # -- ORACC words (gloss is not translation) -------------------------------
+    def word(self, key: str, wid: str, version=None) -> dict:
+        ds = self._ds(key, version)
+        wid = self._node_id(wid)
+        P = self.b.projections
+
+        def work(db):
+            rows = P.lookup(db, 'words', wid, limit=5)['rows']
+            return [r for r in rows if r['word_id'] == wid]
+        rows = self.b.run(ds, work)
+        if not rows:
+            raise UserError('unknown word ID in this dataset')
+        out = {'word': rows[0], 'gloss_note': GLOSS_NOTE, 'trace': None, 'trace_error': None}
+        if ds.kind == 'snapshot' and ds.manifest and ds.manifest.get('source') == 'oracc-selection':
+            try:
+                with self.b.guarded(ds):
+                    out['trace'] = self.b.oracc.trace_word(ds.path, wid, parent_root=self.b.research_root)
+            except UserError:
+                raise
+            except (ValueError, OSError, KeyError, StopIteration) as exc:
+                out['trace_error'] = f'{type(exc).__name__}: {exc}'
+        else:
+            out['trace_error'] = 'word trace is provided by the backend for ORACC-selection snapshots only'
+        return _jsonable(self._bind(ds, out))
+
+    def words(self, key: str, text: str, version=None, offset=None) -> dict:
+        ds = self._ds(key, version)
+        if not isinstance(text, str) or not 1 <= len(text) <= 64:
+            raise UserError('word search text 1–64 characters')
+        off = self._int(offset, 0, 100000, 'offset', 0)
+        P = self.b.projections
+        res = self.b.run(ds, lambda db: P.lookup(db, 'words', text, limit=50, offset=off))
+        return _jsonable(self._bind(ds, dict(res, gloss_note=GLOSS_NOTE, query=text,
+                                             scope_note=ds.selection.get('note'), offset=off)))
 
     # -- graph ----------------------------------------------------------------
-    def node(self, key: str, nid: str) -> dict:
-        ds = self._ds(key)
+    def node(self, key: str, nid: str, version=None) -> dict:
+        ds = self._ds(key, version)
         nid = self._node_id(nid)
         P = self.b.projections
 
@@ -335,7 +416,7 @@ class Explorer:
             extra: dict[str, Any] = {}
             if d['kind'] == 'Claim' and d['props'].get('predicate') == 'catalog_alias':
                 extra['catalog_candidates'] = P.lookup(db, 'catalog', d['props']['object_key'], limit=20)['rows']
-                extra['candidate_note'] = 'Exact catalog-key candidates. No identity merge or equivalence edge is asserted.'
+                extra['candidate_note'] = 'Exact catalog-key candidates in this dataset only. No identity merge or equivalence edge is asserted.'
             if d['kind'] == 'Artifact':
                 extra['alias_claims'] = P.lookup(db, 'aliases', nid, limit=20)['rows']
                 extra['incoming_alias_claims'] = []
@@ -348,36 +429,36 @@ class Explorer:
             if d['kind'] == 'Line':
                 line = _rows(db, 'SELECT l.start_byte, l.end_byte, s.source_record_id, s.field FROM line l JOIN sequence_version s ON s.id=l.sequence_id WHERE l.id=?', [nid])[0]
                 extra['positions'] = P.source_span(db, line['source_record_id'], line['field'], line['start_byte'], line['end_byte'], 100)
+            if d['kind'] in ('WordToken', 'Sense', 'Lemma'):
+                extra['gloss_note'] = GLOSS_NOTE
             return dict(d, **extra)
-        return _jsonable(self.b.run(ds, work))
+        return _jsonable(self._bind(ds, self.b.run(ds, work)))
 
-    def neighborhood(self, key: str, nid: str, per_group=None) -> dict:
-        ds = self._ds(key)
+    def neighborhood(self, key: str, nid: str, per_group=None, version=None) -> dict:
+        ds = self._ds(key, version)
         nid = self._node_id(nid)
         per = self._int(per_group, 1, 25, 'per', 8)
-        P = self.b.projections
 
         def work(db):
             center = self.describe(db, [nid]).get(nid)
             if center is None:
                 raise UserError('unknown node ID in this dataset')
-            edges, offset, truncated = [], 0, False
-            for _ in range(EDGE_PAGES):
-                page = P.lookup(db, 'neighbors', nid, limit=100, offset=offset)
-                edges += page['rows']
-                truncated = page['truncated']
-                if not truncated:
-                    break
-                offset = page['next_offset']
-            groups: dict[tuple[str, str], list[dict]] = {}
-            for e in edges:
-                direction = 'out' if e['source_id'] == nid else 'in'
-                groups.setdefault((e['kind'], direction), []).append(e)
-            other_ids = [e['target_id'] if e['source_id'] == nid else e['source_id'] for e in edges]
+            # Exact per-group counts first, then a bounded sample inside each group (review F-15).
+            counts = db.execute("SELECT kind, 'out', count(*) FROM portable_edge WHERE source_id=? GROUP BY kind "
+                                "UNION ALL SELECT kind, 'in', count(*) FROM portable_edge WHERE target_id=? AND source_id<>? GROUP BY kind",
+                                [nid, nid, nid]).fetchall()
+            groups: dict[tuple[str, str], tuple[int, list[dict]]] = {}
+            for kind, direction, n in counts:
+                col = 'source_id' if direction == 'out' else 'target_id'
+                sample = _rows(db, f'SELECT * FROM portable_edge WHERE {col}=? AND kind=?'
+                                   + (" AND source_id<>?" if direction == 'in' else '') + ' ORDER BY id LIMIT ?',
+                               [nid, kind] + ([nid] if direction == 'in' else []) + [GROUP_SAMPLE])
+                groups[(kind, direction)] = (n, sample)
+            other_ids = [e['target_id'] if d == 'out' else e['source_id'] for (_k, d), (_n, s) in groups.items() for e in s]
             info = self.describe(db, other_ids)
             nodes = {nid: dict(center, center=True)}
             links, aggregates = [], []
-            for (kind, direction), group in sorted(groups.items()):
+            for (kind, direction), (total, group) in sorted(groups.items()):
                 def order(e):
                     other = e['target_id'] if direction == 'out' else e['source_id']
                     p = info.get(other, {}).get('props', {})
@@ -388,20 +469,21 @@ class Explorer:
                     nodes.setdefault(other, info.get(other) or {'id': other, 'kind': '?', 'label': other, 'props': {}})
                     links.append({'id': e['id'], 'source': e['source_id'], 'target': e['target_id'], 'kind': kind,
                                   'qualification': json.loads(e['qualification']) if isinstance(e['qualification'], str) else e['qualification']})
-                hidden = len(group) - per
+                hidden = total - min(per, len(group))
                 if hidden > 0:
                     agg = f'more:{kind}:{direction}'
-                    aggregates.append({'id': agg, 'kind': 'Aggregate', 'edge_kind': kind, 'direction': direction,
-                                       'hidden': hidden, 'lower_bound': truncated, 'label': f"+{hidden}{'+' if truncated else ''} {kind}"})
+                    aggregates.append({'id': agg, 'kind': 'Aggregate', 'edge_kind': kind, 'direction': direction, 'total': total,
+                                       'hidden': hidden, 'lower_bound': False, 'label': f'+{hidden} {kind}'})
                     links.append({'id': agg + ':link', 'source': nid if direction == 'out' else agg, 'target': agg if direction == 'out' else nid,
                                   'kind': kind, 'aggregate': True})
-            return {'center': nid, 'nodes': list(nodes.values()) + aggregates, 'links': links, 'edges_seen': len(edges),
-                    'edges_truncated': truncated, 'per_group': per,
-                    'note': f'Showing up to {per} neighbors per relationship type and direction; inspected at most {EDGE_PAGES * 100} incident edges.'}
-        return _jsonable(self.b.run(ds, work))
+            return {'center': nid, 'nodes': list(nodes.values()) + aggregates, 'links': links,
+                    'edges_total': sum(n for n, _s in groups.values()), 'edges_truncated': False, 'per_group': per,
+                    'groups': [{'kind': k, 'direction': d, 'total': n} for (k, d), (n, _s) in sorted(groups.items())],
+                    'note': f'Showing up to {per} neighbors per relationship type and direction; group totals are exact.'}
+        return _jsonable(self._bind(ds, self.b.run(ds, work)))
 
-    def search_nodes(self, key: str, text: str) -> dict:
-        ds = self._ds(key)
+    def search_nodes(self, key: str, text: str, version=None) -> dict:
+        ds = self._ds(key, version)
         if not isinstance(text, str) or not 1 <= len(text) <= 64:
             raise UserError('search text 1–64 characters')
 
@@ -412,7 +494,41 @@ class Explorer:
             like = '%' + text.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
             ids = [r[0] for r in db.execute("SELECT id FROM artifact WHERE catalog_key ILIKE ? ESCAPE '\\' UNION ALL SELECT id FROM sign_type WHERE label ILIKE ? ESCAPE '\\' UNION ALL SELECT id FROM source_record WHERE source_key ILIKE ? ESCAPE '\\' UNION ALL SELECT id FROM claim WHERE object_key ILIKE ? ESCAPE '\\' LIMIT 30", [like] * 4).fetchall()]
             return {'rows': list(self.describe(db, ids).values())}
-        return _jsonable(self.b.run(ds, work))
+        return _jsonable(self._bind(ds, self.b.run(ds, work)))
+
+
+def graph_page(res: dict, offset: int, limit: int) -> dict:
+    """Page the backend graph motif's materialized matches without implying the rest are absent (review F-10)."""
+    allm = res['matches']
+    total = res['occurrences']
+    page = allm[offset:offset + limit]
+    more_materialized = offset + limit < len(allm)
+    cap_reached = len(allm) < total
+    out = {'count': total, 'retrievable': len(allm), 'page': page,
+           'truncated': more_materialized or (cap_reached and offset + len(page) < total),
+           'next_offset': offset + limit if more_materialized else None,
+           'materialized_cap_reached': cap_reached}
+    if cap_reached:
+        out['note'] = (f'The backend graph engine materializes at most {len(allm)} of {total} matches. Rows {len(allm) + 1}–{total} '
+                       'exist but cannot be listed from the graph engine; use the Index engine (same count) to page through them.')
+    return out
+
+
+def layer_states(counts: dict, exclusions: list[dict]) -> list[dict]:
+    """Never show a zero data layer as a plain 'none' (review F-11)."""
+    out = []
+    for layer in DATA_LAYERS:
+        n = counts[layer]
+        state = '' if n else 'unavailable — not supplied by this source (or supplied empty)' + ('; see Exclusions & rejections' if exclusions else '')
+        out.append({'layer': layer, 'rows': n, 'state': state})
+    no_text = counts['sequence_version'] == 0
+    if no_text:
+        for r in out:
+            if r['layer'] in ('witness', 'sequence_version', 'line', 'occurrence', 'sign_type', 'translation_segment', 'word_token', 'lemma', 'sense') and not r['rows']:
+                r['state'] = 'unavailable — no text supplied by this source (not zero occurrences)'
+    for t in AUDIT_TABLES:
+        out.append({'layer': t, 'rows': counts[t], 'state': 'none recorded' if not counts[t] else ''})
+    return out
 
 
 def _source_order(rows: list[dict]) -> list[dict]:

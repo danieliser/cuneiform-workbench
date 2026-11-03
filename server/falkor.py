@@ -1,8 +1,18 @@
-"""Disposable FalkorDB projection of a dataset's nodes/portable_edge views.
+"""Disposable FalkorDB projection of a dataset version's nodes/portable_edge views.
 
-Canonical DuckDB/Parquet data stays authoritative. Each export is written once
-under the UI's own runtime directory with SHA-256 receipts, and can be dropped
-and reloaded at any time. The isolated FalkorDB instance is loopback-only.
+Canonical DuckDB/Parquet data stays authoritative. Each export is written once under the
+UI's own runtime directory with SHA-256 receipts. Every load rebuilds the graph and then
+reads it back to prove its contents equal the export (not just its counts).
+
+Security model (review F-1, F-7, F-9):
+* The FalkorDB server runs on a Docker ``--internal`` network with no egress; a fixed-code
+  relay publishes it on 127.0.0.1 only. The official FalkorDB Browser is disabled.
+* Redis ACL: the default user is off. ``cuneiform-ro`` may only PING/GRAPH.RO_QUERY/GRAPH.LIST;
+  ``cuneiform-rw`` additionally GRAPH.QUERY/GRAPH.DELETE. Passwords live in 0600 files.
+* Arbitrary Cypher is not accepted from the browser. ``GRAPH.RO_QUERY`` still allows
+  ``LOAD CSV FROM 'https://…'`` (outbound connections) and unbounded ``range()`` lists that
+  OOM-kill the server regardless of QUERY_MEM_CAPACITY. Only allowlisted, parameterized,
+  LIMIT-bounded templates run.
 """
 from __future__ import annotations
 
@@ -15,7 +25,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .bridge import Backend, Dataset, UserError
+from .bridge import NODE_RE, TOKEN_RE, Backend, Dataset, UserError
 from .explore import PROPS, label_for
 
 GRAPH_PREFIX = 'cuneiform_'
@@ -23,13 +33,48 @@ GRAPH_RE = re.compile(r'^cuneiform_[a-z0-9_]{1,80}$')
 LABEL_RE = re.compile(r'^[A-Za-z][A-Za-z0-9]{0,40}$')
 REL_RE = re.compile(r'^[A-Z][A-Z_]{0,40}$')
 KEY_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_]{0,40}$')
-MAX_EXPORT_NODES = 100_000
-MAX_EXPORT_EDGES = 300_000
+EXPORT_ID_RE = re.compile(r'^[0-9a-f]{24}$')
+MAX_EXPORT_NODES = 150_000
+MAX_EXPORT_EDGES = 400_000
 BATCH = 250
-MAX_CYPHER_CHARS = 4000
-MAX_RESULT_ROWS = 500
+READBACK_PAGE = 5000  # below the server RESULTSET_SIZE (10000)
+RESULTSET_SIZE = 10000
+MAX_TEMPLATE_ROWS = 500
 RO_TIMEOUT_MS = 3000
-EXPORT_FORMAT = 'cuneiform-ui-graph-export-1'
+EXPORT_FORMAT = 'cuneiform-ui-graph-export-2'
+USERS = ('cuneiform-ro', 'cuneiform-rw')
+
+# Allowlisted read-only templates. Parameters are typed and validated; strings are emitted as escaped
+# Cypher literals; ints are validated then inlined. No template uses LOAD CSV, CALL, range() or UNWIND.
+TEMPLATES: dict[str, dict] = {
+    'node-kinds': {'label': 'Node kinds', 'params': {},
+                   'cypher': 'MATCH (n) RETURN labels(n)[0] AS kind, count(*) AS n ORDER BY n DESC LIMIT {limit}'},
+    'edge-kinds': {'label': 'Relationship kinds', 'params': {},
+                   'cypher': 'MATCH ()-[e]->() RETURN type(e) AS kind, count(*) AS n ORDER BY n DESC LIMIT {limit}'},
+    'adjacent-readings': {'label': 'Frequent adjacent readings (NEXT)', 'params': {},
+                          'cypher': 'MATCH (a:SignOccurrence)-[:NEXT]->(b:SignOccurrence) WHERE a.reading IS NOT NULL AND b.reading IS NOT NULL '
+                                    'RETURN a.reading AS first, b.reading AS second, count(*) AS n ORDER BY n DESC, first, second LIMIT {limit}'},
+    'reading-pair': {'label': 'Occurrences of reading A followed by B', 'params': {'a': 'token', 'b': 'token'},
+                     'cypher': 'MATCH (a:SignOccurrence {reading: $a})-[:NEXT]->(b:SignOccurrence {reading: $b}) '
+                               'RETURN a.id AS first, b.id AS second, a.line_id AS line ORDER BY first LIMIT {limit}'},
+    'reading-pair-count': {'label': 'Count of reading A followed by B', 'params': {'a': 'token', 'b': 'token'},
+                           'cypher': 'MATCH (a:SignOccurrence {reading: $a})-[:NEXT]->(b:SignOccurrence {reading: $b}) RETURN count(*) AS n LIMIT {limit}'},
+    'artifact-lines': {'label': 'Artifacts → lines per sequence', 'params': {},
+                       'cypher': 'MATCH (w:Witness)-[:ON_ARTIFACT]->(a:Artifact), (w)-[:HAS_SEQUENCE]->(s:SequenceVersion)-[:HAS_LINE]->(l:Line) '
+                                 'RETURN a.catalog_key AS artifact, s.field AS field, count(l) AS lines ORDER BY artifact, field LIMIT {limit}'},
+    'alias-claims': {'label': 'Catalog alias claims (no merges)', 'params': {},
+                     'cypher': 'MATCH (c:Claim)-[:CLAIM_SUBJECT]->(a:Artifact) RETURN a.catalog_key AS artifact, c.object_key AS claims, c.status AS status '
+                               'ORDER BY artifact, claims LIMIT {limit}'},
+    'node-neighbors': {'label': 'Neighbors of a node ID', 'params': {'id': 'node'},
+                       'cypher': 'MATCH (n {id: $id})-[e]-(m) RETURN type(e) AS rel, startNode(e) = n AS outgoing, labels(m)[0] AS node_kind, m.id AS id, '
+                                 'm.display AS display ORDER BY rel, id LIMIT {limit}'},
+    'projection-receipt': {'label': 'Projection receipt', 'params': {},
+                           'cypher': 'MATCH (p:ProjectionReceipt) RETURN p.export_id AS export_id, p.dataset AS dataset, p.dataset_version AS version, '
+                                     'p.receipt AS receipt LIMIT {limit}'},
+}
+_FORBIDDEN = re.compile(r'LOAD\s+CSV|\bCALL\b|\brange\s*\(|\bUNWIND\b|\bCREATE\b|\bMERGE\b|\bSET\b|\bDELETE\b|\bREMOVE\b|\bFOREACH\b', re.I)
+for _t in TEMPLATES.values():  # fail fast at import if a template ever gains an unsafe capability
+    assert not _FORBIDDEN.search(_t['cypher']), _t['cypher']
 
 
 class RespError(Exception):
@@ -37,11 +82,17 @@ class RespError(Exception):
 
 
 class Resp:
-    """Minimal RESP2 client (enough for GRAPH.* and PING); stdlib only."""
+    """Minimal RESP2 client (enough for AUTH, GRAPH.* and PING); stdlib only."""
 
-    def __init__(self, host: str, port: int, timeout: float = 10.0):
+    def __init__(self, host: str, port: int, timeout: float = 10.0, auth: tuple[str, str] | None = None):
         self.sock = socket.create_connection((host, port), timeout=timeout)
         self.file = self.sock.makefile('rb')
+        if auth:
+            try:
+                self.cmd('AUTH', auth[0], auth[1])
+            except BaseException:
+                self.close()
+                raise
 
     def close(self):
         try:
@@ -89,6 +140,11 @@ class Resp:
         raise RespError('unsupported reply type')
 
 
+def cy_str(v: str) -> str:
+    """The exact string FalkorDB stores for ``cy(v)``: control characters other than \\n \\r \\t become spaces."""
+    return ''.join(' ' if (ord(ch) < 0x20 and ch not in '\n\r\t') or ord(ch) == 0x7f else ch for ch in v)
+
+
 def cy(v: Any) -> str:
     """Serialize a Python value as a Cypher literal for the CYPHER parameter header.
 
@@ -105,7 +161,7 @@ def cy(v: Any) -> str:
         return repr(v)
     if isinstance(v, str):
         out = []
-        for ch in v:
+        for ch in cy_str(v):
             if ch == '\\':
                 out.append('\\\\')
             elif ch == '"':
@@ -116,8 +172,6 @@ def cy(v: Any) -> str:
                 out.append('\\r')
             elif ch == '\t':
                 out.append('\\t')
-            elif ord(ch) < 0x20 or ord(ch) == 0x7f:
-                out.append(' ')
             else:
                 out.append(ch)
         return '"' + ''.join(out) + '"'
@@ -141,21 +195,57 @@ def _sha_file(p: Path) -> str:
     return h.hexdigest()
 
 
+def _norm(v: Any) -> Any:
+    """Value as stored in / returned by FalkorDB (strings normalized; ints kept)."""
+    if isinstance(v, bool) or v is None or isinstance(v, int):
+        return v
+    if isinstance(v, float):
+        return repr(v)
+    return cy_str(str(v))
+
+
+def node_columns(kind: str) -> list[str]:
+    return ['id'] + PROPS[kind][1] + ['node_kind', 'display']
+
+
 class Falkor:
-    def __init__(self, backend: Backend, home: Path, host: str = '127.0.0.1', port: int = 26380, browser_port: int = 23001):
+    def __init__(self, backend: Backend, home: Path, host: str = '127.0.0.1', port: int = 26380, secret_dir: Path | None = None):
         self.b = backend
         self.home = home
-        self.host, self.port, self.browser_port = host, port, browser_port
+        self.host, self.port = host, port
         self.exports = home / 'exports'
-        self.loaded: dict[str, dict] = {}
+        self.secret_dir = secret_dir or Path(os.environ.get('CUNEIFORM_FALKORDB_SECRET_DIR', str(home / 'secrets')))
+        prefix = os.environ.get('CUNEIFORM_FALKORDB_GRAPH_PREFIX', GRAPH_PREFIX)
+        self.prefix = prefix if re.match(r'^cuneiform_[a-z_]{0,20}$', prefix) else GRAPH_PREFIX
+
+    # -- connection ------------------------------------------------------------
+    def _secret(self, user: str) -> str:
+        p = self.secret_dir / f'falkordb-{user.split("-")[1]}.password'
+        try:
+            st = p.stat()
+            if st.st_mode & 0o077:
+                raise UserError(f'FalkorDB secret file has unsafe permissions; run bin/cuneiform-ui falkordb-up ({p.name})')
+            return p.read_text().strip()
+        except OSError as exc:
+            raise UserError(f'FalkorDB credentials not provisioned ({p.name}); run bin/cuneiform-ui falkordb-up') from exc
+
+    def conn(self, user: str = 'cuneiform-ro', timeout: float = 10.0) -> Resp:
+        assert user in USERS
+        return Resp(self.host, self.port, timeout=timeout, auth=(user, self._secret(user)))
 
     # -- status --------------------------------------------------------------
     def status(self) -> dict:
-        out = {'host': self.host, 'port': self.port, 'browser_url': f'http://127.0.0.1:{self.browser_port}',
-               'browser_login': {'host': 'localhost', 'port': 6379, 'note': 'Browser connects from inside the container; host port is ' + str(self.port)},
-               'reachable': False}
+        out = {'host': self.host, 'port': self.port, 'reachable': False,
+               'browser': {'enabled': False,
+                           'reason': ('Disabled: the bundled FalkorDB Browser connects to any host the user types and does not check the Host header '
+                                      '(DNS rebinding). It stays off until it can sit behind a loopback Host-checking proxy.')},
+               'console': {'arbitrary_cypher': False,
+                           'reason': ('Arbitrary Cypher is disabled: GRAPH.RO_QUERY still allows LOAD CSV over https (outbound connections) and '
+                                      'unbounded range() lists that OOM-kill the server despite QUERY_MEM_CAPACITY. Allowlisted bounded templates only.')},
+               'templates': [{'id': k, 'label': t['label'], 'params': t['params']} for k, t in TEMPLATES.items()],
+               'isolation': 'internal Docker network without egress; loopback relay; ACL users with 0600 secret files'}
         try:
-            with Resp(self.host, self.port, timeout=2) as r:
+            with self.conn('cuneiform-ro', timeout=2) as r:
                 out['ping'] = r.cmd('PING')
                 mods = r.cmd('MODULE', 'LIST')
                 for m in mods or []:
@@ -167,8 +257,11 @@ class Falkor:
                 out['graphs'] = [self._graph_info(r, g) for g in sorted(graphs) if GRAPH_RE.match(g)]
                 out['foreign_graphs'] = len([g for g in graphs if not GRAPH_RE.match(g)])
                 out['reachable'] = True
+        except UserError as exc:
+            out['error'] = str(exc)
         except (OSError, RespError) as exc:
-            out['error'] = f'{type(exc).__name__}: {exc}'
+            out['error'] = (f'{type(exc).__name__}: {exc}. If the container died (for example OOM), '
+                            'run bin/cuneiform-ui falkordb-up; graphs reload from disk and can be rebuilt.')
         return out
 
     def _graph_info(self, r: Resp, g: str) -> dict:
@@ -182,47 +275,50 @@ class Falkor:
 
     # -- export ----------------------------------------------------------------
     def export(self, ds: Dataset) -> dict:
-        """Write nodes/edges JSONL once, content-addressed, with a hash receipt."""
+        """Write nodes/edges JSONL once, content-addressed by dataset version and contents, with a hash receipt."""
         def work(db):
             n_nodes = db.execute('SELECT count(*) FROM nodes').fetchone()[0]
             n_edges = db.execute('SELECT count(*) FROM portable_edge').fetchone()[0]
             if n_nodes > MAX_EXPORT_NODES or n_edges > MAX_EXPORT_EDGES:
-                raise UserError(f'graph too large for UI projection ({n_nodes} nodes / {n_edges} edges)')
+                raise UserError(f'graph too large for the UI projection ({n_nodes} nodes / {n_edges} edges; cap {MAX_EXPORT_NODES}/{MAX_EXPORT_EDGES})')
             nodes = []
             for kind, (table, cols) in PROPS.items():
                 cur = db.execute(f"SELECT id,{','.join(cols)} FROM {table} ORDER BY id")
                 names = [d[0] for d in cur.description]
-                for row in cur.fetchall():
-                    p = dict(zip(names, row))
-                    props = {k: (v if isinstance(v, (int, float, bool)) or v is None else str(v)) for k, v in p.items()}
-                    props['kind'] = kind
-                    props['display'] = label_for(kind, props)
-                    nodes.append(props)
+                while batch := cur.fetchmany(5000):
+                    for row in batch:
+                        p = dict(zip(names, row))
+                        props = {k: (v if isinstance(v, (int, float, bool)) or v is None else str(v)) for k, v in p.items()}
+                        props['node_kind'] = kind  # label; SignOccurrence keeps its own 'kind' property (review fix)
+                        props['display'] = label_for(kind, props)
+                        nodes.append(props)
             nodes.sort(key=lambda x: x['id'])
             edges = [{'id': r[0], 'source_id': r[1], 'target_id': r[2], 'kind': r[3], 'source_record_id': r[4], 'qualification': str(r[5])}
                      for r in db.execute('SELECT id, source_id, target_id, kind, source_record_id, qualification FROM portable_edge ORDER BY id').fetchall()]
             registry = self.b.projections.rows(db, 'SELECT * FROM projection_registry')
             bindings = self.b.projections.rows(db, 'SELECT DISTINCT snapshot_id, raw_sha256 FROM source_binding ORDER BY 1, 2')
             return nodes, edges, registry, bindings, n_nodes
-        nodes, edges, registry, bindings, n_nodes = self.b.run(ds, work, timeout=60)
+        nodes, edges, registry, bindings, n_nodes = self.b.run(ds, work, timeout=120)
         if len(nodes) != n_nodes:
             raise UserError('node property export does not cover nodes view; backend schema changed')
         node_bytes = ''.join(json.dumps(n, ensure_ascii=False, sort_keys=True) + '\n' for n in nodes).encode()
         edge_bytes = ''.join(json.dumps(e, ensure_ascii=False, sort_keys=True) + '\n' for e in edges).encode()
         nh, eh = hashlib.sha256(node_bytes).hexdigest(), hashlib.sha256(edge_bytes).hexdigest()
         backend = {k: self.b.info[k] for k in ('commit', 'dirty', 'versions', 'compatibility')}
-        export_id = hashlib.sha256(json.dumps([EXPORT_FORMAT, ds.key, nh, eh, backend['versions']], sort_keys=True).encode()).hexdigest()[:24]
-        receipt = {'format': EXPORT_FORMAT, 'export_id': export_id, 'dataset': ds.key, 'dataset_kind': ds.kind,
+        export_id = hashlib.sha256(json.dumps([EXPORT_FORMAT, ds.key, ds.version, nh, eh, backend['versions']], sort_keys=True).encode()).hexdigest()[:24]
+        receipt = {'format': EXPORT_FORMAT, 'export_id': export_id, 'dataset': ds.key, 'dataset_kind': ds.kind, 'dataset_version': ds.version,
+                   'selection': {k: ds.selection.get(k) for k in ('kind', 'label', 'scope_note')},
                    'source_bindings': bindings, 'projection_registry': registry, 'backend': backend,
                    'files': {'nodes.jsonl': nh, 'edges.jsonl': eh}, 'counts': {'nodes': len(nodes), 'edges': len(edges)},
+                   'content_digest': content_digest(nodes, edges),
                    'authority': 'Derived, disposable. Canonical data is the backend DuckDB/Parquet snapshot or in-memory parse of the hashed inputs.'}
-        target = self.exports / re.sub(r'[^a-z0-9-]', '-', ds.key.lower()) / export_id
+        target = self._export_dir(ds.key, export_id)
         if target.exists():
             for name, expected in receipt['files'].items():
                 if _sha_file(target / name) != expected:
                     raise UserError(f'existing export {export_id} failed hash check: {name}')
             receipt = json.loads((target / 'receipt.json').read_text())
-            receipt['reused'] = True
+            receipt['reused_export_files'] = True
         else:
             stage = target.parent / f'.pending-{export_id}-{os.getpid()}'
             stage.mkdir(parents=True, exist_ok=False)
@@ -233,33 +329,32 @@ class Falkor:
             for p in stage.iterdir():
                 p.chmod(0o444)
             stage.rename(target)
-            receipt['reused'] = False
+            receipt['reused_export_files'] = False
         receipt['path'] = str(target)
         return {'receipt': receipt, 'nodes': nodes, 'edges': edges}
 
-    def graph_name(self, ds: Dataset, export_id: str) -> str:
-        return GRAPH_PREFIX + re.sub(r'[^a-z0-9]', '_', ds.key.lower())[:40] + '_' + export_id[:12]
+    def _export_dir(self, dataset: str, export_id: str) -> Path:
+        if not EXPORT_ID_RE.match(export_id):
+            raise UserError('invalid export ID')
+        return self.exports / re.sub(r'[^a-z0-9-]', '-', dataset.lower()) / export_id
 
-    # -- load -------------------------------------------------------------------
+    def graph_name(self, ds: Dataset, export_id: str) -> str:
+        return self.prefix + re.sub(r'[^a-z0-9]', '_', ds.key.lower())[:40] + '_' + export_id[:12]
+
+    # -- load (always rebuild, then prove contents) --------------------------------------
     def load(self, ds: Dataset) -> dict:
         ex = self.export(ds)
         receipt, nodes, edges = ex['receipt'], ex['nodes'], ex['edges']
         g = self.graph_name(ds, receipt['export_id'])
         started = time.time()
         try:
-            with Resp(self.host, self.port, timeout=30) as r:
-                existing = r.cmd('GRAPH.LIST') or []
-                if g in existing:
-                    info = self._graph_info(r, g)
-                    if info['receipt'] and info['receipt'].get('export_id') == receipt['export_id']:
-                        counts = self._counts(r, g)
-                        if counts == receipt['counts']:
-                            return {'graph': g, 'reused': True, 'counts': counts, 'receipt': receipt}
-                    r.cmd('GRAPH.DELETE', g)  # our own disposable projection
+            with self.conn('cuneiform-rw', timeout=60) as r:
+                if g in (r.cmd('GRAPH.LIST') or []):
+                    r.cmd('GRAPH.DELETE', g)  # our own disposable projection; never trust a previous copy
                 by_kind: dict[str, list[dict]] = {}
                 for n in nodes:
-                    by_kind.setdefault(n['kind'], []).append(n)
-                kind_of = {n['id']: n['kind'] for n in nodes}
+                    by_kind.setdefault(n['node_kind'], []).append(n)
+                kind_of = {n['id']: n['node_kind'] for n in nodes}
                 for kind, group in by_kind.items():
                     if not LABEL_RE.match(kind):
                         raise UserError('unsafe node label')
@@ -279,48 +374,170 @@ class Falkor:
                         rows = [{'id': e['id'], 's': e['source_id'], 't': e['target_id'], 'src': e['source_record_id'], 'q': e['qualification']} for e in group[i:i + BATCH]]
                         r.cmd('GRAPH.QUERY', g, f'CYPHER rows={cy(rows)} UNWIND $rows AS row MATCH (a:{sk} {{id: row.s}}), (b:{tk} {{id: row.t}}) '
                                                 f'CREATE (a)-[:{rel} {{id: row.id, source_record_id: row.src, qualification: row.q}}]->(b)')
-                public = {k: receipt[k] for k in ('format', 'export_id', 'dataset', 'dataset_kind', 'files', 'counts', 'backend', 'source_bindings', 'authority')}
-                r.cmd('GRAPH.QUERY', g, f'CYPHER p={cy({"export_id": receipt["export_id"], "dataset": ds.key, "receipt": json.dumps(public, sort_keys=True)})} '
+                public = {k: receipt[k] for k in ('format', 'export_id', 'dataset', 'dataset_kind', 'dataset_version', 'selection', 'files',
+                                                  'counts', 'backend', 'source_bindings', 'authority', 'content_digest')}
+                r.cmd('GRAPH.QUERY', g, f'CYPHER p={cy({"export_id": receipt["export_id"], "dataset": ds.key, "dataset_version": ds.version, "receipt": json.dumps(public, sort_keys=True)})} '
                                         'CREATE (x:ProjectionReceipt) SET x = $p')
-                counts = self._counts(r, g)
         except (OSError, RespError) as exc:
             raise UserError(f'FalkorDB load failed: {exc}') from exc
-        if counts != receipt['counts']:
-            raise UserError(f'loaded counts {counts} differ from export {receipt["counts"]}')
-        return {'graph': g, 'reused': False, 'counts': counts, 'seconds': round(time.time() - started, 2), 'receipt': receipt}
+        check = self.verify_graph(g, nodes=nodes, edges=edges, receipt=receipt)
+        if not check['content_verified']:
+            raise UserError(f'loaded graph contents differ from the export: {check["problems"][:3]}')
+        return {'graph': g, 'rebuilt': True, 'counts': check['counts'], 'content_verified': True, 'content_digest': check['digest'],
+                'seconds': round(time.time() - started, 2), 'receipt': receipt}
 
-    def _counts(self, r: Resp, g: str) -> dict:
-        n = r.cmd('GRAPH.RO_QUERY', g, 'MATCH (n) WHERE NOT n:ProjectionReceipt RETURN count(n)', 'TIMEOUT', 5000)[1][0][0]
-        e = r.cmd('GRAPH.RO_QUERY', g, 'MATCH ()-[e]->() RETURN count(e)', 'TIMEOUT', 5000)[1][0][0]
-        return {'nodes': int(n), 'edges': int(e)}
+    def verify_graph(self, graph: str, nodes: list[dict] | None = None, edges: list[dict] | None = None, receipt: dict | None = None) -> dict:
+        """Read every node and edge back and compare with the export files (review F-8)."""
+        if not isinstance(graph, str) or not GRAPH_RE.match(graph):
+            raise UserError('only cuneiform_* projection graphs can be verified')
+        try:
+            with self.conn('cuneiform-ro', timeout=30) as r:
+                if graph not in (r.cmd('GRAPH.LIST') or []):
+                    raise UserError('graph not loaded')
+                if receipt is None:
+                    receipt = self._graph_info(r, graph)['receipt']
+                    if not receipt:
+                        return {'graph': graph, 'content_verified': False, 'problems': ['no projection receipt in graph']}
+                if nodes is None or edges is None:
+                    target = self._export_dir(receipt['dataset'], receipt['export_id'])
+                    for name, expected in receipt['files'].items():
+                        if _sha_file(target / name) != expected:
+                            return {'graph': graph, 'content_verified': False, 'problems': [f'export file {name} hash mismatch']}
+                    nodes = [json.loads(x) for x in (target / 'nodes.jsonl').read_text().splitlines()]
+                    edges = [json.loads(x) for x in (target / 'edges.jsonl').read_text().splitlines()]
+                got_nodes, got_edges = self._readback(r, graph, nodes, edges)
+        except (OSError, RespError) as exc:
+            raise UserError(f'FalkorDB verify failed: {exc}') from exc
+        want = content_digest(nodes, edges)
+        have = digest_rows(got_nodes, got_edges)
+        problems = []
+        if len(got_nodes) != len(nodes):
+            problems.append(f'node count {len(got_nodes)} != {len(nodes)}')
+        if len(got_edges) != len(edges):
+            problems.append(f'edge count {len(got_edges)} != {len(edges)}')
+        if have != want:
+            want_n = {row[0]: row for row in node_rows(nodes)}
+            diff = [row[0] for row in got_nodes if want_n.get(row[0]) != row][:5]
+            problems.append(f'content digest differs (first differing nodes: {diff})')
+        return {'graph': graph, 'content_verified': not problems, 'digest': have, 'expected_digest': want, 'problems': problems,
+                'counts': {'nodes': len(got_nodes), 'edges': len(got_edges)}}
+
+    def _readback(self, r: Resp, g: str, nodes: list[dict], edges: list[dict]) -> tuple[list, list]:
+        got_nodes: list = []
+        for kind in sorted({n['node_kind'] for n in nodes} | {'_extra'}):
+            if kind == '_extra':
+                # any node that is neither the receipt nor an exported kind is a content difference
+                q = 'MATCH (n) WHERE NOT n:ProjectionReceipt AND NOT (' + ' OR '.join(f'n:{k}' for k in sorted({n["node_kind"] for n in nodes}) or ['ProjectionReceipt']) + ') RETURN n.id'
+                res = r.cmd('GRAPH.RO_QUERY', g, q + ' LIMIT 10', 'TIMEOUT', RO_TIMEOUT_MS)
+                got_nodes += [[row[0], 'unexpected'] for row in (res[1] if len(res) == 3 else [])]
+                continue
+            if not LABEL_RE.match(kind):
+                raise UserError('unsafe node label')
+            cols = node_columns(kind)
+            ret = ', '.join(f'n.{c}' for c in cols)
+            skip = 0
+            while True:
+                res = r.cmd('GRAPH.RO_QUERY', g, f'MATCH (n:{kind}) RETURN {ret} ORDER BY n.id SKIP {skip} LIMIT {READBACK_PAGE}', 'TIMEOUT', RO_TIMEOUT_MS)
+                rows = res[1] if len(res) == 3 else []
+                got_nodes += [[row[0], kind] + row[1:] for row in rows]
+                if len(rows) < READBACK_PAGE:
+                    break
+                skip += READBACK_PAGE
+        got_edges: list = []
+        skip = 0
+        while True:
+            res = r.cmd('GRAPH.RO_QUERY', g, f'MATCH (a)-[e]->(b) RETURN e.id, a.id, b.id, type(e), e.source_record_id, e.qualification '
+                                             f'ORDER BY e.id SKIP {skip} LIMIT {READBACK_PAGE}', 'TIMEOUT', RO_TIMEOUT_MS)
+            rows = res[1] if len(res) == 3 else []
+            got_edges += [list(row) for row in rows]
+            if len(rows) < READBACK_PAGE:
+                break
+            skip += READBACK_PAGE
+        got_nodes.sort(key=lambda x: (str(x[0]), x[1]))
+        got_edges.sort(key=lambda x: str(x[0]))
+        return got_nodes, got_edges
 
     def drop(self, graph: str) -> dict:
         if not isinstance(graph, str) or not GRAPH_RE.match(graph):
             raise UserError('only cuneiform_* projection graphs can be dropped')
-        with Resp(self.host, self.port) as r:
-            if graph not in (r.cmd('GRAPH.LIST') or []):
-                raise UserError('graph not found')
-            r.cmd('GRAPH.DELETE', graph)
+        try:
+            with self.conn('cuneiform-rw') as r:
+                if graph not in (r.cmd('GRAPH.LIST') or []):
+                    raise UserError('graph not found')
+                r.cmd('GRAPH.DELETE', graph)
+        except (OSError, RespError) as exc:
+            raise UserError(f'FalkorDB: {exc}') from exc
         return {'dropped': graph}
 
-    # -- read-only Cypher ---------------------------------------------------------------
-    def ro_query(self, graph: str, query: str) -> dict:
+    # -- allowlisted read-only templates --------------------------------------------------
+    def template(self, graph: str, template_id: str, params: dict | None, limit=None) -> dict:
         if not isinstance(graph, str) or not GRAPH_RE.match(graph):
             raise UserError('choose a loaded cuneiform_* projection graph')
-        if not isinstance(query, str) or not 1 <= len(query) <= MAX_CYPHER_CHARS:
-            raise UserError(f'query must be 1–{MAX_CYPHER_CHARS} characters')
+        t = TEMPLATES.get(template_id) if isinstance(template_id, str) else None
+        if t is None:
+            raise UserError('unknown query template')
+        params = params if isinstance(params, dict) else {}
+        if set(params) - set(t['params']):
+            raise UserError('unexpected template parameter')
+        try:
+            lim = int(limit if limit not in (None, '') else 50)
+        except (TypeError, ValueError):
+            raise UserError('limit must be an integer')
+        if isinstance(limit, bool) or not 1 <= lim <= MAX_TEMPLATE_ROWS:
+            raise UserError(f'limit must be 1–{MAX_TEMPLATE_ROWS}')
+        header = []
+        for name, typ in t['params'].items():
+            v = params.get(name)
+            if typ == 'token' and not (isinstance(v, str) and TOKEN_RE.match(v)):
+                raise UserError(f'{name}: 1–64 visible characters')
+            if typ == 'node' and not (isinstance(v, str) and NODE_RE.match(v)):
+                raise UserError(f'{name}: node ID required')
+            header.append(f'{name}={cy(v)}')
+        query = t['cypher'].replace('{limit}', str(lim + 1))  # one extra row proves truncation exactly
+        if header:
+            query = 'CYPHER ' + ' '.join(header) + ' ' + query
         started = time.time()
         try:
-            with Resp(self.host, self.port, timeout=RO_TIMEOUT_MS / 1000 + 3) as r:
+            with self.conn('cuneiform-ro', timeout=RO_TIMEOUT_MS / 1000 + 3) as r:
                 if graph not in (r.cmd('GRAPH.LIST') or []):
                     raise UserError('graph not loaded')
                 res = r.cmd('GRAPH.RO_QUERY', graph, query, 'TIMEOUT', RO_TIMEOUT_MS)
         except RespError as exc:
             raise UserError(f'FalkorDB: {exc}') from exc
         except OSError as exc:
-            raise UserError(f'FalkorDB unreachable: {exc}') from exc
-        header, rows, stats = (res + [[], [], []])[:3] if len(res) == 3 else ([], [], res[0] if res else [])
-        columns = [h[1] if isinstance(h, list) and len(h) == 2 else h for h in header]
-        return {'graph': graph, 'columns': columns, 'rows': rows[:MAX_RESULT_ROWS], 'row_count': len(rows),
-                'truncated': len(rows) > MAX_RESULT_ROWS, 'stats': stats, 'ms': round((time.time() - started) * 1000),
-                'mode': 'GRAPH.RO_QUERY (read-only) on disposable projection; not canonical data'}
+            raise UserError(f'FalkorDB unreachable: {exc}. Run bin/cuneiform-ui falkordb-up.') from exc
+        header_row, rows = (res[0], res[1]) if len(res) == 3 else ([], [])
+        columns = [h[1] if isinstance(h, list) and len(h) == 2 else h for h in header_row]
+        return {'graph': graph, 'template': template_id, 'label': t['label'], 'params': params, 'columns': columns,
+                'rows': rows[:lim], 'row_count': min(len(rows), lim), 'limit': lim, 'truncated': len(rows) > lim,
+                'server_cap_hit': len(rows) >= RESULTSET_SIZE, 'ms': round((time.time() - started) * 1000),
+                'mode': 'allowlisted template via GRAPH.RO_QUERY (cuneiform-ro ACL user) on a disposable projection; not canonical data'}
+
+
+def node_rows(nodes: list[dict]) -> list[list]:
+    out = []
+    for n in nodes:
+        cols = node_columns(n['node_kind'])
+        out.append([n['id'], n['node_kind']] + [_norm(n.get(c)) for c in cols[1:]])
+    out.sort(key=lambda x: (str(x[0]), x[1]))
+    return out
+
+
+def edge_rows(edges: list[dict]) -> list[list]:
+    out = [[e['id'], e['source_id'], e['target_id'], e['kind'], _norm(e['source_record_id']), _norm(e['qualification'])] for e in edges]
+    out.sort(key=lambda x: str(x[0]))
+    return out
+
+
+def digest_rows(nodes: list, edges: list) -> str:
+    h = hashlib.sha256()
+    for row in nodes:
+        h.update(json.dumps([_norm(v) for v in row], ensure_ascii=False).encode() + b'\n')
+    h.update(b'--edges--\n')
+    for row in edges:
+        h.update(json.dumps([_norm(v) for v in row], ensure_ascii=False).encode() + b'\n')
+    return h.hexdigest()
+
+
+def content_digest(nodes: list[dict], edges: list[dict]) -> str:
+    return digest_rows(node_rows(nodes), edge_rows(edges))

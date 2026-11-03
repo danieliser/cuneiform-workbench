@@ -18,7 +18,7 @@
     <label for="dataset">Dataset</label>
     <select id="dataset" aria-label="Dataset"></select>
     <span id="dataset-badge" class="badge"></span>
-    <button id="refresh" class="ghost" title="Re-discover snapshots under the research root">Refresh data</button>
+    <button id="refresh" class="ghost" title="Re-scan snapshots and re-verify every file hash now">Refresh &amp; re-verify</button>
   </div>
   <div id="backend-chip" class="chip" role="status"></div>
 </header>
@@ -61,6 +61,9 @@
         <ul id="saved" class="examples"></ul>
         <h3>Frequent in dataset</h3>
         <div id="frequent" class="frequent"></div>
+        <h3>Word lookup <span class="hint">(lemma / sense; glosses are not translations)</span></h3>
+        <form id="wform" autocomplete="off"><input id="wq" placeholder="form, citation form or gloss" maxlength="64" spellcheck="false"><button class="ghost">Find words</button></form>
+        <div id="wresults" class="examples"></div>
       </aside>
       <div class="query-main">
         <div id="qsummary" class="panel summary"><p class="muted">Pick an example or type a pattern.</p></div>

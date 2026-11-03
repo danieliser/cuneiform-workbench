@@ -4,7 +4,7 @@
   'use strict';
   const $ = sel => document.querySelector(sel);
   const SAVED_KEY = 'cuneiform-ui:saved-queries';
-  const state = { status: null, ds: null, view: 'query', lastQuery: null, result: null, selectedRow: null,
+  const state = { status: null, ds: null, version: null, view: 'query', lastQuery: null, result: null, selectedRow: null,
     graph: { center: null, data: null, history: [], selected: null, pos: null }, report: null, falkor: null };
 
   // ---------- DOM helpers ----------
@@ -45,54 +45,84 @@
     const res = await fetch(path, opts);
     let data;
     try { data = await res.json(); } catch (_) { data = { error: `HTTP ${res.status}` }; }
+    if (res.status === 409) {  // the dataset version this view was built from is gone: never keep its results
+      staleReset(data.error || 'dataset version changed');
+      throw new Error('Results cleared: ' + (data.error || 'dataset version changed'));
+    }
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     return data;
   }
   const q = params => '?' + new URLSearchParams(params).toString();
+  // Every dataset-scoped request names the exact dataset version the view was built from.
+  const bound = extra => Object.assign({ dataset: state.ds, version: state.version || '' }, extra || {});
+  async function staleReset(why) {
+    try { state.status = await api('/api/status'); } catch (_) { /* keep old status */ }
+    state.ds = null; state.version = null;
+    renderStatus(`Earlier results were cleared because they belonged to a dataset version that is no longer served (${why}).`);
+  }
 
   // ---------- status / datasets ----------
-  async function loadStatus(rediscover) {
-    const st = rediscover ? Object.assign(state.status || {}, await api('/api/refresh', {})) : await api('/api/status');
-    if (!rediscover) state.status = st;
+  async function loadStatus() {
+    state.status = await api('/api/status');
     renderStatus();
   }
-  function renderStatus() {
+  function tagFor(d) {
+    if (d.kind === 'snapshot') return 'SNAPSHOT' + (d.selection && d.selection.label ? ' · ' + d.selection.label : '');
+    return d.kind === 'sample' ? 'SAMPLE' : 'SYNTHETIC';
+  }
+  function renderStatus(notice) {
     const st = state.status;
     const b = st.backend;
     const chip = $('#backend-chip');
     chip.className = 'chip ' + (b.compatibility === 'tested' ? 'ok' : b.compatibility === 'incompatible' ? 'bad' : 'warn');
-    chip.textContent = `backend ${b.commit ? b.commit.slice(0, 7) : '?'}${b.dirty ? '+dirty' : ''} · schema ${b.versions.schema} · ${b.versions.parser} · ${b.versions.projection} · ${b.compatibility}`;
+    chip.textContent = `backend ${b.commit ? b.commit.slice(0, 7) : '?'}${b.code_equivalent_to && b.code_equivalent_to !== b.commit ? ' (code = ' + b.code_equivalent_to.slice(0, 7) + ')' : ''}${b.dirty ? '+dirty code' : ''} · schema ${b.versions.schema} · ${b.versions.parser} · ${b.versions.projection} · ${b.compatibility}`;
     chip.title = b.repo + (b.problems.length ? '\n' + b.problems.join('\n') : '');
     const sel = clear($('#dataset'));
     for (const d of st.datasets) {
-      const tag = d.kind === 'snapshot' ? 'SNAPSHOT' : d.kind === 'sample' ? 'SAMPLE' : 'SYNTHETIC';
-      sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready', text: `[${tag}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status : ''}` }));
+      sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready', text: `[${tagFor(d)}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status : ''}` }));
     }
-    const keys = st.datasets.filter(d => d.status === 'ready').map(d => d.key);
+    const ready = st.datasets.filter(d => d.status === 'ready');
+    const keys = ready.map(d => d.key);
     const fromHash = new URLSearchParams(location.hash.slice(1)).get('ds');
+    const before = { ds: state.ds, version: state.version };
     if (!state.ds || !keys.includes(state.ds)) state.ds = keys.includes(fromHash) ? fromHash : keys[0] || null;
+    const now = ready.find(d => d.key === state.ds);
+    state.version = now ? now.version : null;
     if (state.ds) sel.value = state.ds;
     const banner = $('#banner');
     const msgs = [];
+    // Review F-5: a dataset switch or version change must never leave the old results under the new label.
+    const switched = before.ds !== null && (before.ds !== state.ds || before.version !== state.version);
+    if (notice) msgs.push(notice);
+    else if (switched) msgs.push(before.ds !== state.ds
+      ? `Dataset switched from ${before.ds} to ${state.ds || 'none'} (the previous one is no longer ready or demos were hidden). Earlier results were cleared.`
+      : `Dataset ${state.ds} has a new verified version (${String(state.version).slice(0, 12)}). Earlier results were cleared.`);
     if (b.compatibility === 'incompatible') msgs.push('Backend is incompatible with this UI build: ' + b.problems.join('; '));
+    if (b.code_changed_since_start) msgs.push((b.problems_runtime || []).join('; '));
     else if (b.compatibility !== 'tested') msgs.push(`Backend revision ${b.commit ? b.commit.slice(0, 7) : 'unknown'}${b.dirty ? ' (uncommitted changes)' : ''} has matching versions but was not the tested revision; results come from it unchanged.`);
-    if (!st.real_snapshots) msgs.push(`No persisted snapshots found under ${st.snapshot_dir}${st.snapshot_dir_exists ? '' : ' (directory not created yet)'} — showing labeled samples and synthetic fixtures. The corpus pilot will appear here after Refresh data once it is persisted.`);
+    const scanned = st.last_discovery ? new Date(st.last_discovery * 1000).toLocaleTimeString() : 'never';
+    if (!st.real_snapshots) msgs.push(`No persisted snapshots found under ${st.snapshot_dir}${st.snapshot_dir_exists ? '' : ' (directory not created yet)'} as of the last scan at ${scanned} — showing labeled samples and synthetic fixtures.`);
     const failing = st.datasets.filter(d => d.kind === 'snapshot' && d.status !== 'ready');
-    for (const d of failing) msgs.push(`Snapshot ${d.key.slice(0, 21)}…: ${d.status}${d.error ? ' — ' + d.error : ''}`);
+    for (const d of failing) msgs.push(`Snapshot ${d.key.slice(0, 21)}…: ${d.status}${d.error ? ' — ' + d.error : ''} (last scan ${scanned})`);
+    const cur = now;
+    if (cur && cur.publication && cur.publication.status === 'legacy-incident') msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.publication.note}`);
     banner.hidden = !msgs.length;
     banner.className = 'banner' + (b.compatibility === 'incompatible' ? ' bad' : '');
     clear(banner);
     msgs.forEach(m => banner.appendChild(el('div', { text: m })));
-    $('#foot').textContent = `Server ${st.server.bind} · pid ${st.server.pid} · backend ${b.repo} · Python ${b.python} · DuckDB ${b.duckdb} · research root ${b.research_root}`;
+    $('#foot').textContent = `Server ${st.server.bind} · pid ${st.server.pid} · backend ${b.repo} · Python ${b.python} · DuckDB ${b.duckdb} · research root ${b.research_root} · last scan ${scanned}`;
     renderDatasetBadge();
+    if (switched || notice) resetDatasetViews();
   }
   function current() { return state.status && state.status.datasets.find(d => d.key === state.ds); }
   function renderDatasetBadge() {
     const d = current(), badge = $('#dataset-badge');
     if (!d) { badge.textContent = 'no data'; badge.className = 'badge'; return; }
-    badge.textContent = d.kind === 'snapshot' ? 'verified snapshot' : d.kind === 'sample' ? 'in-memory sample' : 'synthetic';
-    badge.className = 'badge ' + d.kind;
-    badge.title = d.authority;
+    const pub = d.publication || {};
+    badge.textContent = d.kind === 'snapshot' ? (pub.status === 'legacy-incident' ? 'verified · legacy ID incident' : `verified · ${pub.status || 'snapshot'}`)
+      : d.kind === 'sample' ? 'in-memory sample' : 'synthetic';
+    badge.className = 'badge ' + d.kind + (pub.status === 'legacy-incident' ? ' incident' : '');
+    badge.title = `${d.authority}\n${pub.note || ''}\n${(d.selection && d.selection.note) || ''}\nversion ${d.version || '—'}`;
   }
   function setHash() {
     const p = new URLSearchParams({ view: state.view });
@@ -136,7 +166,7 @@
   async function runQuery(offset) {
     const v = formValues();
     if (!state.ds) return;
-    const body = Object.assign({ dataset: state.ds, offset: offset || 0 }, v);
+    const body = Object.assign(bound({ offset: offset || 0 }), v);
     state.lastQuery = body;
     const sum = clear($('#qsummary'));
     sum.appendChild(el('p', { class: 'muted', text: 'Running…' }));
@@ -163,15 +193,16 @@
   function renderResults(r) {
     const sum = clear($('#qsummary'));
     const head = r.missing ? el('div', { class: 'count' }, 'Unavailable', el('small', { text: 'no sequences for this field' }))
-      : el('div', { class: 'count' }, fmt(r.count), el('small', { text: r.kind === 'postings' ? 'postings' : 'matching windows' }));
+      : el('div', { class: 'count' }, fmt(r.count), el('small', { text: (r.kind === 'postings' ? 'postings' : 'matching windows') + (r.selection_label ? ` within ${r.selection_label}` : '') }));
     sum.appendChild(el('div', { style: null }, head));
-    const ds = current();
+    if (r.scope_note) sum.appendChild(el('div', { class: 'callout scope', text: 'Scope: ' + r.scope_note }));
+    const ds = current() || { kind: r.dataset.kind, authority: '' };
     sum.appendChild(el('div', { class: 'summary-grid' },
       el('div', {}, el('b', { text: 'Pattern' }), el('span', { class: 'mono', text: r.pattern.join(' ') })),
       el('div', {}, el('b', { text: 'Field' }), r.field),
       el('div', {}, el('b', { text: 'Policy' }), r.policy),
       el('div', {}, el('b', { text: 'Engine' }), r.engine + (r.max_skip ? ` (skip ≤ ${r.max_skip})` : '')),
-      el('div', {}, el('b', { text: 'Dataset' }), el('span', { class: 'badge ' + ds.kind, text: ds.kind })),
+      el('div', {}, el('b', { text: 'Dataset' }), el('span', { class: 'badge ' + ds.kind, text: ds.kind }), ' ', el('span', { class: 'ids', title: 'dataset version this result is bound to', text: 'v ' + String(r.dataset.version || '').slice(0, 12) })),
       r.scope ? el('div', {}, el('b', { text: 'Scope' }), el('span', { class: 'mono', text: `${r.scope.namespace} · ${r.scope.snapshot_id}` })) : null,
       r.parity && r.parity.ok !== undefined ? el('div', {}, el('b', { text: 'Graph/index parity' }),
         el('span', { class: 'pill ' + (r.parity.ok ? 'ok' : 'bad'), text: `index ${r.parity.index} · graph ${r.parity.graph} ${r.parity.ok ? '✓' : '✗'}` })) : null,
@@ -183,7 +214,7 @@
       el('li', { text: `Evidence: ${r.evidence}. ${r.policy_note}.` }),
       el('li', { text: `Gap extent: ${r.gap_extent}. Matching is line-local.` }),
       r.graph_summary ? el('li', { text: `Bounds: ${r.graph_summary.bounds}. Composition coverage unknown.` }) : null,
-      r.policy === 'strict' && r.count === 0 ? el('li', { text: 'Strict = 0 is expected for current eBL data: the source asserts neither intact nor certain from an absence of editorial marks. See Coverage → position states.' }) : null,
+      r.strict_note ? el('li', { text: r.strict_note }) : null,
       r.note ? el('li', { text: r.note }) : null,
       ds.kind !== 'snapshot' ? el('li', { text: ds.authority }) : null);
     sum.appendChild(notes);
@@ -207,7 +238,7 @@
     });
     const pager = clear($('#pager'));
     const from = r.rows.length ? (r.offset || 0) + 1 : 0, to = (r.offset || 0) + r.rows.length;
-    pager.appendChild(el('span', { text: `Rows ${from}–${to} of ${fmt(r.count)}` }));
+    pager.appendChild(el('span', { text: `Rows ${from}–${to} of ${fmt(r.count)}` + (r.materialized_cap_reached ? ` (graph engine lists only the first ${fmt(r.retrievable)}; use Index to page the rest)` : '') }));
     pager.appendChild(el('div', { class: 'btns' },
       el('button', { disabled: !(r.offset > 0), onclick: () => runQuery(Math.max(0, r.offset - r.limit)) }, '← Prev'),
       el('button', { disabled: !r.truncated, onclick: () => runQuery(r.next_offset) }, 'Next →')));
@@ -223,7 +254,7 @@
     const box = clear($('#detail'));
     box.appendChild(el('p', { class: 'muted', text: 'Loading occurrence…' }));
     try {
-      const d = await api('/api/occurrence' + q({ dataset: state.ds, id }));
+      const d = await api('/api/occurrence' + q(bound({ id })));
       renderOccurrence(d, windowIds || []);
     } catch (e) { clear(box).appendChild(el('p', { class: 'error', text: e.message })); }
   }
@@ -248,15 +279,29 @@
     box.appendChild(ctx);
     if (d.line_positions.truncated) box.appendChild(el('div', { class: 'hint', text: 'Line shows first 100 positions.' }));
 
-    box.appendChild(el('h3', { text: 'Raw source evidence' }));
+    box.appendChild(el('h3', { text: 'Parsed record field (canonical DB)' }));
+    box.appendChild(el('div', { class: 'hint', text: d.excerpt.origin }));
     box.appendChild(el('div', { class: 'evidence' }, d.excerpt.before, el('mark', { text: d.excerpt.token }), d.excerpt.after));
+    box.appendChild(el('h3', { text: 'Raw-byte trace' }));
     if (d.trace) {
       const t = d.trace;
-      box.appendChild(el('div', { class: 'check ok', text: `✓ Exact round-trip: UTF-8 bytes [${t.utf8_span[0]}, ${t.utf8_span[1]}) of “${t.decoded_field}” in the raw source decode to “${t.resolved_raw}”.` }));
+      box.appendChild(el('div', { class: 'check ok', text: `✓ Exact round-trip in ${t.origin || 'raw source'}: UTF-8 bytes [${t.utf8_span[0]}, ${t.utf8_span[1]}) of field “${t.decoded_field}” decode to “${t.resolved_raw}”.` }));
       box.appendChild(kv([
         ['Raw SHA-256', el('span', { class: 'ids', text: t.raw_sha256 })], ['Record locator', t.record_locator || '(document root)'],
         ['Source key', t.source_key], ['Rights', `${t.rights.status}${t.rights.reuse ? ' — ' + t.rights.reuse : ''}`],
         ['Rights basis', t.rights_attribution]]));
+      const pt = t.parent_trace;
+      if (pt) {
+        const ok = pt.status === 'verified';
+        box.appendChild(el('div', { class: 'check ' + (ok ? 'ok' : 'bad'), text: ok
+          ? `✓ Parent object verified: the same token re-read from the original parent file at absolute bytes [${pt.parent_file_byte_span[0]}, ${pt.parent_file_byte_span[1]}) (JSON-escaped form “${pt.parent_file_fragment}”).`
+          : `✗ Parent object not re-read: ${pt.status}. Only the cohort payload slice was checked.` }));
+        box.appendChild(kv([['Parent SHA-256', el('span', { class: 'ids', text: pt.parent_sha256 })], ['Parent URL', pt.parent_url],
+          ['Parent receipt', pt.parent_receipt_id], ['Parent pointer', pt.parent_pointer],
+          ['Record byte range in parent', `[${pt.parent_byte_range[0]}, ${pt.parent_byte_range[1]})`], ['Record SHA-256', el('span', { class: 'ids', text: pt.record_sha256 })]]));
+      } else if (d.dataset.kind === 'snapshot') {
+        box.appendChild(el('div', { class: 'hint', text: 'No parent trace: this snapshot is not a cohort of a larger parent object (the backend provides parent traces for eBL cohorts).' }));
+      }
     } else {
       box.appendChild(el('div', { class: 'check bad', text: '✗ Trace unavailable: ' + (d.trace_error || 'unknown') }));
     }
@@ -274,7 +319,9 @@
     } else {
       box.appendChild(el('div', { class: 'missing', text: d.translation_total_in_record ? 'No translation placed in this sequence (the record has translations elsewhere).' : 'No translation supplied for this source record. Unavailable — not an empty translation.' }));
     }
-    box.appendChild(el('div', { class: 'hint', text: d.word_tokens_in_sequence ? `${d.word_tokens_in_sequence} word tokens in sequence.` : 'Word / lemma / sense layers: unavailable for this source (no supplied rows; not zero linguistic words).' }));
+    box.appendChild(el('div', { class: 'hint', text: d.word_tokens_in_sequence ? `${d.word_tokens_in_sequence} word tokens in this sequence.`
+      : d.word_tokens_in_dataset ? 'No word tokens are attached to this sequence (other sequences in this dataset have words). This is a per-sequence observation, not a source-level claim.'
+      : 'Word / lemma / sense layers: unavailable in this dataset (no supplied rows; not zero linguistic words).' }));
     box.appendChild(el('h3', { text: `Indexed windows containing this position (${d.motifs.rows.length}${d.motifs.truncated ? '+' : ''})` }));
     const mw = el('div', { class: 'tags' });
     const seen = new Set();
@@ -317,7 +364,7 @@
     const box = clear($('#frequent'));
     if (!state.ds) return;
     try {
-      const t = await api('/api/top' + q({ dataset: state.ds, field: $('#field').value, policy: document.querySelector('input[name=policy]:checked').value }));
+      const t = await api('/api/top' + q(bound({ field: $('#field').value, policy: document.querySelector('input[name=policy]:checked').value })));
       if (!t.postings.length && !t.bigrams.length) { box.appendChild(el('span', { class: 'muted', text: `No indexed ${$('#field').value} postings in this dataset.` })); return; }
       for (const g of t.bigrams.slice(0, 8)) box.appendChild(el('button', { title: 'bigram', onclick: () => { $('#pattern').value = g.readings.join(' '); runQuery(0); } }, g.readings.join(' '), el('small', { text: String(g.n) })));
       for (const p of t.postings.slice(0, 12)) box.appendChild(el('button', { title: 'single reading', onclick: () => { $('#pattern').value = p.label; runQuery(0); } }, p.label, el('small', { text: String(p.n) })));
@@ -328,7 +375,7 @@
   async function startGraph() {
     if (!state.ds) return;
     try {
-      const rep = state.report && state.report.dataset.key === state.ds ? state.report : await api('/api/report' + q({ dataset: state.ds }));
+      const rep = state.report && state.report.dataset.key === state.ds && state.report.dataset.version === state.version ? state.report : await api('/api/report' + q(bound()));
       state.report = rep;
       const entry = rep.entry_nodes.Artifact || rep.entry_nodes.SourceRecord || Object.values(rep.entry_nodes)[0];
       if (entry) focusNode(entry, true);
@@ -338,18 +385,18 @@
   function openGraph(id) { show('graph', true); focusNode(id); }
   async function focusNode(id, reset) {
     try {
-      const data = await api('/api/neighborhood' + q({ dataset: state.ds, id, per: $('#gper').value }));
+      const data = await api('/api/neighborhood' + q(bound({ id, per: $('#gper').value })));
       if (reset) state.graph.history = [];
       if (state.graph.center && state.graph.center !== id && !reset) state.graph.history.push(state.graph.center);
       state.graph.center = id; state.graph.data = data; state.graph.selected = id;
       drawGraph();
       selectNode(data.nodes.find(n => n.id === id));
-    } catch (e) { clear($('#gdetail')).appendChild(el('p', { class: 'error', text: e.message })); }
+    } catch (e) { graphError(e); }
   }
   async function expandNode(id) {
     const g = state.graph;
     try {
-      const more = await api('/api/neighborhood' + q({ dataset: state.ds, id, per: $('#gper').value }));
+      const more = await api('/api/neighborhood' + q(bound({ id, per: $('#gper').value })));
       const ids = new Set(g.data.nodes.map(n => n.id));
       const merged = { ...g.data, nodes: [...g.data.nodes], links: [...g.data.links] };
       for (const n of more.nodes) {
@@ -363,14 +410,20 @@
       }
       merged.note = more.nodes.length + g.data.nodes.length > 150 ? 'View capped at 150 nodes; focus a node to explore further.' : g.data.note;
       g.data = merged; drawGraph();
-    } catch (e) { clear($('#gdetail')).appendChild(el('p', { class: 'error', text: e.message })); }
+    } catch (e) { graphError(e); }
+  }
+  function graphError(e) {  // visible in both the graph note and the detail panel (review F-6)
+    $('#gnote').textContent = 'Graph request failed: ' + e.message;
+    $('#gnote').className = 'gnote error';
+    clear($('#gdetail')).appendChild(el('p', { class: 'error', text: e.message }));
   }
   function drawGraph() {
     const g = state.graph;
     g.pos = GraphView.render($('#graph'), g.data, { selected: g.selected, previous: g.pos,
       onSelect: n => { g.selected = n.id; drawGraphSelection(); selectNode(n); }, onFocus: n => focusNode(n.id) });
     GraphView.legend($('#glegend'), [...new Set(g.data.nodes.map(n => n.kind))]);
-    $('#gnote').textContent = `${g.data.nodes.length} nodes · ${g.data.links.length} links · ${g.data.note}${g.data.edges_truncated ? ' Incident edges truncated; counts are lower bounds.' : ''}`;
+    $('#gnote').className = 'gnote muted';
+    $('#gnote').textContent = `${g.data.nodes.length} nodes · ${g.data.links.length} links · ${g.data.note}`;
     $('#gback').disabled = !g.history.length;
     const crumbs = clear($('#gcrumbs'));
     [...g.history.slice(-4), g.center].forEach((id, i, arr) => crumbs.appendChild(el('button', { class: 'ghost', disabled: i === arr.length - 1, title: id, onclick: () => focusNode(id) }, shortId(id))));
@@ -383,19 +436,21 @@
     if (!n) return;
     if (n.kind === 'Aggregate') {
       box.appendChild(el('h2', { text: n.label }));
-      box.appendChild(el('p', { text: `${n.hidden}${n.lower_bound ? '+' : ''} more ${n.edge_kind} neighbors (${n.direction === 'out' ? 'outgoing' : 'incoming'}) are hidden to keep this view readable.` }));
+      box.appendChild(el('p', { text: `${n.hidden} more ${n.edge_kind} neighbors (${n.direction === 'out' ? 'outgoing' : 'incoming'}; ${n.total} in total, exact) are hidden to keep this view readable.` }));
       box.appendChild(el('p', { class: 'muted', text: 'Raise “Per type”, or focus a visible sibling. Aggregates are display groupings only; they assert nothing.' }));
       return;
     }
     box.appendChild(el('p', { class: 'muted', text: 'Loading…' }));
     try {
-      const d = await api('/api/node' + q({ dataset: state.ds, id: n.id }));
+      const d = await api('/api/node' + q(bound({ id: n.id })));
       clear(box);
       box.appendChild(el('h2', {}, el('span', {}, el('span', { class: 'badge', text: d.kind }), ' ', d.label)));
       box.appendChild(el('div', { class: 'actions' },
         el('button', { class: 'primary', disabled: d.id === state.graph.center, onclick: () => focusNode(d.id) }, 'Focus'),
         el('button', { onclick: () => expandNode(d.id) }, 'Expand here'),
-        d.kind === 'SignOccurrence' ? el('button', { onclick: () => { show('query'); openOccurrence(d.id, [d.id]); } }, 'Evidence panel') : null));
+        d.kind === 'SignOccurrence' ? el('button', { onclick: () => { show('query'); openOccurrence(d.id, [d.id]); } }, 'Evidence panel') : null,
+        d.kind === 'WordToken' ? el('button', { onclick: () => { show('query'); openWord(d.id); } }, 'Word trace') : null));
+      if (d.gloss_note) box.appendChild(el('div', { class: 'callout', text: d.gloss_note }));
       box.appendChild(el('h3', { text: 'Properties' }));
       const pairs = [['ID', el('span', { class: 'ids', text: d.id })]];
       for (const [k, v] of Object.entries(d.props)) {
@@ -456,22 +511,33 @@
     if (!state.ds) { box.appendChild(el('div', { class: 'panel missing', text: 'No dataset ready.' })); return; }
     box.appendChild(el('div', { class: 'panel', text: 'Loading report…' }));
     try {
-      const r = await api('/api/report' + q({ dataset: state.ds }));
+      const r = await api('/api/report' + q(bound()));
       state.report = r;
       clear(box);
-      const d = r.dataset;
-      box.appendChild(el('div', { class: 'panel wide' }, el('h2', {}, el('span', { class: 'badge ' + d.kind, text: d.kind }), ' ', d.title),
-        el('p', { text: d.description }), el('p', { class: 'muted', text: d.authority }),
-        table([['source', 'Source'], ['file', 'Input'], ['bytes', 'Bytes'], ['sha256', 'SHA-256'], ['snapshot_id', 'Snapshot ID'], ['receipt', 'Receipt']], d.inputs, ['bytes']),
-        d.manifest ? kv([['Rights', JSON.stringify(d.manifest.rights)], ['Imported', d.manifest.retrieved_or_imported_at], ['Coverage', d.manifest.coverage]]) : null));
-      const unavailable = new Set(r.unavailable_layers);
-      const counts = Object.entries(r.counts).map(([k, v]) => ({ layer: k, rows: v, state: unavailable.has(k) ? 'unavailable (not supplied)' : (v === 0 ? 'none' : '') }));
+      const d = r.dataset, sel = d.selection || {}, pub = d.publication || {};
+      box.appendChild(el('div', { class: 'panel wide' }, el('h2', {}, el('span', { class: 'badge ' + d.kind, text: tagFor(d) }), ' ', d.title),
+        el('div', { class: 'callout scope', text: 'Scope: ' + (sel.note || '—') }), el('p', { class: 'muted', text: d.authority }),
+        kv([['Dataset version', el('span', { class: 'ids', text: d.version || '—' })], ['Verified at', d.verified_at ? new Date(d.verified_at * 1000).toLocaleString() : '—'],
+          ['Publication', `${pub.status || '—'}${pub.note ? ' — ' + pub.note : ''}`]]),
+        table([['source', 'Source'], ['file', 'Input'], ['bytes', 'Bytes'], ['sha256', 'SHA-256'], ['snapshot_id', 'Snapshot ID'], ['source_url', 'Source URL'], ['receipt', 'Receipt']], d.inputs, ['bytes']),
+        d.manifest ? kv([['Rights', JSON.stringify(d.manifest.rights)], ['Imported', d.manifest.retrieved_or_imported_at], ['Coverage', d.manifest.coverage],
+          ['Manifest SHA-256', el('span', { class: 'ids', text: d.manifest.manifest_sha256 || '—' })]]) : null));
+      if (sel.kind === 'cohort' || sel.kind === 'selection') {
+        const pairs = [['Selection', sel.label], ['Kind', sel.backend_kind || sel.kind], ['Rule', sel.rule_name || '—']];
+        if (sel.kind === 'cohort') pairs.push(['Cohort size', fmt(sel.cohort_size)], ['Eligible records', fmt(sel.eligible_records)], ['Parent records', fmt(sel.parent_records)],
+          ['Selector', sel.selector], ['Provenance', sel.provenance], ['Exclusions (parent)', el('pre', { class: 'cell', text: JSON.stringify(sel.excluded_by_reason, null, 1) })],
+          ['Rule detail', el('pre', { class: 'cell', text: JSON.stringify(sel.rule, null, 1) })]);
+        else pairs.push(['Selected', fmt(sel.selected)]);
+        box.appendChild(el('div', { class: 'panel wide' }, el('h2', { text: 'Population these counts describe' }), kv(pairs)));
+      }
+      const counts = r.layers;
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Canonical layers' }), table([['layer', 'Table'], ['rows', 'Rows'], ['state', 'Note']], counts, ['rows']),
         el('p', { class: 'hint', text: `${fmt(r.nodes)} nodes · ${fmt(r.edges)} portable edges` })));
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Translation & linguistic coverage per source record' }),
         el('div', { class: 'callout', text: r.coverage_note }),
-        r.coverage.length ? table([['source_record_id', 'Source record'], ['namespace', 'NS'], ['sequences', 'Seq'], ['words', 'Words'], ['lemmas', 'Lemmas'], ['translations', 'Transl.'], ['unresolved_translations', 'Unresolved']],
-          r.coverage.map(c => ({ ...c, source_record_id: idLink(c.source_record_id) })), ['sequences', 'words', 'lemmas', 'translations', 'unresolved_translations']) : el('div', { class: 'missing', text: 'No source records.' })));
+        el('div', { class: 'hint', text: 'Sense glosses (words with sense) are lexical labels for single words, not translations. Translations are separate strings with unresolved spans.' }),
+        r.coverage.length ? table([['source_record_id', 'Source record'], ['namespace', 'NS'], ['sequences', 'Seq'], ['words', 'Words'], ['lemmatized_words', 'Lemmatized'], ['words_with_sense', 'With sense gloss'], ['translations', 'Transl.'], ['unresolved_translations', 'Unresolved']],
+          r.coverage.map(c => ({ ...c, source_record_id: idLink(c.source_record_id) })), ['sequences', 'words', 'lemmatized_words', 'words_with_sense', 'translations', 'unresolved_translations']) : el('div', { class: 'missing', text: 'No source records.' })));
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Position states (why strict may be empty)' }),
         r.position_kinds.length ? table([['field', 'Field'], ['kind', 'Kind'], ['preservation', 'Preservation'], ['certainty', 'Certainty'], ['n', 'Positions']], r.position_kinds, ['n']) : el('div', { class: 'missing', text: 'No represented text positions in this dataset.' })));
       box.appendChild(el('div', { class: 'panel' }, el('h2', { text: 'Graph shape' }),
@@ -489,16 +555,10 @@
   }
 
   // ---------- FalkorDB ----------
-  const SAMPLE_CYPHER = [
-    ['Node kinds', 'MATCH (n) RETURN labels(n)[0] AS kind, count(*) AS n ORDER BY n DESC'],
-    ['Frequent adjacent readings', 'MATCH (a:SignOccurrence)-[:NEXT]->(b:SignOccurrence)\nWHERE a.reading IS NOT NULL AND b.reading IS NOT NULL\nRETURN a.reading, b.reading, count(*) AS n ORDER BY n DESC LIMIT 20'],
-    ['Artifact → lines', 'MATCH (w:Witness)-[:ON_ARTIFACT]->(a:Artifact), (w)-[:HAS_SEQUENCE]->(s:SequenceVersion)-[:HAS_LINE]->(l:Line)\nRETURN a.catalog_key, s.field, count(l) AS lines LIMIT 20'],
-    ['Alias claims', 'MATCH (c:Claim)-[:CLAIM_SUBJECT]->(a:Artifact)\nRETURN a.catalog_key, c.object_key, c.status LIMIT 25'],
-    ['Projection receipt', 'MATCH (p:ProjectionReceipt) RETURN p.export_id, p.dataset, p.receipt'],
-  ];
   function loadReceipt(r) {
-    return kv([['Graph', el('span', { class: 'mono', text: r.graph })], ['Status', r.reused ? 'already loaded (receipt + counts match)' : `loaded in ${r.seconds}s`],
-          ['Nodes / edges', `${fmt(r.counts.nodes)} / ${fmt(r.counts.edges)}`], ['Export ID', r.receipt.export_id], ['Export dir', el('span', { class: 'ids', text: r.receipt.path })],
+    return kv([['Graph', el('span', { class: 'mono', text: r.graph })], ['Status', `rebuilt in ${r.seconds}s; contents read back and ${r.content_verified ? 'verified equal to the export ✓' : 'NOT verified'}`],
+          ['Nodes / edges', `${fmt(r.counts.nodes)} / ${fmt(r.counts.edges)}`], ['Dataset version', el('span', { class: 'ids', text: r.receipt.dataset_version || '—' })],
+          ['Export ID', r.receipt.export_id], ['Content digest', el('span', { class: 'ids', text: r.content_digest })], ['Export dir', el('span', { class: 'ids', text: r.receipt.path })],
           ['nodes.jsonl', el('span', { class: 'ids', text: r.receipt.files['nodes.jsonl'] })], ['edges.jsonl', el('span', { class: 'ids', text: r.receipt.files['edges.jsonl'] })]]);
   }
   async function renderFalkor() {
@@ -509,83 +569,150 @@
     state.falkor = st;
     clear(box);
     const d = current();
-    const statusPanel = el('div', { class: 'panel' }, el('h2', {}, 'Isolated FalkorDB ', el('span', { class: 'pill ' + (st.reachable ? 'ok' : 'bad'), text: st.reachable ? 'running' : 'unreachable' })),
-      kv([['Server', `redis://${st.host}:${st.port}`], ['Version', st.falkordb_version || '—'], ['Projection graphs', st.graphs ? String(st.graphs.length) : '—'],
-        ['Other graphs', st.foreign_graphs ? String(st.foreign_graphs) + ' (not managed here)' : '0']]),
-      st.reachable ? null : el('div', { class: 'missing', text: `Not reachable: ${st.error || ''}. Start it with bin/cuneiform-ui falkordb-up. Query and graph views do not need it.` }),
-      el('h3', { text: 'FalkorDB Browser (official UI)' }),
-      el('p', {}, el('a', { href: st.browser_url, target: '_blank', rel: 'noopener noreferrer', text: st.browser_url })),
-      el('p', { class: 'hint', text: `Log in with host “${st.browser_login.host}”, port ${st.browser_login.port}, no username/password, then pick a cuneiform_* graph. ${st.browser_login.note}.` }),
-      el('div', { class: 'callout', text: 'Everything in FalkorDB is a disposable projection exported from the selected dataset. The DuckDB/Parquet snapshot (or hashed in-memory input) remains authoritative. Writes made in the Browser affect only the projection; reload to restore it.' }));
-    box.appendChild(statusPanel);
+    box.appendChild(el('div', { class: 'panel' }, el('h2', {}, 'Isolated FalkorDB ', el('span', { class: 'pill ' + (st.reachable ? 'ok' : 'bad'), text: st.reachable ? 'running' : 'unreachable' })),
+      kv([['Server', `redis://${st.host}:${st.port} (loopback relay; ACL login required)`], ['Version', st.falkordb_version || '—'], ['Isolation', st.isolation],
+        ['Projection graphs', st.graphs ? String(st.graphs.length) : '—'], ['Other graphs', st.foreign_graphs ? String(st.foreign_graphs) + ' (not managed here)' : '0']]),
+      st.reachable ? null : el('div', { class: 'missing', text: `Not reachable: ${st.error || ''} Query, evidence and graph views do not need it.` }),
+      el('h3', { text: 'FalkorDB Browser' }), el('div', { class: 'missing', text: st.browser.reason }),
+      el('h3', { text: 'Cypher' }), el('div', { class: 'missing', text: st.console.reason }),
+      el('div', { class: 'callout', text: 'Everything in FalkorDB is a disposable projection exported from one dataset version. The DuckDB/Parquet snapshot (or hashed in-memory input) remains authoritative. Every load rebuilds the graph and reads it back to prove its contents equal the export.' })));
     const loadPanel = el('div', { class: 'panel' }, el('h2', { text: 'Projection for current dataset' }),
-      d ? el('p', {}, el('span', { class: 'badge ' + d.kind, text: d.kind }), ' ', d.title) : null);
+      d ? el('p', {}, el('span', { class: 'badge ' + d.kind, text: tagFor(d) }), ' ', d.title, ' ', el('span', { class: 'ids', text: 'v ' + String(d.version || '').slice(0, 12) })) : null);
     const out = el('div');
     loadPanel.appendChild(el('button', { class: 'primary', disabled: !st.reachable || !d, onclick: async ev => {
-      ev.target.disabled = true; clear(out).appendChild(el('p', { class: 'muted', text: 'Exporting and loading…' }));
+      ev.target.disabled = true; clear(out).appendChild(el('p', { class: 'muted', text: 'Exporting, rebuilding and verifying…' }));
       try {
-        const r = await api('/api/falkordb/load', { dataset: state.ds });
+        const r = await api('/api/falkordb/load', bound());
         state.lastLoad = r;
         clear(out).appendChild(loadReceipt(r));
         setTimeout(renderFalkor, 600);
       } catch (e) { clear(out).appendChild(el('p', { class: 'error', text: e.message })); ev.target.disabled = false; }
-    } }, 'Export & load into FalkorDB'));
-    if (state.lastLoad && state.lastLoad.receipt.dataset === state.ds) out.appendChild(loadReceipt(state.lastLoad));
-    loadPanel.appendChild(el('p', { class: 'hint', text: 'Writes content-addressed nodes/edges JSONL + receipt under ~/.local/share/cuneiform-ui/exports (write-once, hash-checked), then (re)builds graph cuneiform_<dataset>_<export>. Same input ⇒ same export ID ⇒ reused.' }));
+    } }, 'Export, rebuild & verify'));
+    if (state.lastLoad && state.lastLoad.receipt.dataset === state.ds && state.lastLoad.receipt.dataset_version === state.version) out.appendChild(loadReceipt(state.lastLoad));
+    loadPanel.appendChild(el('p', { class: 'hint', text: 'Writes content-addressed nodes/edges JSONL + receipt under the UI runtime exports directory (write-once, hash-checked), deletes and rebuilds graph cuneiform_<dataset>_<export>, then compares every node and edge read back from FalkorDB with the export.' }));
     loadPanel.appendChild(out);
     box.appendChild(loadPanel);
     const graphs = (st.graphs || []);
     const gp = el('div', { class: 'panel wide' }, el('h2', { text: 'Loaded projection graphs' }));
+    const vres = el('div');
     if (!graphs.length) gp.appendChild(el('div', { class: 'missing', text: 'None loaded yet.' }));
-    else gp.appendChild(table([['graph', 'Graph'], ['dataset', 'Dataset'], ['counts', 'Nodes / edges'], ['backend', 'Backend'], ['act', '']], graphs.map(g => ({
+    else gp.appendChild(table([['graph', 'Graph'], ['dataset', 'Dataset'], ['version', 'Version'], ['counts', 'Nodes / edges'], ['backend', 'Backend'], ['act', '']], graphs.map(g => ({
       graph: el('span', { class: 'mono', text: g.graph }), dataset: g.receipt ? `${g.receipt.dataset} (${g.receipt.dataset_kind})` : 'no receipt',
+      version: g.receipt ? String(g.receipt.dataset_version || 'unrecorded').slice(0, 12) : '—',
       counts: g.receipt ? `${fmt(g.receipt.counts.nodes)} / ${fmt(g.receipt.counts.edges)}` : '—',
       backend: g.receipt ? `${(g.receipt.backend.commit || '').slice(0, 7)} ${g.receipt.backend.versions.parser}` : '—',
       act: el('span', {}, el('button', { onclick: () => { $('#cy-graph').value = g.graph; } }, 'Use'), ' ',
+        el('button', { class: 'ghost', onclick: async () => {
+          clear(vres).appendChild(el('p', { class: 'muted', text: 'Reading back ' + g.graph + '…' }));
+          try { const v = await api('/api/falkordb/verify', { graph: g.graph });
+            clear(vres).appendChild(el('p', { class: v.content_verified ? 'check ok' : 'check bad', text: v.content_verified ? `✓ ${g.graph}: contents equal the export (${fmt(v.counts.nodes)} nodes / ${fmt(v.counts.edges)} edges).` : `✗ ${g.graph}: ${v.problems.join('; ')}. Rebuild it.` }));
+          } catch (e) { clear(vres).appendChild(el('p', { class: 'error', text: e.message })); } } }, 'Verify'), ' ',
         el('button', { class: 'ghost', onclick: async () => { try { await api('/api/falkordb/drop', { graph: g.graph }); renderFalkor(); } catch (e) { alert(e.message); } } }, 'Drop'))
     }))));
+    gp.appendChild(vres);
     box.appendChild(gp);
-    const con = el('div', { class: 'panel wide' }, el('h2', {}, 'Cypher console ', el('span', { class: 'pill warn', text: 'read-only · disposable projection · not canonical' })));
-    const gsel = el('select', { id: 'cy-graph' }, graphs.map(g => el('option', { value: g.graph, text: g.graph })));
-    const ta = el('textarea', { id: 'cy-q', spellcheck: 'false', maxlength: '4000' });
-    ta.value = SAMPLE_CYPHER[1][1];
+    // Review F-14: preselect the current dataset version's projection and echo the graph in every result.
+    const mine = graphs.filter(g => g.receipt && g.receipt.dataset === state.ds && g.receipt.dataset_version === state.version);
+    const con = el('div', { class: 'panel wide' }, el('h2', {}, 'Read-only templates ', el('span', { class: 'pill warn', text: 'allowlisted · bounded · disposable projection · not canonical' })));
+    const gsel = el('select', { id: 'cy-graph' }, graphs.map(g => el('option', { value: g.graph, text: g.graph + (mine.includes(g) ? '  (current dataset)' : '') })));
+    if (mine.length) gsel.value = mine[0].graph;
+    const tsel = el('select', { id: 'cy-template' }, st.templates.map(t => el('option', { value: t.id, text: t.label })));
+    const pbox = el('div', { class: 'row2' });
+    const lim = el('input', { id: 'cy-limit', type: 'number', min: '1', max: '500', value: '50' });
+    const syncParams = () => {
+      clear(pbox);
+      const t = st.templates.find(x => x.id === tsel.value);
+      for (const [name, typ] of Object.entries(t.params)) pbox.appendChild(el('div', {}, el('label', { for: 'cy-p-' + name, text: `${name} (${typ === 'node' ? 'node ID' : 'reading'})` }),
+        el('input', { id: 'cy-p-' + name, 'data-param': name, maxlength: '64', spellcheck: 'false' })));
+    };
+    tsel.addEventListener('change', syncParams); syncParams();
     const res = el('div');
     con.appendChild(el('label', { for: 'cy-graph', text: 'Graph' })); con.appendChild(gsel);
-    con.appendChild(el('div', { class: 'tags', style: null }, SAMPLE_CYPHER.map(([n, c]) => el('button', { class: 'ghost', onclick: () => { ta.value = c; } }, n))));
-    con.appendChild(el('label', { for: 'cy-q', text: 'Query (GRAPH.RO_QUERY, 3 s timeout, 500 rows shown)' })); con.appendChild(ta);
+    if (!mine.length && graphs.length) con.appendChild(el('div', { class: 'hint', text: 'No projection of the current dataset version is loaded; the graphs listed belong to other datasets or versions.' }));
+    con.appendChild(el('label', { for: 'cy-template', text: 'Template' })); con.appendChild(tsel);
+    con.appendChild(pbox);
+    con.appendChild(el('label', { for: 'cy-limit', text: 'Row limit (1–500)' })); con.appendChild(lim);
     con.appendChild(el('div', { class: 'actions' }, el('button', { class: 'primary', disabled: !graphs.length, onclick: async () => {
       clear(res).appendChild(el('p', { class: 'muted', text: 'Running…' }));
+      const params = {};
+      pbox.querySelectorAll('input[data-param]').forEach(i => { params[i.dataset.param] = i.value.trim(); });
       try {
-        const r = await api('/api/falkordb/query', { graph: gsel.value, query: ta.value });
+        const r = await api('/api/falkordb/template', { graph: gsel.value, template: tsel.value, params, limit: Number(lim.value) });
         clear(res);
-        res.appendChild(el('p', { class: 'hint', text: `${r.row_count} rows${r.truncated ? ' (first 500 shown)' : ''} · ${r.ms} ms · ${r.mode}` }));
+        res.appendChild(el('p', { class: 'hint', text: `${r.graph} · ${r.label} · ${r.row_count} rows${r.truncated ? ` (more exist beyond the limit of ${r.limit})` : ' (complete)'} · ${r.ms} ms · ${r.mode}` }));
         const cols = r.columns.map((c, i) => [String(i), String(c)]);
         res.appendChild(table(cols, r.rows.map(row => Object.fromEntries(row.map((v, i) => [String(i), typeof v === 'string' || typeof v === 'number' || v === null ? v : el('pre', { class: 'cell', text: JSON.stringify(v) })])))));
       } catch (e) { clear(res).appendChild(el('p', { class: 'error', text: e.message })); }
-    } }, 'Run read-only query')));
+    } }, 'Run template')));
     con.appendChild(res);
     box.appendChild(con);
   }
 
+  // ---------- ORACC words: gloss is not translation ----------
+  async function openWord(id) {
+    const box = clear($('#detail'));
+    box.appendChild(el('p', { class: 'muted', text: 'Loading word…' }));
+    try {
+      const d = await api('/api/word' + q(bound({ id })));
+      clear(box);
+      const w = d.word;
+      box.appendChild(el('h2', {}, el('span', {}, 'Word ', el('span', { class: 'tok focus', text: w.form || '∅' }))));
+      box.appendChild(el('div', { class: 'callout', text: d.gloss_note }));
+      box.appendChild(kv([['Citation form', w.citation_form], ['Language', w.language], ['POS', w.pos], ['Guideword', w.guideword],
+        ['Sense gloss', w.sense_gloss === null || w.sense_gloss === undefined ? el('span', { class: 'muted', text: 'none supplied' }) : `${w.sense_gloss} — ${w.gloss_status}`],
+        ['Word ID', idLink(w.word_id, w.word_id)], ['Source record', idLink(w.source_record_id)]]));
+      box.appendChild(el('h3', { text: 'Backend word trace' }));
+      if (d.trace) {
+        const t = d.trace, pt = t.parent_trace || {};
+        box.appendChild(el('div', { class: 'check ok', text: `✓ Word → lemma → sense re-resolved in the snapshot payload member ${t.member} at ${t.payload_pointer}.` }));
+        box.appendChild(el('div', { class: 'check ' + (pt.status === 'verified' ? 'ok' : 'bad'), text: pt.status === 'verified'
+          ? `✓ Parent ZIP member ${pt.member} is byte-identical to the payload member (zip ${String(pt.zip_sha256).slice(0, 16)}…, CRC ${pt.crc32}).` : `✗ Parent ZIP not re-read: ${pt.status || 'not requested'}.` }));
+        box.appendChild(kv([['Text ref', t.ref], ['Line', t.line_label], ['Source word ID', t.source_word_id], ['Gloss status', t.gloss_status],
+          ['Rights', `${t.rights.status}${t.rights.reuse ? ' — ' + t.rights.reuse : ''}`]]));
+      } else box.appendChild(el('div', { class: 'check bad', text: '✗ ' + (d.trace_error || 'no trace') }));
+    } catch (e) { clear(box).appendChild(el('p', { class: 'error', text: e.message })); }
+  }
+  async function wordSearch(ev) {
+    ev.preventDefault();
+    const box = clear($('#wresults'));
+    const text = $('#wq').value.trim();
+    if (!text || !state.ds) return;
+    try {
+      const r = await api('/api/words' + q(bound({ q: text })));
+      box.appendChild(el('div', { class: 'hint', text: r.gloss_note }));
+      if (!r.rows.length) { box.appendChild(el('div', { class: 'muted', text: 'No word rows match (or this dataset has no word layer).' })); return; }
+      for (const w of r.rows) box.appendChild(el('button', { class: 'ex', onclick: () => openWord(w.word_id) }, `${w.form} → ${w.citation_form || '∅'}`,
+        el('span', { class: 'meta', text: `  gloss: ${w.sense_gloss ?? '—'}` })));
+      if (r.truncated) box.appendChild(el('div', { class: 'hint', text: 'First 50 shown.' }));
+    } catch (e) { box.appendChild(el('div', { class: 'error', text: e.message })); }
+  }
+
   // ---------- wiring ----------
-  function onDatasetChange() {
-    state.ds = $('#dataset').value;
+  function resetDatasetViews() {
     state.report = null; state.graph = { center: null, data: null, history: [], selected: null, pos: null };
-    state.result = null;
+    state.result = null; state.lastQuery = null;
     clear($('#results thead')); clear($('#results tbody')); clear($('#pager'));
     clear($('#qsummary')).appendChild(el('p', { class: 'muted', text: 'Pick an example or type a pattern.' }));
     clear($('#detail')).appendChild(el('p', { class: 'muted', text: 'Select a result row, then a token, to see occurrence detail and raw-source evidence.' }));
-    clear($('#graph')); clear($('#gdetail'));
+    clear($('#graph')); clear($('#gdetail')); clear($('#wresults'));
+    $('#gnote').textContent = '';
     renderDatasetBadge(); renderExamples(); setHash();
     const d = current();
     if (d && d.examples.length) setForm(d.examples[0]);
     if (state.view !== 'query') show(state.view);
   }
+  function onDatasetChange() {
+    state.ds = $('#dataset').value;
+    const d = current();
+    state.version = d ? d.version : null;
+    resetDatasetViews();
+  }
   async function init() {
     document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
     $('#dataset').addEventListener('change', onDatasetChange);
-    $('#refresh').addEventListener('click', async () => { $('#refresh').disabled = true; try { await api('/api/refresh', {}); await loadStatus(); renderExamples(); } finally { $('#refresh').disabled = false; } });
+    $('#refresh').addEventListener('click', async () => { $('#refresh').disabled = true; try { await api('/api/refresh', { deep: true }); await loadStatus(); } finally { $('#refresh').disabled = false; } });
     $('#qform').addEventListener('submit', ev => { ev.preventDefault(); runQuery(0); });
+    $('#wform').addEventListener('submit', wordSearch);
     $('#engine').addEventListener('change', syncSkip);
     $('#field').addEventListener('change', renderFrequent);
     document.querySelectorAll('input[name=policy]').forEach(r => r.addEventListener('change', renderFrequent));
@@ -599,7 +726,7 @@
       ev.preventDefault();
       const box = $('#gresults'); clear(box); box.hidden = false;
       try {
-        const r = await api('/api/search' + q({ dataset: state.ds, q: $('#gq').value.trim() }));
+        const r = await api('/api/search' + q(bound({ q: $('#gq').value.trim() })));
         if (!r.rows.length) box.appendChild(el('div', { class: 'muted', text: 'No matches (searches artifact keys, sign labels, source keys, alias targets, exact IDs).' }));
         r.rows.forEach(n => box.appendChild(el('button', { onclick: () => { box.hidden = true; focusNode(n.id); } }, el('span', { class: 'badge', text: n.kind }), ' ', n.label, el('span', { class: 'ids', text: '  ' + shortId(n.id) }))));
       } catch (e) { box.appendChild(el('div', { class: 'error', text: e.message })); }
@@ -612,14 +739,12 @@
     onDatasetChange();
     show(['query', 'graph', 'coverage', 'falkordb'].includes(hashView) ? hashView : 'query');
     if (current() && current().examples.length) runQuery(0);
-    // Discover newly persisted snapshots without a restart.
+    // Poll status only; the server scans in the background (an open tab no longer triggers discovery).
     setInterval(async () => {
       try {
-        const before = state.status.datasets.map(d => d.key + d.status).join();
-        const fresh = await api('/api/refresh', {});
         const st = await api('/api/status');
-        if (st.datasets.map(d => d.key + d.status).join() !== before) { state.status = st; renderStatus(); }
-        void fresh;
+        const sig = x => x.datasets.map(d => d.key + d.status + d.version).join();
+        if (sig(st) !== sig(state.status)) { state.status = st; renderStatus(); }
       } catch (_) { /* server restarting */ }
     }, 30000);
   }

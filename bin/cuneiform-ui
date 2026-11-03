@@ -1,37 +1,63 @@
 #!/usr/bin/env bash
 # Lifecycle for the local Cuneiform query UI and its isolated FalkorDB projection.
-# Usage: bin/cuneiform-ui {start|stop|restart|status|logs|ui-start|ui-stop|falkordb-up|falkordb-down|test}
+# Usage: bin/cuneiform-ui {start|stop|restart|status|logs|ui-start|ui-stop|falkordb-up|falkordb-down|security-check|test}
+#
+# FalkorDB isolation (review F-1/F-7):
+#   cuneiform-ui-falkordb        FalkorDB only (BROWSER=0), on the --internal network cuneiform-ui-internal:
+#                                no egress, no DNS, no published ports. Redis ACL: default user off.
+#   cuneiform-ui-falkordb-relay  fixed-code TCP relay (node from the same pinned image) that publishes
+#                                127.0.0.1:$FALKOR_PORT -> falkordb:6379. Read-only rootfs, no capabilities.
+#   Secrets: $UI_HOME/secrets/falkordb-{ro,rw}.password (0600, never printed). The ACL file mounted into the
+#   container holds only SHA-256 hashes.
 set -euo pipefail
+umask 077
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UI_HOME="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}"
-SOURCE_REPO="${CUNEIFORM_SOURCE_REPO:-$HOME/Projects/Fun/cuneiform-research}"
+BACKEND_REPO="${CUNEIFORM_BACKEND_REPO:-$HOME/Projects/Fun/cuneiform-research}"  # read only (git archive / git status)
+PIN_COMMIT="d6049e21b05dcc9c96b03cb7ca722cea921031a4"  # tested backend commit (corpus pilot, manifest-3 ledger)
+PIN_DIR="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}/backend-pin/$PIN_COMMIT"
+# Default: run against the read-only pinned export when it exists, so concurrent backend edits cannot change the UI.
+if [[ -z "${CUNEIFORM_SOURCE_REPO:-}" && -f "$PIN_DIR/.cuneiform-ui-pin.json" ]]; then SOURCE_REPO="$PIN_DIR"; else SOURCE_REPO="${CUNEIFORM_SOURCE_REPO:-$BACKEND_REPO}"; fi
 RESEARCH_ROOT="${CUNEIFORM_RESEARCH_ROOT:-$HOME/.local/share/cuneiform-research}"
 PY="${CUNEIFORM_PY:-$RESEARCH_ROOT/venv/bin/python}"
 UI_PORT="${CUNEIFORM_UI_PORT:-8740}"
 FALKOR_PORT="${CUNEIFORM_FALKORDB_PORT:-26380}"
-BROWSER_PORT="${CUNEIFORM_FALKORDB_BROWSER_PORT:-23001}"
+OLD_BROWSER_PORT=23001  # published by the pre-review build; must stay closed
 CONTAINER="cuneiform-ui-falkordb"
-# FalkorDB 4.18.8 + FalkorDB Browser 2.0.5 (bundled image), pinned by digest.
+RELAY="cuneiform-ui-falkordb-relay"
+NET_INT="cuneiform-ui-internal"
+NET_EDGE="cuneiform-ui-edge"
+LABEL="com.cuneiform-ui.owner=cuneiform-ui"
+# FalkorDB 4.18.8 (+ bundled Browser 2.0.5, not started), pinned by digest. Already cached; never pulled here.
 FALKOR_IMAGE="falkordb/falkordb@sha256:bbebe3dc3fd109f9a88a48fc97cd146bf4301410872d4dd5d4a755c2d71e37a7"
+SECRETS="$UI_HOME/secrets"
+CONF="$UI_HOME/falkordb-conf"
 PID_FILE="$UI_HOME/run/ui.pid"
 LOG_FILE="$UI_HOME/logs/ui.log"
+FALKORDB_ARGS="MAX_QUEUED_QUERIES 25 TIMEOUT_MAX 3000 TIMEOUT_DEFAULT 3000 RESULTSET_SIZE 10000 QUERY_MEM_CAPACITY 268435456 THREAD_COUNT 2 OMP_THREAD_COUNT 2"
+REDIS_ARGS="--aclfile /run/cuneiform-ui/users.acl --save 300 1 --maxmemory 512mb"
+RELAY_JS="const n=require('net');n.createServer(c=>{const u=n.connect(6379,'$CONTAINER');c.on('error',()=>u.destroy());u.on('error',()=>c.destroy());c.pipe(u);u.pipe(c)}).listen(6379,'0.0.0.0')"
+# Any change to the run configuration recreates the containers (data dir is kept).
+CONFIG_HASH="$(printf '%s\n' "$FALKOR_IMAGE" "$FALKORDB_ARGS" "$REDIS_ARGS" "$RELAY_JS" "$FALKOR_PORT" v2 | shasum -a 256 | cut -c1-16)"
 
-mkdir -p "$UI_HOME/run" "$UI_HOME/logs" "$UI_HOME/exports" "$UI_HOME/falkordb-data"
+mkdir -p "$UI_HOME/run" "$UI_HOME/logs" "$UI_HOME/exports" "$UI_HOME/falkordb-data" "$UI_HOME/duckdb-tmp"
 
 ui_running() { [[ -f "$PID_FILE" ]] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; }
 
 ui_start() {
   if ui_running; then echo "UI already running (pid $(cat "$PID_FILE")) at http://127.0.0.1:$UI_PORT/"; return 0; fi
   [[ -x "$PY" ]] || { echo "python not found: $PY (set CUNEIFORM_PY)"; exit 1; }
-  cd "$APP_DIR"
-  PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_RESEARCH_ROOT="$RESEARCH_ROOT" \
-    CUNEIFORM_UI_HOME="$UI_HOME" CUNEIFORM_UI_PORT="$UI_PORT" CUNEIFORM_FALKORDB_PORT="$FALKOR_PORT" \
-    CUNEIFORM_FALKORDB_BROWSER_PORT="$BROWSER_PORT" \
-    nohup "$PY" -B -m server.app >>"$LOG_FILE" 2>&1 &
+  if port_busy "$UI_PORT"; then echo "port $UI_PORT is already in use by another process; not starting"; exit 1; fi
+  # Working directory is the runtime dir, never the repo (DuckDB temp files stayed out of git: review F-19).
+  # The subshell execs into python, so $! is the server's own PID.
+  ( cd "$UI_HOME/run" || exit 1
+    export PYTHONPATH="$APP_DIR" PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_RESEARCH_ROOT="$RESEARCH_ROOT" \
+      CUNEIFORM_UI_HOME="$UI_HOME" CUNEIFORM_UI_PORT="$UI_PORT" CUNEIFORM_FALKORDB_PORT="$FALKOR_PORT"
+    exec nohup "$PY" -B -m server.app >>"$LOG_FILE" 2>&1 ) &
   echo $! >"$PID_FILE"
-  for _ in $(seq 1 40); do
-    if curl -fsS -m 2 "http://127.0.0.1:$UI_PORT/api/health" >/dev/null 2>&1; then
+  for _ in $(seq 1 120); do
+    if [[ "$(served_pid)" == "$(cat "$PID_FILE")" ]]; then
       echo "UI running (pid $(cat "$PID_FILE")) at http://127.0.0.1:$UI_PORT/"; return 0; fi
     ui_running || { echo "UI exited; see $LOG_FILE"; tail -20 "$LOG_FILE"; exit 1; }
     sleep 0.25
@@ -39,44 +65,201 @@ ui_start() {
   echo "UI did not become healthy; see $LOG_FILE"; exit 1
 }
 
+port_busy() { "$PY" -c 'import socket,sys; s=socket.socket(); r=s.connect_ex(("127.0.0.1", int(sys.argv[1]))); sys.exit(0 if r == 0 else 1)' "$1"; }
+
+served_pid() {  # PID reported by whatever answers on the UI port (empty if nothing does)
+  "$PY" -c 'import json,sys,urllib.request
+try: print(json.load(urllib.request.urlopen(urllib.request.Request("http://127.0.0.1:%s/api/status" % sys.argv[1], headers={"Host": "127.0.0.1:%s" % sys.argv[1]}), timeout=2))["server"]["pid"])
+except Exception: pass' "$UI_PORT"
+}
+
 ui_stop() {
-  if ui_running; then kill "$(cat "$PID_FILE")"; sleep 0.5; echo "UI stopped"; else echo "UI not running"; fi
+  if ui_running; then
+    local pid; pid="$(cat "$PID_FILE")"
+    kill "$pid"
+    for _ in $(seq 1 40); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
+    kill -0 "$pid" 2>/dev/null && { echo "UI pid $pid did not exit"; exit 1; }
+    echo "UI stopped"
+  else echo "UI not running"; fi
   rm -f "$PID_FILE"
 }
 
-falkor_up() {
-  command -v docker >/dev/null || { echo "docker CLI not available; UI still works without FalkorDB"; return 0; }
-  docker info >/dev/null 2>&1 || { echo "container runtime not reachable; UI still works without FalkorDB"; return 0; }
-  if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
-    owner="$(docker container inspect -f '{{index .Config.Labels "com.cuneiform-ui.owner"}}' "$CONTAINER")"
-    [[ "$owner" == "cuneiform-ui" ]] || { echo "refusing: $CONTAINER exists but is not owned by cuneiform-ui"; exit 1; }
-    [[ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER")" == "true" ]] || docker start "$CONTAINER" >/dev/null
+docker_ok() { command -v docker >/dev/null && docker info >/dev/null 2>&1; }
+
+owned() {  # $1 = container or network; true when it carries our ownership label
+  local kind="$1" name="$2" fmt='{{index .Labels "com.cuneiform-ui.owner"}}'
+  [[ "$kind" == container ]] && fmt='{{index .Config.Labels "com.cuneiform-ui.owner"}}'
+  [[ "$(docker "$kind" inspect -f "$fmt" "$name" 2>/dev/null)" == cuneiform-ui ]]
+}
+
+ensure_secrets() {
+  mkdir -p "$SECRETS" "$CONF"; chmod 700 "$SECRETS"; chmod 755 "$CONF"
+  for u in ro rw; do
+    f="$SECRETS/falkordb-$u.password"
+    [[ -s "$f" ]] || "$PY" -c 'import secrets,sys; open(sys.argv[1],"w").write(secrets.token_hex(32))' "$f"
+    chmod 600 "$f"
+  done
+  local ro_hash rw_hash
+  ro_hash="$(tr -d '\n' <"$SECRETS/falkordb-ro.password" | shasum -a 256 | cut -d' ' -f1)"
+  rw_hash="$(tr -d '\n' <"$SECRETS/falkordb-rw.password" | shasum -a 256 | cut -d' ' -f1)"
+  cat >"$CONF/users.acl" <<EOF
+user default off resetpass resetkeys resetchannels -@all
+user cuneiform-ro on #$ro_hash ~* resetchannels -@all +ping +graph.ro_query +graph.list +module|list
+user cuneiform-rw on #$rw_hash ~* resetchannels -@all +ping +graph.ro_query +graph.list +module|list +graph.query +graph.delete
+EOF
+  chmod 644 "$CONF/users.acl"  # hashes only; readable by the container's redis user
+}
+
+ensure_network() {  # name internal?
+  if docker network inspect "$1" >/dev/null 2>&1; then
+    owned network "$1" || { echo "refusing: network $1 exists but is not owned by cuneiform-ui"; exit 1; }
   else
-    docker run -d --name "$CONTAINER" \
-      --label com.cuneiform-ui.owner=cuneiform-ui \
-      --restart no --memory 1g \
-      -p "127.0.0.1:$FALKOR_PORT:6379" -p "127.0.0.1:$BROWSER_PORT:3000" \
-      -v "$UI_HOME/falkordb-data:/var/lib/falkordb/data" \
-      -e NEXT_TELEMETRY_DISABLED=1 \
-      -e "FALKORDB_ARGS=MAX_QUEUED_QUERIES 25 TIMEOUT 3000 RESULTSET_SIZE 10000" \
-      -e "REDIS_ARGS=--save 300 1 --maxmemory 512mb" \
-      "$FALKOR_IMAGE" >/dev/null
+    if [[ "$2" == internal ]]; then docker network create --internal --label "$LABEL" "$1" >/dev/null
+    else docker network create --label "$LABEL" "$1" >/dev/null; fi
   fi
-  for _ in $(seq 1 40); do
-    docker exec "$CONTAINER" redis-cli PING >/dev/null 2>&1 && { echo "FalkorDB up: redis://127.0.0.1:$FALKOR_PORT  Browser: http://127.0.0.1:$BROWSER_PORT"; return 0; }
+}
+
+retire_if_stale() {  # remove our own container when its configuration predates CONFIG_HASH (e.g. Browser on, bridge net)
+  local name="$1"
+  docker container inspect "$name" >/dev/null 2>&1 || return 0
+  owned container "$name" || { echo "refusing: $name exists but is not owned by cuneiform-ui"; exit 1; }
+  local have; have="$(docker container inspect -f '{{index .Config.Labels "com.cuneiform-ui.config"}}' "$name")"
+  if [[ "$have" != "$CONFIG_HASH" ]]; then
+    echo "recreating $name (configuration changed; data directory kept)"
+    docker rm -f "$name" >/dev/null
+  fi
+}
+
+falkor_up() {
+  docker_ok || { echo "container runtime not reachable; the UI still works without FalkorDB"; return 0; }
+  ensure_secrets
+  ensure_network "$NET_INT" internal
+  ensure_network "$NET_EDGE" edge
+  retire_if_stale "$CONTAINER"
+  retire_if_stale "$RELAY"
+  if ! docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+    docker run -d --name "$CONTAINER" --label "$LABEL" --label "com.cuneiform-ui.config=$CONFIG_HASH" \
+      --network "$NET_INT" --restart on-failure:3 --memory 1g --pids-limit 512 \
+      --security-opt no-new-privileges \
+      -e BROWSER=0 -e NEXT_TELEMETRY_DISABLED=1 \
+      -e "FALKORDB_ARGS=$FALKORDB_ARGS" -e "REDIS_ARGS=$REDIS_ARGS" \
+      -v "$UI_HOME/falkordb-data:/var/lib/falkordb/data" -v "$CONF:/run/cuneiform-ui:ro" \
+      "$FALKOR_IMAGE" >/dev/null
+  else
+    [[ "$(docker container inspect -f '{{.State.Running}}' "$CONTAINER")" == true ]] || docker start "$CONTAINER" >/dev/null
+  fi
+  if ! docker container inspect "$RELAY" >/dev/null 2>&1; then
+    docker create --name "$RELAY" --label "$LABEL" --label "com.cuneiform-ui.config=$CONFIG_HASH" \
+      --network "$NET_EDGE" -p "127.0.0.1:$FALKOR_PORT:6379" --restart on-failure:3 --memory 64m --pids-limit 64 \
+      --read-only --cap-drop ALL --security-opt no-new-privileges --user 65534:65534 \
+      --entrypoint /usr/local/bin/node "$FALKOR_IMAGE" -e "$RELAY_JS" >/dev/null
+    docker network connect "$NET_INT" "$RELAY"
+    docker start "$RELAY" >/dev/null
+  else
+    [[ "$(docker container inspect -f '{{.State.Running}}' "$RELAY")" == true ]] || docker start "$RELAY" >/dev/null
+  fi
+  for _ in $(seq 1 60); do
+    if REDISCLI_AUTH="$(cat "$SECRETS/falkordb-ro.password")" docker exec -e REDISCLI_AUTH "$CONTAINER" \
+         redis-cli --no-auth-warning --user cuneiform-ro PING 2>/dev/null | grep -q PONG \
+       && relay_ping; then
+      echo "FalkorDB up (isolated, Browser disabled): redis://127.0.0.1:$FALKOR_PORT via relay, ACL users cuneiform-ro/cuneiform-rw"
+      return 0
+    fi
     sleep 0.5
   done
-  echo "FalkorDB did not answer PING"; exit 1
+  echo "FalkorDB did not answer PING through the relay"; exit 1
+}
+
+relay_ping() {  # authenticated PING from the host through the published loopback port
+  "$PY" - "$FALKOR_PORT" "$SECRETS/falkordb-ro.password" <<'EOF' 2>/dev/null
+import socket, sys
+pw = open(sys.argv[2]).read().strip()
+s = socket.create_connection(('127.0.0.1', int(sys.argv[1])), timeout=2)
+def cmd(*a):
+    s.sendall(b''.join([b'*%d\r\n' % len(a)] + [b'$%d\r\n%s\r\n' % (len(x.encode()), x.encode()) for x in a]))
+    return s.recv(200)
+assert cmd('AUTH', 'cuneiform-ro', pw).startswith(b'+OK')
+assert cmd('PING').startswith(b'+PONG')
+EOF
 }
 
 falkor_down() {
-  if docker container inspect "$CONTAINER" >/dev/null 2>&1; then docker stop "$CONTAINER" >/dev/null && echo "FalkorDB stopped (container and data kept)"; else echo "FalkorDB container absent"; fi
+  docker_ok || { echo "container runtime not reachable"; return 0; }
+  for c in "$RELAY" "$CONTAINER"; do
+    if docker container inspect "$c" >/dev/null 2>&1; then
+      owned container "$c" || { echo "refusing: $c is not owned by cuneiform-ui"; exit 1; }
+      docker stop "$c" >/dev/null && echo "$c stopped (container and data kept)"
+    fi
+  done
+}
+
+security_check() {  # exits non-zero on any isolation regression
+  local fail=0
+  ok() { echo "  ok   $*"; }
+  bad() { echo "  FAIL $*"; fail=1; }
+  echo "FalkorDB isolation checks:"
+  if curl -s -m 2 -o /dev/null "http://127.0.0.1:$OLD_BROWSER_PORT/"; then bad "port $OLD_BROWSER_PORT (Browser) answers"; else ok "port $OLD_BROWSER_PORT (Browser) closed"; fi
+  if curl -s -m 2 -o /dev/null -H 'Host: evil.example' "http://127.0.0.1:$OLD_BROWSER_PORT/"; then bad "rebinding Host on $OLD_BROWSER_PORT answers"; else ok "rebinding Host on $OLD_BROWSER_PORT refused (nothing listening)"; fi
+  if docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+    [[ "$(docker container inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$CONTAINER")" == "$NET_INT " ]] && ok "falkordb attached only to $NET_INT" || bad "falkordb attached to other networks"
+    [[ "$(docker network inspect -f '{{.Internal}}' "$NET_INT")" == true ]] && ok "$NET_INT is internal (no egress)" || bad "$NET_INT is not internal"
+    [[ -z "$(docker container inspect -f '{{range $p, $b := .NetworkSettings.Ports}}{{if $b}}{{$p}}{{end}}{{end}}' "$CONTAINER")" ]] && ok "falkordb publishes no ports" || bad "falkordb publishes ports"
+    docker container inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$CONTAINER" | grep -qx 'BROWSER=0' && ok "Browser disabled (BROWSER=0)" || bad "Browser not disabled"
+    procs="$(docker exec "$CONTAINER" sh -c 'for p in /proc/[0-9]*; do tr "\0" " " < $p/cmdline 2>/dev/null; echo; done' 2>/dev/null || echo PROC_READ_FAILED)"
+    if [[ "$procs" == *PROC_READ_FAILED* || "$procs" != *redis-server* ]]; then bad "could not read container process list"
+    elif [[ "$procs" == *"node server.js"* ]]; then bad "Browser process running"; else ok "no Browser process (only redis-server)"; fi
+    # Egress probes go to the UI's own host port and a public address, never to another service's port.
+    if docker exec "$CONTAINER" bash -c "timeout 3 bash -c 'echo > /dev/tcp/host.docker.internal/$UI_PORT'" 2>/dev/null; then bad "falkordb can reach the host"; else ok "falkordb cannot reach the host"; fi
+    if docker exec "$CONTAINER" bash -c "timeout 3 bash -c 'echo > /dev/tcp/1.1.1.1/443'" 2>/dev/null; then bad "falkordb can reach the internet"; else ok "falkordb cannot reach the internet"; fi
+    if docker exec "$CONTAINER" sh -c 'getent hosts example.com' >/dev/null 2>&1; then bad "falkordb resolves external DNS"; else ok "no external DNS from falkordb"; fi
+    out="$(docker exec "$CONTAINER" redis-cli PING 2>&1 || true)"
+    [[ "$out" == *NOAUTH* ]] && ok "unauthenticated PING refused (NOAUTH)" || bad "unauthenticated PING: $out"
+    out="$(REDISCLI_AUTH="$(cat "$SECRETS/falkordb-ro.password")" docker exec -e REDISCLI_AUTH "$CONTAINER" redis-cli --no-auth-warning --user cuneiform-ro GRAPH.QUERY cuneiform_x 'RETURN 1' 2>&1 || true)"
+    [[ "$out" == *NOPERM* ]] && ok "read-only user cannot GRAPH.QUERY" || bad "read-only user GRAPH.QUERY: $out"
+    out="$(REDISCLI_AUTH="$(cat "$SECRETS/falkordb-rw.password")" docker exec -e REDISCLI_AUTH "$CONTAINER" redis-cli --no-auth-warning --user cuneiform-rw GRAPH.CONFIG SET TIMEOUT_MAX 0 2>&1 || true)"
+    [[ "$out" == *NOPERM* ]] && ok "loader user cannot GRAPH.CONFIG" || bad "loader GRAPH.CONFIG: $out"
+  else
+    echo "  skip FalkorDB container absent"
+  fi
+  for f in "$SECRETS"/falkordb-*.password; do
+    [[ -e "$f" ]] || continue
+    [[ "$(stat -f '%Lp' "$f")" == 600 ]] && ok "$(basename "$f") is 0600" || bad "$(basename "$f") permissions"
+  done
+  grep -q '#' "$CONF/users.acl" 2>/dev/null && ! grep -qE '>[^ ]' "$CONF/users.acl" && ok "ACL file holds hashes only" || bad "ACL file content"
+  if docker container inspect "$RELAY" >/dev/null 2>&1; then
+    [[ "$(docker container inspect -f '{{range $p, $b := .NetworkSettings.Ports}}{{range $b}}{{.HostIp}}{{end}}{{end}}' "$RELAY")" == 127.0.0.1 ]] && ok "relay publishes on 127.0.0.1 only" || bad "relay publish address"
+  fi
+  return $fail
+}
+
+pin_backend() {  # read-only export of $PIN_COMMIT's code; never writes to the backend repository
+  local commit="${1:-$PIN_COMMIT}"
+  local dest="$UI_HOME/backend-pin/$commit"
+  [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo "full 40-hex commit required"; exit 1; }
+  if [[ -f "$dest/.cuneiform-ui-pin.json" ]]; then echo "already pinned: $dest"; return 0; fi
+  local stage="$UI_HOME/backend-pin/.pending-$commit-$$"
+  rm -rf "$stage"; mkdir -p "$stage"
+  GIT_OPTIONAL_LOCKS=0 git -C "$BACKEND_REPO" archive --format=tar "$commit" cuneiform fixtures pyproject.toml | tar -x -C "$stage"
+  "$PY" -c '
+import hashlib, json, sys
+from pathlib import Path
+root, commit, src = Path(sys.argv[1]), sys.argv[2], sys.argv[3]
+files = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob("*")) if p.is_file()}
+tree = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()
+(root / ".cuneiform-ui-pin.json").write_text(json.dumps({"commit": commit, "source_repo": src, "paths": ["cuneiform", "fixtures", "pyproject.toml"],
+    "files": files, "tree_digest": tree, "method": "git archive (read-only)"}, indent=1) + "\n")
+print(f"pinned {commit[:7]}: {len(files)} files, digest {tree[:16]}")' "$stage" "$commit" "$BACKEND_REPO"
+  find "$stage" -type f -exec chmod 444 {} +; find "$stage" -type d -exec chmod 555 {} +
+  chmod 755 "$stage"; mv "$stage" "$dest"; chmod 555 "$dest"
+  echo "pinned export: $dest (restart the UI to use it)"
 }
 
 status() {
   if ui_running; then echo "UI: running pid $(cat "$PID_FILE") http://127.0.0.1:$UI_PORT/"; else echo "UI: stopped"; fi
-  if command -v docker >/dev/null && docker container inspect "$CONTAINER" >/dev/null 2>&1; then
-    echo "FalkorDB: $(docker container inspect -f '{{.State.Status}}' "$CONTAINER") redis://127.0.0.1:$FALKOR_PORT browser http://127.0.0.1:$BROWSER_PORT"
+  if docker_ok && docker container inspect "$CONTAINER" >/dev/null 2>&1; then
+    echo "FalkorDB: $(docker container inspect -f '{{.State.Status}} oom={{.State.OOMKilled}} restarts={{.RestartCount}}' "$CONTAINER") (internal network, no ports)"
+    docker container inspect "$RELAY" >/dev/null 2>&1 && echo "Relay: $(docker container inspect -f '{{.State.Status}}' "$RELAY") redis://127.0.0.1:$FALKOR_PORT (ACL auth required)"
+    echo "FalkorDB Browser: disabled (port $OLD_BROWSER_PORT closed)"
   else echo "FalkorDB: not created"; fi
   echo "Logs: $LOG_FILE"
   du -sh "$UI_HOME" 2>/dev/null | sed 's/^/Runtime storage: /'
@@ -90,8 +273,13 @@ case "${1:-}" in
   ui-stop) ui_stop ;;
   falkordb-up) falkor_up ;;
   falkordb-down) falkor_down ;;
-  status) status ;;
+  security-check) security_check ;;
+  status) status; echo "Backend source: $SOURCE_REPO" ;;
+  pin-backend) pin_backend "${2:-}" ;;
   logs) tail -n "${2:-80}" "$LOG_FILE" ;;
-  test) cd "$APP_DIR" && PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_RESEARCH_ROOT="$RESEARCH_ROOT" "$PY" -B -m unittest discover -s tests -v ;;
-  *) echo "usage: $0 {start|stop|restart|status|logs [n]|ui-start|ui-stop|falkordb-up|falkordb-down|test}"; exit 2 ;;
+  test)
+    security_check || { echo "isolation checks failed"; exit 1; }
+    cd "$APP_DIR" && PYTHONDONTWRITEBYTECODE=1 CUNEIFORM_SOURCE_REPO="$SOURCE_REPO" CUNEIFORM_FALKORDB_SECRET_DIR="$SECRETS" \
+      CUNEIFORM_FALKORDB_PORT="$FALKOR_PORT" CUNEIFORM_UI_REAL_HOME="$UI_HOME" "$PY" -B -m unittest discover -s tests -v ;;
+  *) echo "usage: $0 {start|stop|restart|status|logs [n]|ui-start|ui-stop|falkordb-up|falkordb-down|security-check|pin-backend [commit]|test}"; exit 2 ;;
 esac
