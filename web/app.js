@@ -169,6 +169,7 @@
       state.stale = { key: state.ds, version: null, reason: cur.error || cur.status };
     }
     if (state.ds) sel.value = state.ds;
+    if (cur && cur.kind === 'snapshot' && b.versions.parser === 'conservative-3') msgs.push('Parser limit: ATF counts and examples may include 129 misfiled comment lines (2,258 positions) in the full eBL snapshot. Signs are unaffected; a backend repair is pending.');
     const banner = $('#banner');
     // Review F-5 / N-1: a version change clears results; the dataset itself never switches by itself.
     const switched = before.ds !== null && (before.ds !== state.ds || before.version !== state.version);

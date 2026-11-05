@@ -27,7 +27,7 @@ EXPLORATIONS = [
     {'id': 'omens', 'title': 'Compare omen openings',
      'prompt': 'Omen collections list observations as “if … then …”. See how their lines open and what the editors’ translations say.',
      'genres': ['CANONICAL > Divination'], 'view': 'openings', 'opening': 'DIŠ',
-     'explain': 'Lines in texts whose source genre is Divination. Most omen lines open with DIŠ, which editors read šumma ‘if’ in this position (Borger, MZL 748); the next readings name what was observed.'},
+     'explain': 'Lines in texts whose source genre is Divination. Most omen lines open with DIŠ, usually read šumma (Borger marks this with a query) ‘if’ in this position (Borger, MZL 748); the next readings name what was observed.'},
     {'id': 'letters', 'title': 'Read letters',
      'prompt': 'Letters and reports the source catalogues as archival correspondence.',
      'genres': ['ARCHIVAL > Letter'],
@@ -280,6 +280,14 @@ class Explorations:
                 d = {'part': p['part'], 'determinative': p['determinative'], 'status': p['status']}
                 if p.get('sign'):
                     d['sign'] = RA.sign_card(p['sign'])
+                    if not p.get('glyph'):
+                        d['sign']['glyph'] = None
+                    d['assignment_note'] = {
+                        'value-agrees': 'Reading → sign assignment agrees with the retained OSL value list; this is not independent verification of the tablet reading.',
+                        'eBL-only': 'Reading → sign assignment from eBL only; not found in the retained OSL value list.',
+                        'ambiguous-index': 'Unspecified reading index (ₓ): no single glyph is assigned.',
+                        'disagrees-or-ambiguous': 'eBL assigns this reading to this sign, but OSL lists a different or additional glyph. No glyph is drawn.'
+                    }.get(p['status'], 'No unambiguous glyph assignment.')
                 if p.get('candidates'):
                     d['candidates'] = [RA.sign_card(n) for n in p['candidates']]
                 out['parts'].append(d)

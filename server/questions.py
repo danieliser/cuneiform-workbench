@@ -153,7 +153,7 @@ class Questions:
             return ex
         curated = {
             'sequence': [{'params': {'tokens': 'DIŠ ina'}, 'label': 'How omen lines often open',
-                          'note': 'At the start of an omen, editors read DIŠ as šumma ‘if’ (Borger, MZL 748).'},
+                          'note': 'At the start of an omen, DIŠ is usually read šumma (Borger marks this with a query) ‘if’ (Borger, MZL 748).'},
                          {'params': {'tokens': 'ina ŠA₃'}, 'label': 'A preposition before a logogram'}],
             'usage': [{'params': {'token': 'ina'}, 'label': 'A preposition (ORACC lemmatizes it as ina, PRP)'},
                       {'params': {'token': 'DIŠ'}, 'label': 'One sign, several uses depending on context'},

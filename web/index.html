@@ -28,19 +28,19 @@
 <main>
   <section id="view-questions" class="view">
     <div class="qlayout">
-      <nav class="qnav" aria-label="Explore and ask">
+      <details class="qnav" aria-label="Explore and ask"><summary>Change task</summary>
         <h2 class="qnav-title" id="x-title">Explore</h2>
         <ol id="x-list" class="q-list" aria-labelledby="x-title"></ol>
         <h2 class="qnav-title" id="q-nav-title">Ask a question</h2>
         <ol id="q-list" class="q-list" aria-labelledby="q-nav-title"></ol>
-      </nav>
+      </details>
       <div class="qmain" id="q-main" tabindex="-1">
         <header class="qhead">
           <h1 id="q-title"></h1>
-          <p id="q-prompt" class="q-prompt"></p>
+          <details class="task-help"><summary>About this task</summary><p id="q-prompt" class="q-prompt"></p></details>
         </header>
         <form id="q-form" class="qform" autocomplete="off" novalidate></form>
-        <div id="q-examples" class="q-examples"></div>
+        <details id="q-examples" class="q-examples"></details>
         <div id="q-result" class="q-result" aria-live="polite"></div>
       </div>
       <aside id="inspector" class="inspector" aria-label="Selected passage" hidden>

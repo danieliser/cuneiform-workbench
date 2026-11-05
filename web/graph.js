@@ -4,9 +4,9 @@
   'use strict';
   const NS = 'http://www.w3.org/2000/svg';
   const COLORS = {
-    Artifact: '#9a4a24', Witness: '#b7791f', SequenceVersion: '#2d5b88', Line: '#4f86b8', SignOccurrence: '#7d6a55',
-    SignType: '#7b4f9d', TranslationSegment: '#2c7a4c', SourceRecord: '#5c5c5c', Claim: '#c0563a', Composition: '#3d7f7a',
-    Passage: '#3d7f7a', WordToken: '#8a6d1f', Lemma: '#8a6d1f', Sense: '#8a6d1f', Aggregate: '#9b9083', '?': '#999'
+    Artifact: '#35679b', Witness: '#617285', SequenceVersion: '#2d5b88', Line: '#4f86b8', SignOccurrence: '#647485',
+    SignType: '#7b4f9d', TranslationSegment: '#2c7a4c', SourceRecord: '#5c5c5c', Claim: '#526d91', Composition: '#3d7f7a',
+    Passage: '#3d7f7a', WordToken: '#586d82', Lemma: '#586d82', Sense: '#586d82', Aggregate: '#7a8590', '?': '#999'
   };
   const RADIUS = { Artifact: 15, SourceRecord: 13, SequenceVersion: 13, Witness: 12, Line: 11, Claim: 11, TranslationSegment: 11, SignType: 10, SignOccurrence: 9 };
 
@@ -93,7 +93,7 @@
     apply();
     const defs = svgEl('defs', {}, svg);
     const marker = svgEl('marker', { id: 'arrow', viewBox: '0 0 10 10', refX: 10, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
-    svgEl('path', { d: 'M0,0 L10,5 L0,10 z', fill: '#9b9083' }, marker);
+    svgEl('path', { d: 'M0,0 L10,5 L0,10 z', fill: '#7a8590' }, marker);
     const root = svgEl('g', {}, svg);
     const edgeLayer = svgEl('g', {}, root), labelLayer = svgEl('g', {}, root), nodeLayer = svgEl('g', {}, root);
     const nodeById = new Map(data.nodes.map(n => [n.id, n]));

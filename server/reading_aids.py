@@ -27,6 +27,7 @@ def _load(name: str) -> dict:
 
 SIGN_MAP = _load('sign-map.json')
 NOTES = _load('reading-notes.json')
+VALUE_CHECKS = _load('value-checks.json')['checks']
 
 
 def value_key(part: str) -> str | None:
@@ -62,9 +63,10 @@ def glyph_parts(text: str) -> list[dict]:
         names = SIGN_MAP['values'].get(k, []) if k else []
         if len(names) == 1:
             s = SIGN_MAP['signs'][names[0]]
-            ok = bool(s['unicode']) and s['osl'] != 'differs'
+            check = VALUE_CHECKS.get(k, 'not-in-osl')
+            ok = bool(s['unicode']) and s['osl'] != 'differs' and check not in ('ambiguous-index', 'disagrees-or-ambiguous')
             parts.append(dict(p, sign=names[0], glyph=''.join(map(chr, s['unicode'])) if ok else None,
-                              status=('verified' if s['osl'] == 'agrees' else 'eBL-only') if ok else 'no-unicode', abz=s['abz']))
+                              status=('value-agrees' if check == 'agrees' else 'eBL-only') if ok else check, abz=s['abz']))
         elif len(names) > 1:
             parts.append(dict(p, sign=None, glyph=None, status='ambiguous', candidates=names))
         else:

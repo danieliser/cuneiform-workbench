@@ -85,6 +85,21 @@ class GlyphMapTest(unittest.TestCase):
         self.assertTrue(parts[0]['determinative'])
         self.assertEqual(parts[0]['sign'], 'AN')
 
+    def test_value_assignment_is_separate_from_sign_unicode(self):
+        for value in ('du₈', 'gu₃', 'uₓ'):
+            part, = RA.glyph_parts(value)
+            self.assertNotEqual(part['status'], 'verified')
+            self.assertIsNone(part['glyph'], value)
+        self.assertEqual(RA.glyph_parts('ina')[0]['status'], 'value-agrees')
+        self.assertEqual(RA.glyph_parts('KUR')[0]['status'], 'value-agrees')
+        self.assertEqual(RA.SIGN_MAP['abz']['ABZ1']['status'], 'verified')
+
+    def test_notes_preserve_source_qualifiers(self):
+        note = RA.NOTES['readings']['DIŠ']
+        self.assertNotIn('did not commit', note['caution'])
+        self.assertIn('Neo-Assyrian', note['uses'][3]['context'])
+        self.assertIn('query', note['uses'][0]['use'])
+
     def test_ambiguous_values_get_no_glyph(self):
         amb = next(v for v, names in RA.SIGN_MAP['values'].items() if len(names) > 1)
         p, = RA.glyph_parts(amb)

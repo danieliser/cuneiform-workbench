@@ -15,9 +15,9 @@
         {"context": "At the start of a line in omen collections", "use": "read šumma, Akkadian ‘if’, opening the observed sign (the protasis). Borger marks this equation with a query and notes that some editors transliterate it as ¶.", "language": "Akkadian (logographic use)", "kind": "contextual reading", "cite": "mzl", "where": "MZL no. 748"},
         {"context": "As a number", "use": "the numeral 1 (also 60 in the sexagesimal system)", "language": "number sign", "kind": "numeral", "cite": "mzl", "where": "MZL no. 748"},
         {"context": "Before a personal name", "use": "a determinative (unpronounced classifier) marking a, usually male, personal name; transliterated {m} or {I} when used this way", "language": "determinative", "kind": "classifier", "cite": "mzl", "where": "MZL no. 748"},
-        {"context": "In some first-millennium spellings", "use": "the Akkadian preposition ana ‘to, for’ (the release’s sign layer writes ana with the same sign, ABZ 480)", "language": "Akkadian", "kind": "syllabic or logographic value", "cite": "mzl", "where": "MZL no. 748"}
+        {"context": "In Neo-Assyrian spellings (Borger: n.)", "use": "the Akkadian preposition ana ‘to, for’ (the release’s sign layer writes ana with the same sign, ABZ 480)", "language": "Akkadian", "kind": "syllabic or logographic value", "cite": "mzl", "where": "MZL no. 748"}
       ],
-      "caution": "The transliteration keeps DIŠ because the editor did not commit to one reading in the text itself; the source's English translation of the line, where it exists, shows the editor's contextual rendering."
+      "caution": "Capitals give the sign name; the source translation, where present, gives the editor’s contextual rendering."
     }
   },
   "conventions": {

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Docker-free synthetic demo; never reads the canonical corpus store.
+set -euo pipefail
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export CUNEIFORM_UI_HOME="${CUNEIFORM_DEMO_HOME:-$HOME/.local/share/cuneiform-ui-demo}"
+export CUNEIFORM_RESEARCH_ROOT="$CUNEIFORM_UI_HOME/research"
+export CUNEIFORM_PY="${CUNEIFORM_PY:-$APP_DIR/.venv/bin/python}"
+export CUNEIFORM_UI_PORT="${CUNEIFORM_UI_PORT:-8741}"
+export CUNEIFORM_UI_SHOW_DEMOS=always
+export CUNEIFORM_FALKORDB_PORT=1
+export CUNEIFORM_FALKORDB_SECRET_DIR="$CUNEIFORM_UI_HOME/no-graph-secrets"
+# A demo must use its own immutable export, not an inherited source override.
+unset CUNEIFORM_SOURCE_REPO
+case "${1:-start}" in
+  start) "$APP_DIR/bin/cuneiform-ui" pin-backend; exec "$APP_DIR/bin/cuneiform-ui" ui-start ;;
+  stop) exec "$APP_DIR/bin/cuneiform-ui" ui-stop ;;
+  status) exec "$APP_DIR/bin/cuneiform-ui" status ;;
+  *) echo 'usage: bin/demo [start|stop|status]'; exit 2 ;;
+esac

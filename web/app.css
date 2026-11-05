@@ -1,17 +1,13 @@
 :root {
-  --bg: #f6f2ea; --surface: #fffdf8; --surface-2: #f3eee4; --ink: #1f1a14; --muted: #6e6457; --line: #e2d9ca; --rule: #cfc3b0;
-  --accent: #974522; --accent-ink: #fff8ef; --lapis: #2d5b88; --ok: #2c7a4c; --warn: #9a620e; --bad: #a8352a;
-  --gap: #8b7f72; --sel: #f1dcc4; --hit: #f3d9b9; --shadow: none;
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #f5f7f9; --ink: #20262d; --muted: #56616e; --line: #e0e5eb; --rule: #c5cdd6;
+  --accent: #245f9b; --accent-ink: #ffffff; --lapis: #2d5b88; --ok: #2c7a4c; --warn: #56616e; --bad: #a8352a;
+  --gap: #637181; --sel: #e7eff9; --hit: #e1ecfa; --shadow: none;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --serif: "Iowan Old Style", Charter, "Palatino Linotype", Palatino, Georgia, serif;
   --radius: 4px;
 }
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #15120e; --surface: #1c1915; --surface-2: #24201a; --ink: #efe7da; --muted: #a59988; --line: #353027; --rule: #4a4236;
-    --accent: #d68a5c; --accent-ink: #1a120c; --lapis: #86b0dc; --ok: #6cc08f; --warn: #e0a64a; --bad: #e57a6e;
-    --gap: #8c8172; --sel: #3d2d20; --hit: #4a3220; }
-}
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
@@ -466,3 +462,44 @@ button.op-line:hover { text-decoration: underline; text-decoration-color: var(--
 .tr-text .anc, .op-tr .anc { font-style: normal; font-family: var(--serif); letter-spacing: .01em; }
 .qform:empty { display: none; }
 dl.meta > div { display: flex; gap: 6px; min-width: 0; } dl.meta > div dd { margin: 0; }
+
+/* Plain reading workspace: one task, with navigation disclosed on demand. */
+.brand-name { font: 600 15px/1.3 var(--sans); letter-spacing: 0; }
+.qlayout { display: block; max-width: 1080px; }
+.qnav { position: static; padding: 14px 0 0; }
+.qnav > summary { cursor: pointer; color: var(--lapis); width: fit-content; padding: 6px 0; }
+.qnav[open] { border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.qnav-title { font: 600 13px/1.4 var(--sans); letter-spacing: 0; text-transform: none; margin: 12px 0 4px; }
+.q-list { border: 0; display: block; }
+.q-item { font: 14px/1.4 var(--sans); padding: 7px 10px; }
+.q-count { display: inline; margin-left: 8px; }
+.qmain { padding-top: 18px; max-width: none; }
+.qhead h1 { font: 600 23px/1.3 var(--sans); margin-bottom: 12px; }
+.q-prompt:empty { display: none; }
+.task-help { margin: 0 0 14px; color: var(--muted); }
+.task-help summary { cursor: pointer; font-size: 13px; }
+.task-help .q-prompt { margin: 8px 0; font-size: 14px; }
+.panel, .state, .x-passage, .sign-card, .pblock { box-shadow: none; border-radius: 0; }
+.x-passage { border: 0; border-top: 1px solid var(--line); padding: 20px 0; background: transparent; }
+.pb-cap, .surface { text-transform: none; letter-spacing: 0; }
+.chip, .badge { border: 0; background: transparent; padding-left: 0; }
+@media (max-width: 700px) {
+  .topbar { position: static; gap: 8px; padding: 10px 14px; height: auto; }
+  .dataset-picker { width: 100%; flex-wrap: wrap; }
+  .dataset-picker select { max-width: 100%; flex: 1; min-width: 0; }
+  .tabs { width: 100%; gap: 0; }
+  .tabs button { padding: 8px; font-size: 12px; }
+  .qnav .q-list { display: block; overflow: visible; white-space: normal; }
+  .qnav .q-list li { display: block; }
+  .qnav .q-item { width: 100%; white-space: normal; border: 0; }
+  .qhead h1 { font-size: 21px; }
+  .qnav-title { margin-top: 12px; }
+  .qlayout { display: block; }
+}
+
+#q-examples { display: block; }
+#q-examples:empty { display: none; }
+#q-examples summary { cursor: pointer; }
+.qf-input input { font-family: var(--sans); }
+.inspector { position: fixed; right: 0; top: 52px; bottom: 0; width: min(460px, 100vw); height: calc(100vh - 52px); z-index: 7; padding: 20px; background: var(--surface); border-left: 1px solid var(--line); box-shadow: none; }
+@media (max-width: 700px) { .inspector { top: 0; height: 100dvh; width: 100%; } }

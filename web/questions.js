@@ -6,7 +6,7 @@
   const { el, clear, fmt, api, q, bound, state } = CW;
   const $ = s => document.querySelector(s);
   const QS = { registry: null, regFor: null, current: null, inputs: {}, results: {}, drill: {}, view: {}, lastDs: null,
-    notice: null, seq: 0, insp: null, sel: null, inspReturn: null, glyphs: 'paired' };
+    notice: null, seq: 0, insp: null, sel: null, inspReturn: null, glyphs: 'reading' };
   const isX = id => typeof id === 'string' && id.startsWith('x:');
 
   // ---------- small helpers ----------
@@ -98,6 +98,7 @@
     if (!qdef(id) && !xdef(id)) return;
     if (!isX(QS.current)) readForm();
     QS.current = id;
+    $('.qnav').open = false;
     closeInspector();
     render();
     CW.setHash();
@@ -157,7 +158,7 @@
     const box = clear($('#q-examples'));
     const ex = ((QS.registry.examples || {})[d.id] || []).slice(0, 5);
     if (!ex.length) return;
-    box.appendChild(el('span', { class: 'hint ex-title', text: 'Examples' }));
+    box.appendChild(el('summary', { class: 'hint ex-title', text: 'Examples' }));
     const list = el('ul', { class: 'ex-list' });
     for (const e of ex) {
       list.appendChild(el('li', {}, el('button', { type: 'button', class: 'ex-btn', title: e.note || null,
@@ -454,7 +455,7 @@
       return;
     }
     const tb = r.tablet;
-    const meta = [['Period', tb.period ? tb.period + (tb.period_uncertain ? ' (uncertain)' : '') : null], ['Collection', tb.collection], ['Museum', tb.museum],
+    const meta = [['Period (source catalogue)', tb.period ? tb.period + (tb.period_uncertain ? ' (uncertain)' : '') : null], ['Collection', tb.collection], ['Museum', tb.museum],
       ['CDLI', tb.cdli], ['Genre', tb.genres.join('; ') || null], ['Joins', tb.joins ? String(tb.joins) : null]].filter(x => x[1]);
     box.appendChild(el('div', { class: 'answer tablet-head' }, el('h2', { class: 'headline', text: tb.catalog }),
       tb.description ? el('p', { class: 'desc', text: tb.description }) : null,
@@ -506,7 +507,7 @@
       for (let j = i; j <= end; j++) lineRow(r.lines[j]).forEach(x => inner.appendChild(x));
       const lab = k => r.lines[k].label || '';
       list.appendChild(el('li', { class: 'tblock' }, inner, el('div', { class: 'tb-tr' }, trs.map(t => el('div', { class: 'pb-tr', lang: t.language },
-        el('span', { class: 'pb-cap', text: `${names[t.language] || t.language} · source edition · ${t.lines > 1 ? `lines ${lab(idx[t.first_line])}–${lab(idx[t.last_line])}` : `line ${lab(idx[t.first_line])}`}` }),
+        el('span', { class: 'pb-cap', text: `${names[t.language] || t.language} · source edition · ${t.lines > 1 ? `lines ${lab(idx[t.first_line])}–${lab(idx[t.last_line])}` : translationLabel(t, lab(idx[t.first_line]))}` }),
         trText(t.text),
         t.status === 'extent-unresolved' ? el('span', { class: 'hint', text: `The source says it runs to “${t.extent}”; that label is not in this edition, so it is shown at its first line.` }) : null)))));
       i = end + 1;
@@ -664,7 +665,7 @@
   function glyphLegend() {
     return el('p', { class: 'glyph-legend hint' },
       el('span', { class: 'cun', 'aria-hidden': 'true', text: '𒁹' }), ' Glyphs are standard Unicode cuneiform looked up from each reading in the eBL sign list. They are not this tablet’s handwriting, and this dataset has no photographs. ',
-      el('span', { class: 'dim', text: '·' }), ' marks a reading with no verified glyph.');
+      el('span', { class: 'dim', text: '·' }), ' marks a reading with no unambiguous glyph assignment.');
   }
   function glyphToggle(redraw) {
     return segmented('Show', [['paired', 'Reading + glyph'], ['reading', 'Reading only']], QS.glyphs, v => { QS.glyphs = v; redraw(); });
@@ -782,12 +783,15 @@
         el('td', { text: t.period || '—' }), el('td', { class: 'n', text: fmt(t.lines) }), el('td', {}, trSummary(t.translations)))))));
     box.appendChild(pagerX(r, id, 'texts, translated first'));
   }
+  function translationLabel(t, label) {
+    return t.status === 'line' ? `attached after line ${label} · no source range; may cover earlier lines` : `line ${label}`;
+  }
   function passageBlock(bl, ctx) {
     const tr = bl.translation;
     const lines = el('ol', { class: 'pb-lines' }, bl.lines.map(ln => el('li', {}, el('span', { class: 'ln-no', text: ln.label || '' }),
       el('span', { class: 'ln-toks' }, ln.tokens.map((t, i) => [i ? ' ' : null, readingButton(t, 'atf', ctx)])))));
     const names = { en: 'English', de: 'German', ar: 'Arabic' };
-    const span = bl.lines.length > 1 ? `lines ${bl.lines[0].label}–${bl.lines[bl.lines.length - 1].label}` : `line ${bl.lines[0].label}`;
+    const span = bl.lines.length > 1 ? `lines ${bl.lines[0].label}–${bl.lines[bl.lines.length - 1].label}` : translationLabel(tr, bl.lines[0].label);
     return el('div', { class: 'pblock' }, lines,
       el('div', { class: 'pb-tr', lang: tr.language },
         el('span', { class: 'pb-cap', text: `${names[tr.language] || tr.language} translation · source edition · ${span}` }),
@@ -814,7 +818,7 @@
     const pct = o.lines ? Math.round(100 * o.opened.lines / o.lines) : 0;
     box.appendChild(el('div', { class: 'answer' }, el('h2', { class: 'headline' },
       `${fmt(o.opened.lines)} of ${fmt(o.lines)} lines (${pct}%) in ${fmt(o.tablets)} divination texts open with `, el('span', { class: 'r', text: o.opening }), '.'),
-      el('p', { class: 'sub' }, 'In this position editors read DIŠ as ', el('i', { text: 'šumma' }), ' ‘if’: the line states an observation, and the result follows. ',
+      el('p', { class: 'sub' }, 'In this position DIŠ is usually read (Borger marks this with a query) as ', el('i', { text: 'šumma' }), ' ‘if’: the line states an observation, and the result follows. ',
         el('button', { type: 'button', class: 'linkish', onclick: ev => openReading({ raw: o.opening, reading: o.opening }, 'atf', {}, ev.currentTarget) }, 'Why DIŠ can mean different things'))));
     const max = o.next.length ? o.next[0].lines : 0;
     const tb = el('tbody');
@@ -865,7 +869,7 @@
       el('span', {}, label ? el('span', { class: 'hint', text: label + ' ' }) : null, el('b', { text: card.name }),
         card.abz && card.abz.length ? el('span', { class: 'hint', text: ` · ABZ ${card.abz.join(', ')}` }) : null,
         card.codepoints && card.codepoints.length ? el('span', { class: 'hint mono', text: ' · ' + card.codepoints.join(' ') }) : null,
-        el('br'), el('span', { class: 'hint', text: card.glyph ? (card.check === 'agrees' ? 'Glyph: eBL sign list, same code point in ORACC OSL.' : 'Glyph: eBL sign list only (not in ORACC OSL under this name).') : 'No verified glyph.' }),
+        el('br'), el('span', { class: 'hint', text: card.glyph ? (card.check === 'agrees' ? 'Sign name → Unicode agrees in eBL and OSL; this does not verify the reading → sign assignment.' : 'Glyph: eBL sign list only (not in ORACC OSL under this name).') : 'No verified glyph.' }),
         ' ', el('a', { href: card.link, target: '_blank', rel: 'noopener noreferrer', text: 'eBL sign page' })));
   }
   function renderReading(body, r, ctx, t) {
@@ -881,7 +885,7 @@
       a.signs.forEach(c => parts.push(c.link ? signLine(c, a.status === 'ambiguous' ? 'could be' : null) : el('p', { text: c.name })));
     } else {
       for (const p of r.parts) {
-        if (p.sign) parts.push(signLine(p.sign, p.determinative ? `{${p.part}} determinative:` : `${p.part}:`));
+        if (p.sign) { parts.push(el('p', { class: 'hint', text: p.assignment_note })); parts.push(signLine(p.sign, p.determinative ? `{${p.part}} determinative:` : `${p.part}:`)); }
         else if (p.candidates) { parts.push(el('p', { class: 'hint', text: `${p.part} is a value of ${p.candidates.length} signs in the eBL list:` })); p.candidates.forEach(c => parts.push(signLine(c, 'could be'))); }
         else parts.push(el('p', { class: 'hint', text: `${p.part}: ${p.status === 'number' ? 'a number (no glyph lookup).' : 'not found as a sign value in the eBL list, so no glyph.'}` }));
       }
@@ -977,6 +981,11 @@
   }
   $('#insp-close').addEventListener('click', closeInspector);
   document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !$('#inspector').hidden && !ev.target.closest('.suggest, [role=combobox]')) closeInspector(); });
+  window.addEventListener('hashchange', async () => {
+    const shouldRun = fromHash();
+    await boot();
+    if (shouldRun && state.version) run(QS.current, {});
+  });
   const auto = fromHash();
   // app.js's first dataset selection calls onReset (and so boot); run the linked question once it is ready.
   const first = CW.onReset;
