@@ -810,7 +810,7 @@
         el('button', { type: 'button', class: 'ghost', onclick: () => openTablet(t.catalog) }, 'Read the whole tablet →')));
     }
     box.insertBefore(el('div', { class: 'toolbar' }, glyphToggle(renderExplorationResult)), box.querySelector('.x-passage'));
-    box.insertBefore(glyphLegend(), box.querySelector('.x-passage'));
+    if (QS.glyphs === 'paired') box.insertBefore(glyphLegend(), box.querySelector('.x-passage'));
     box.appendChild(pagerX(r, id, 'translated texts'));
   }
   function renderXOpenings(r, box) {
