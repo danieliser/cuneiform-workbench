@@ -607,6 +607,7 @@
       box.appendChild(el('div', { class: 'panel wide' }, el('h2', {}, el('span', { class: 'badge ' + d.kind, text: tagFor(d) }), ' ', d.title),
         el('div', { class: 'callout scope', text: 'Scope: ' + (sel.note || '—') }), el('p', { class: 'muted', text: d.authority }),
         kv([['Dataset version', el('span', { class: 'ids', text: d.version || '—' })], ['Verified at', d.verified_at ? new Date(d.verified_at * 1000).toLocaleString() : '—'],
+          d.verification ? ['Per-request check', `${d.verification.mode} — ${d.verification.note}`] : undefined,
           ['Publication', `${pub.status || '—'}${pub.note ? ' — ' + pub.note : ''}${pub.ledger_tail_note ? ' · ' + pub.ledger_tail_note : ''}`],
           d.superseded ? ['Superseded', d.superseded.note] : undefined, d.supersedes ? ['Supersedes', d.supersedes.note] : undefined,
           sel.oracc ? ['ORACC adapter', `${sel.oracc.adapter} — ${sel.oracc.note}`] : undefined].filter(Boolean)),

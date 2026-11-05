@@ -133,12 +133,19 @@ class SnapshotPathTest(Roots, unittest.TestCase):
         pub = next(d for d in listing['datasets'] if d['key'] == sid) if ds.status == 'ready' else None
         sel = b.datasets[sid].public()['selection']
         self.assertEqual(sel['kind'], 'cohort')
-        self.assertIn('COHORT', sel['label'])
         self.assertIsInstance(sel['eligible_records'], int)
         self.assertIsInstance(sel['parent_records'], int)
-        self.assertIn('not corpus frequencies', sel['note'])
         self.assertEqual(sel['parent']['sha256'], parent_sha)
-        self.assertIn('COHORT', b.datasets[sid].title)
+        if sel['backend_kind'] == 'all eligible records of a fixed release':
+            # Backend 057a0b7 (Q-023): an all-eligible cohort (size=None, no key filter) names the fixed release and its caveats.
+            self.assertTrue(sel['label'].startswith('FULL ELIGIBLE '), sel['label'])
+            self.assertIn('not linguistic completeness', sel['note'])
+            self.assertEqual(sel['accounting']['status'], 'complete-partition')
+            self.assertIn('FULL ELIGIBLE', b.datasets[sid].title)
+        else:
+            self.assertIn('COHORT', sel['label'])
+            self.assertIn('not corpus frequencies', sel['note'])
+            self.assertIn('COHORT', b.datasets[sid].title)
         self.assertIsNotNone(pub)
         self.assertEqual({i['source'] for i in ds.inputs}, {'ebl-cohort', 'parent'})
         self.assertEqual(next(i for i in ds.inputs if i['source'] == 'parent')['receipt'], 'receipt:' + '0' * 32)
@@ -146,7 +153,7 @@ class SnapshotPathTest(Roots, unittest.TestCase):
         e = Explorer(b)
         r = e.query({'dataset': sid, 'pattern': ['A', 'B']})
         self.assertGreater(r['count'], 0)
-        self.assertIn('cohort', r['scope_note'])
+        self.assertEqual(r['scope_note'], sel['note'])  # the backend's own scope note, cohort or full release
         occ = e.occurrence(sid, r['rows'][0]['occurrence_ids'][0], ds.version)
         self.assertIsNone(occ['trace_error'])
         pt = occ['trace']['parent_trace']
@@ -592,6 +599,66 @@ class LedgerFormatTest(Roots, unittest.TestCase):
         b.timing_begin()
         e.occurrence(sid, r['rows'][0]['occurrence_ids'][0], ds.version)
         self.assertIn('end_to_end_ms', b.timing_parts()['backend_trace'])
+
+
+class LargeSnapshotTest(Roots, unittest.TestCase):
+    """Q-023: above PER_REQUEST_REHASH_MAX a request checks stat fingerprint + manifest bytes + ledger, not every hash."""
+
+    def setUp(self):
+        super().setUp()
+        import server.bridge as bridge
+        self.bridge, self.saved = bridge, bridge.PER_REQUEST_REHASH_MAX
+        bridge.PER_REQUEST_REHASH_MAX = 1024  # the fixture snapshot counts as "large"
+
+    def tearDown(self):
+        self.bridge.PER_REQUEST_REHASH_MAX = self.saved
+        super().tearDown()
+
+    def test_bounded_per_request_check_is_labelled_and_still_refuses(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        self.assertEqual(ds.status, 'ready', ds.error)
+        self.assertEqual(ds.public()['verification']['mode'], 'bounded-per-request')
+        from server.bridge import VersionChanged
+        from server.explore import Explorer
+        e = Explorer(b)
+        b.timing_begin()
+        e.query({'dataset': sid, 'version': ds.version, 'pattern': ['A', 'B', 'C']})
+        parts = b.timing_parts()
+        self.assertIn('payload hashes verified at verified_at', parts['per_request_check'])
+        self.assertEqual(parts['publication_at_read'], 'ledgered')
+        # Any write through normal means changes the stat fingerprint (mtime/ctime): the request is refused and the
+        # snapshot goes back to a full re-hash. Identical bytes then verify again; different bytes would fail there.
+        before = ds.verified_at
+        target = sorted((ds.path / 'parquet').glob('*.parquet'))[0]
+        writable(ds.path / 'parquet'); writable(target)
+        target.write_bytes(target.read_bytes())
+        with self.assertRaises(VersionChanged):
+            e.query({'dataset': sid, 'version': ds.version, 'pattern': ['A', 'B']})
+        b.discover(wait=30)
+        self.assertTrue(wait_until(lambda: ds.status == 'ready' and not ds.verifying), ds.error)
+        self.assertGreater(ds.verified_at, before)
+        # manifest.json bytes are compared on the bounded path even when the stat fingerprint is forged back.
+        ds.manifest_file_sha256 = '0' * 64
+        with self.assertRaises(VersionChanged):
+            e.query({'dataset': sid, 'version': ds.version, 'pattern': ['A', 'B']})
+
+    def test_bounded_path_refuses_a_corrupt_ledger(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        led = self.research / 'snapshots' / '.publication-ledger.jsonl'
+        saved = led.read_text()
+        led.write_text('not json\n' + saved)
+        from server.bridge import VersionChanged
+        from server.explore import Explorer
+        with self.assertRaises(VersionChanged) as cm:
+            Explorer(b).query({'dataset': sid, 'version': ds.version, 'pattern': ['A', 'B']})
+        self.assertIn('ledger-corrupt', str(cm.exception))
+        led.write_text(saved)
 
 
 class OraccAdapterTest(unittest.TestCase):

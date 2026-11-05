@@ -40,7 +40,9 @@ sys.dont_write_bytecode = True
 SUPPORTED = {'schema': {'2'}, 'parser': {'conservative-3'}, 'projection': {'linked-1'}}
 # 63f4221: corpus pilot with ledger format 2, ledger-bound store reads (StoreEntry) and typed refusals; independently
 # accepted in cuneiform-research reviews/corpus-pilot-review-v0.3.md. d6049e2 lacks storage.verified/store_path.
-TESTED_COMMITS = {'63f42216243141f4b10cdfd3d7ddd514c85b63d7'}
+# 057a0b7 (Q-023): full eligible eBL import, bounded lookups (SCOPES_SQL, partition-first). Writer-tested only: its 75-test
+# suite passed on a clean export (disk tests included); independent review pending. The UI calls it "tested" in the byte-identity sense.
+TESTED_COMMITS = {'63f42216243141f4b10cdfd3d7ddd514c85b63d7', '057a0b757ed3dc05e486893bc344a15dd73c86d8'}
 
 SNAPSHOT_RE = re.compile(r'^snapshot:[0-9a-f]{32}$')
 DATASET_RE = re.compile(r'^(snapshot:[0-9a-f]{32}|[a-z][a-z0-9-]{1,40})$')
@@ -50,7 +52,16 @@ TOKEN_RE = re.compile(r'^[^\s\x00-\x1f\x7f]{1,64}$')
 
 QUERY_TIMEOUT_S = 10.0
 LOCK_WAIT_S = 15.0
-MAX_VERIFY_BYTES = 2 * 1024**3
+# Background (discovery and routine) verification hashes every payload file. The full eligible eBL snapshot is ~10 GiB.
+MAX_VERIFY_BYTES = 48 * 1024**3
+# Per request, snapshots up to this size are re-hashed in full. Larger ones get a bounded check instead: unchanged stat
+# fingerprint of every file (size, mtime, inode, ctime), manifest.json bytes equal to those hashed at verification, and the
+# backend ledger check; their payload hashes are re-verified in the background every REVERIFY_LARGE_S (labelled per request).
+PER_REQUEST_REHASH_MAX = 2 * 1024**3
+REVERIFY_LARGE_S = 3600.0
+# Per-request DuckDB memory bound (spill disabled). Graph traversal on the full eBL snapshot needs ~512 MB (Q-023 probe).
+SNAPSHOT_MEMORY = '256MB'
+LARGE_SNAPSHOT_MEMORY = '512MB'
 MAX_RAW_TRACE_BYTES = 64 * 1024**2
 STABLE_S = float(os.environ.get('CUNEIFORM_UI_STABLE_S', '30'))  # quiet period before a snapshot is verified
 REVERIFY_S = 900.0  # full re-hash of ready snapshots at most this often (stat fingerprint is checked per request)
@@ -99,6 +110,19 @@ class Dataset:
     publication: dict = field(default_factory=dict)
     superseded: dict | None = None  # oracc-cdl-1 snapshot superseded for sense provenance (still served)
     supersedes: dict | None = None
+    payload_bytes: int = 0
+    manifest_file_sha256: str | None = None
+
+    def verification(self) -> dict:
+        if self.kind != 'snapshot':
+            return {'mode': 'in-memory', 'note': 'not a snapshot'}
+        if self.payload_bytes > PER_REQUEST_REHASH_MAX:
+            return {'mode': 'bounded-per-request', 'payload_bytes': self.payload_bytes, 'full_rehash_interval_s': REVERIFY_LARGE_S,
+                    'note': (f'Snapshot is above {PER_REQUEST_REHASH_MAX // 1024**3} GiB. Every payload hash was verified by the backend at verified_at and is '
+                             f're-verified in the background at most every {REVERIFY_LARGE_S / 3600:.0f} h. Each request checks the stat fingerprint of every file '
+                             '(size, mtime, inode, ctime), the manifest.json bytes and the publication ledger, but does not re-hash the payload.')}
+        return {'mode': 'full-rehash-per-request', 'payload_bytes': self.payload_bytes,
+                'note': 'Each request re-hashes every payload file and checks the publication ledger (backend storage.verified).'}
 
     def public(self) -> dict:
         return {'key': self.key, 'kind': self.kind, 'title': self.title, 'description': self.description,
@@ -107,6 +131,7 @@ class Dataset:
                 'selection': self.selection, 'verified_at': self.verified_at, 'checked_at': self.checked_at,
                 'reverifying': self.reverifying, 'stale': self.stale, 'superseded': self.superseded, 'supersedes': self.supersedes,
                 'publication': self.publication or {'status': 'not-a-snapshot', 'note': PUBLICATION[self.kind]},
+                'verification': self.verification(),
                 'manifest': _manifest_summary(self.manifest) if self.manifest else None}
 
     def binding(self) -> dict:
@@ -179,6 +204,14 @@ def store_entry_refusal(path: Path, key: str) -> dict | None:
     return None
 
 
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open('rb') as f:
+        while b := f.read(1 << 20):
+            h.update(b)
+    return h.hexdigest()
+
+
 def _fingerprint_eq(path: Path, fp: dict) -> bool:
     now = _fingerprint(path)
     return now == {k: v for k, v in fp.items() if not k.startswith('@')}
@@ -191,7 +224,9 @@ def _newest(fp: dict) -> float:
 def selection_of(persisted, manifest: dict, path: Path) -> dict:
     """Population the counts describe, from the backend's own ``persisted.scope`` (never re-derived here)."""
     sc = {k: v for k, v in persisted.scope(path, manifest).items() if k != 'publication'}  # publication is held separately
-    kind = {'rule-selected cohort': 'cohort', 'explicit selection': 'selection', 'single input': 'single-input'}.get(sc.get('kind'), sc.get('kind'))
+    # 'all eligible records of a fixed release' is structurally a cohort (cohort.json, parent trace); its label/note say what it is.
+    kind = {'rule-selected cohort': 'cohort', 'all eligible records of a fixed release': 'cohort', 'explicit selection': 'selection',
+            'single input': 'single-input'}.get(sc.get('kind'), sc.get('kind'))
     out = dict(sc, kind=kind, backend_kind=sc.get('kind'), note=sc.get('scope_note'),
                size=sc.get('cohort_size', sc.get('selected')), rule_name=(sc.get('rule') or {}).get('name') or sc.get('selection_rule'))
     if manifest.get('source') == 'oracc-selection':
@@ -567,7 +602,8 @@ class Backend:
         fp = _fingerprint(path)
         fp['@ledger'] = self._ledger_key(key)  # a ledger change re-evaluates publication status
         changed = fp != ds.fingerprint
-        routine = ds.status == 'ready' and not changed and (deep or now - (ds.verified_at or 0) > REVERIFY_S)
+        interval = REVERIFY_LARGE_S if ds.payload_bytes > PER_REQUEST_REHASH_MAX else REVERIFY_S
+        routine = ds.status == 'ready' and not changed and (deep or now - (ds.verified_at or 0) > interval)
         due = (ds.status in ('pending', 'settling')
                or changed
                or (ds.status == 'failed' and now >= ds.next_retry)
@@ -794,9 +830,9 @@ class Backend:
                 commit = {'status': 'ready', 'publication': publication, 'refresh_only': True}
                 return
             selection = selection_of(self.persisted, manifest, self.store_entry(ds.key))
-            db = self._open_snapshot_db(ds.path, manifest)
+            db = self._open_snapshot_db(ds.path, manifest, total)
             try:
-                scopes = self.projections.rows(db, 'SELECT DISTINCT namespace,snapshot_id,field FROM ordered_position ORDER BY 1,2,3')
+                scopes = self.projections.rows(db, self.scopes_sql())
                 probe = Dataset(ds.key, 'snapshot', '', '', scopes=scopes)
                 examples = self._auto_examples(probe, db)
             finally:
@@ -806,7 +842,7 @@ class Backend:
                           'fingerprint': _fingerprint(ds.path)}
                 return
             commit = {'status': 'ready', 'manifest': manifest, 'selection': selection, 'scopes': scopes, 'examples': examples,
-                      'publication': publication}
+                      'publication': publication, 'payload_bytes': total, 'manifest_file_sha256': _sha256_file(ds.path / 'manifest.json')}
         except Exception as exc:
             commit = {'status': 'failed', 'error': f'{type(exc).__name__}: {exc}', 'exc': True}
         finally:
@@ -845,6 +881,7 @@ class Backend:
                                           'receipt': parent.get('receipt_id') or 'none recorded'})
                     ds.version = manifest['manifest_sha256']
                     ds.fingerprint = fp_before
+                    ds.payload_bytes, ds.manifest_file_sha256 = c['payload_bytes'], c['manifest_file_sha256']
                     ds.verified_at = ds.checked_at = ds.loaded_at = time.time()
                     ds.status, ds.error, ds.attempts, ds.ever_ready = 'ready', None, 0, True
                     if ds.stale and ds.stale.get('version') == ds.version:
@@ -863,11 +900,15 @@ class Backend:
             finally:
                 ds.verifying = ds.reverifying = False
 
-    def _open_snapshot_db(self, path: Path, manifest: dict):
+    def scopes_sql(self) -> str:
+        # Backend Q-023 form avoids ordered_position's corpus-wide window; same rows. Older pins keep the original query.
+        return getattr(self.projections, 'SCOPES_SQL', 'SELECT DISTINCT namespace,snapshot_id,field FROM ordered_position ORDER BY 1,2,3')
+
+    def _open_snapshot_db(self, path: Path, manifest: dict, payload_bytes: int = 0):
         import duckdb
         db = duckdb.connect(str(path / 'graph.duckdb'), read_only=True)
         try:
-            self._configure(db, '256MB', 2)
+            self._configure(db, LARGE_SNAPSHOT_MEMORY if payload_bytes > PER_REQUEST_REHASH_MAX else SNAPSHOT_MEMORY, 2)
             recorded = manifest.get('projection_registry')
             if recorded and hasattr(self.projections, 'mark_frozen_verified'):
                 # Valid only because graph.duckdb's hash matched the manifest and the stat fingerprint is unchanged.
@@ -879,7 +920,7 @@ class Backend:
         return db
 
     def _finish(self, ds: Dataset, db) -> None:
-        ds.scopes = self.projections.rows(db, 'SELECT DISTINCT namespace,snapshot_id,field FROM ordered_position ORDER BY 1,2,3')
+        ds.scopes = self.projections.rows(db, self.scopes_sql())
         if not ds.examples:
             ds.examples = self._auto_examples(ds, db)
         ds.loaded_at = time.time()
@@ -952,7 +993,7 @@ class Backend:
         """
         started = time.monotonic()
         try:
-            out = self.verified(ds.key)
+            out = self._per_request_verified(ds)
         except ValueError as exc:
             state = getattr(exc, 'state', None)
             if isinstance(state, str):
@@ -978,6 +1019,21 @@ class Backend:
                 ds.publication = pub  # e.g. a torn ledger tail seen on this read is shown, not ignored
         self.note_timing('publication_at_read', pub.get('status'))
 
+    def _per_request_verified(self, ds: Dataset) -> dict:
+        """Full backend re-verification up to PER_REQUEST_REHASH_MAX; above it, the bounded check (stat fingerprint was
+        checked by the caller; here: manifest.json bytes and the backend ledger check). Both raise typed PublicationErrors."""
+        if ds.payload_bytes <= PER_REQUEST_REHASH_MAX:
+            self.note_timing('per_request_check', 'full payload re-hash + ledger')
+            return self.verified(ds.key)
+        entry = self.store_entry(ds.key)
+        data = (ds.path / 'manifest.json').read_bytes()
+        if hashlib.sha256(data).hexdigest() != ds.manifest_file_sha256:
+            raise ValueError('manifest.json bytes differ from the verified manifest')
+        manifest = json.loads(data)
+        publication = self.storage.publication_of(entry, manifest, 'require')
+        self.note_timing('per_request_check', 'stat fingerprint + manifest bytes + ledger; payload hashes verified at verified_at (snapshot above 2 GiB)')
+        return {'manifest': manifest, 'publication': publication}
+
     def run(self, ds: Dataset, fn: Callable[[Any], Any], timeout: float = QUERY_TIMEOUT_S):
         """One bounded unit of work on one dataset version.
 
@@ -999,7 +1055,7 @@ class Backend:
                 self._mark('stat_check_ms', t)
                 self._reverify_bytes(ds, version)
                 t = time.monotonic()
-                db = self._open_snapshot_db(ds.path, ds.manifest)
+                db = self._open_snapshot_db(ds.path, ds.manifest, ds.payload_bytes)
                 self._mark('open_ms', t)
             else:
                 db = ds.db

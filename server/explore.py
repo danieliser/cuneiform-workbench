@@ -299,6 +299,12 @@ class Explorer:
                     out['parity'] = {'index': out['count'], 'graph': g['occurrences'], 'ok': g['occurrences'] == out['count']}
                 except ValueError as exc:
                     out['parity'] = {'skipped': str(exc)}
+                except Exception as exc:  # duckdb OutOfMemory/Interrupt: the add-on exceeded the interactive bound
+                    text = str(exc).lower()
+                    if 'out of memory' not in text and 'interrupt' not in text:
+                        raise
+                    out['parity'] = {'skipped': 'graph traversal for parity exceeded the interactive bound (DuckDB memory or time); the index count stands. '
+                                                'Offline graph/array/index parity: python -m cuneiform parity <snapshot> <pattern> --field <field>'}
             if policy == 'strict' and out['count'] == 0:
                 certain = db.execute("SELECT count(*) FROM token_context WHERE field=? AND preservation='intact' AND certainty='certain'", [field]).fetchone()[0]
                 out['strict_note'] = (f'Strict = 0 here because no {field} position in this dataset is marked intact AND certain by the source'
