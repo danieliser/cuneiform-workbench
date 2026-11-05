@@ -1,0 +1,77 @@
+{
+  "protocol_version": "cb-protocol-1",
+  "seed": "cb-v1-2026-11-05",
+  "input": {
+    "store_root": "~/.local/share/cuneiform-research/snapshots",
+    "snapshot_id": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+    "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+    "backend_pin": "~/.local/share/cuneiform-ui/backend-pin/057a0b757ed3dc05e486893bc344a15dd73c86d8",
+    "backend_commit": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+    "optional_stage_root": "~/.local/share/cuneiform-research/scratch/q023-full-import/stage-root/snapshots",
+    "python": "~/.local/share/cuneiform-research/venv/bin/python"
+  },
+  "resources": {
+    "duckdb_memory_limit": "2GB",
+    "duckdb_threads": 2,
+    "duckdb_max_temp_directory_size": "2GiB",
+    "rss_soft_abort_bytes": 4294967296,
+    "min_free_disk_gib": 30,
+    "max_additional_disk_gib": 5,
+    "cpu_budget_minutes_total": 90
+  },
+  "families": {
+    "primary": ["exact shared CDLI P-number catalog_alias claim (candidate alias, not proven identity)", "exact duplicate normalized signs token sequence (>=10 derived signs)", "exact duplicate normalized ATF reading sequence (>=10 readings)"],
+    "near_duplicate_sensitivity": {"shingle": 8, "unit": "consecutive derived signs within one line", "max_shingle_df": 50, "min_shared": 5, "min_containment": 0.5, "status": "uncertain; sensitivity only, never used to delete parallels"}
+  },
+  "split": {"hash": "sha256(seed + ':split:' + family_key) first 8 hex mod 100", "train": [0, 59], "dev": [60, 69], "test": [70, 99]},
+  "stage_a": {
+    "field_mix": {
+      "signs_exact": {"2": {"common": 6, "mid": 6, "rare": 6}, "3": {"common": 4, "mid": 4, "rare": 4}, "4": {"common": 3, "mid": 3, "rare": 3}, "5": {"common": 3, "mid": 3, "rare": 3}},
+      "signs_frame_A?C": {"common": 6, "mid": 6, "rare": 4},
+      "signs_bounded_gap_AB[0-2]C": {"common": 3, "mid": 3},
+      "atf_exact": {"2": {"common": 4, "rare": 4}, "3": {"common": 2, "rare": 2}}
+    },
+    "strata": {"common": "count >= 1000 (n=2) / >= 200 (n>=3) / >= 500 (frames)", "mid": "count 10..999 (n=2) / 10..199 (n>=3) / 10..499 (frames)", "rare": "count 1..3"},
+    "selection": "types eligible for a stratum sorted lexicographically, chosen with random.Random(seed+stratum key).sample; selection uses oracle frequencies only to place queries in strata",
+    "warm_repeats": 4,
+    "graph_subset": "first 2 queries of signs n=2 common/mid, signs n=3 common/mid, 2 frames (common, mid), 2 bounded-gap (common, mid)",
+    "filler_top_k": 10
+  },
+  "stage_b": {
+    "discovery_split": "train", "confirmation_split": "test",
+    "units": "signs field derived signs only; windows never cross a line, gap or unsupported position",
+    "families_of_tests": ["trigram ABC", "frame A?C with derived middle"],
+    "null": "order-1 sign transition chain fitted on train lines only; analytic expectation conditioned on observed context slots (E_ABC = N(A,B,sign) * p(C|B); E_A?C = N(A,sign,sign) * sum_B p(B|A) p(C|B))",
+    "min_count_candidates": [10, 20, 40],
+    "threshold_rule": "smallest value such that eligible types per test family <= 100000 and discovery pass < 10 CPU-minutes in the train-only resource pilot",
+    "min_families": 3,
+    "top_k": {"trigram": 200, "frame": 100},
+    "effect": "d = log2((O + 0.5) / (E + 0.5)); 0.5 added to both observed and expected",
+    "control": "per candidate one control of the same test family: discovery-eligible, |d_disc| <= 0.25, same floor(log2 O_disc) bin, chosen by smallest sha256(seed+candidate+type) without replacement",
+    "bootstrap": {"unit": "primary family in the confirmation split", "scheme": "Poisson(1) family weights", "reps": 1000},
+    "primary_hypothesis": "H_B1: mean d_conf(candidates) - mean d_conf(controls) > 0, decided by family-bootstrap 95% lower bound > 0, per test family (trigram, frame)",
+    "individual_motifs": "exploratory: per-motif d_conf with uncorrected 95% family-bootstrap interval; no BH/significance claim"
+  },
+  "stage_c": {
+    "train_split": "train", "test_split": "test",
+    "n_targets": 2000,
+    "target_rule": "signs position with derived-sign target and derived-sign immediate left and right neighbours in the same line",
+    "caps": {"per_line": 1, "per_family": 10},
+    "order": "sha256(seed + ':target:' + line_id + ':' + position) ascending",
+    "context": "L2 L1 [MASK] R1 R2; context tokens are sign labels or GAP/UNS/BOS/EOS literals",
+    "methods": ["unigram", "left_bigram", "markov1_bidir", "frame1 (L1 ? R1)", "frame2 (L2 L1 ? R1 R2)", "cascade frame2>frame1>markov1>left_bigram>unigram"],
+    "ties": "score desc, train unigram count desc, label asc",
+    "metrics": ["top1", "top5", "MRR (abstain or absent = 0)", "coverage", "top1_given_covered"],
+    "groups": ["target train frequency bin", "frame1 train support bin", "frame2 seen", "near-duplicate partner in train"],
+    "bootstrap": {"unit": "test primary family", "reps": 1000}
+  },
+  "stage_d": {
+    "run_if": "A-C complete and cumulative CPU < 60 minutes",
+    "n_queries": 12, "query_split": "dev",
+    "methods": {"ovl": "binary sign n-grams n=1..3, overlap coefficient", "ovl_len_tfidf": "binary sign n-grams n=1..3, weight n^2 * log((1+|D|)/(1+df)), weighted overlap coefficient"},
+    "documents": "artifacts (no chapter labels exist)",
+    "exclude": "query artifact and its primary family (CDLI alias / exact duplicate)",
+    "pool_top_k": 10,
+    "claims": "none; blinded packet for future expert judgment"
+  }
+}
