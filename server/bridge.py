@@ -119,7 +119,7 @@ class Dataset:
         if self.payload_bytes > PER_REQUEST_REHASH_MAX:
             return {'mode': 'bounded-per-request', 'payload_bytes': self.payload_bytes, 'full_rehash_interval_s': REVERIFY_LARGE_S,
                     'note': (f'Snapshot is above {PER_REQUEST_REHASH_MAX // 1024**3} GiB. Every payload hash was verified by the backend at verified_at and is '
-                             f're-verified in the background at most every {REVERIFY_LARGE_S / 3600:.0f} h. Each request checks the stat fingerprint of every file '
+                             f're-verified in the background about every {REVERIFY_LARGE_S / 3600:.0f} h while unchanged; changes trigger re-verification. Each request checks the stat fingerprint of every file '
                              '(size, mtime, inode, ctime), the manifest.json bytes and the publication ledger, but does not re-hash the payload.')}
         return {'mode': 'full-rehash-per-request', 'payload_bytes': self.payload_bytes,
                 'note': 'Each request re-hashes every payload file and checks the publication ledger (backend storage.verified).'}
@@ -142,7 +142,7 @@ class Dataset:
 
 
 AUTHORITY = {
-    'snapshot': 'Backend-verified snapshot (manifest + every file hash checked by storage.verify). Opened read-only per request.',
+    'snapshot': 'Payload hashes verified at verified_at. Opened read-only with the per-request integrity check described below.',
     'sample': 'Real retained source sample parsed in memory by the backend. Not a verified snapshot; not a corpus.',
     'synthetic': 'SYNTHETIC engineering fixture. Not philological evidence.',
 }
@@ -612,7 +612,7 @@ class Backend:
             return None
         if routine:
             # Review N-1: nothing changed on disk, so the served version stays ready while the bytes are re-hashed.
-            # Every request still re-verifies every file itself; this pass only refreshes verified_at (or, if the
+            # Requests use the size-dependent integrity check; this pass refreshes verified_at (or, if the
             # bytes turn out different, invalidates the version with an explicit stale reason).
             ds.verifying = ds.reverifying = True
             t = threading.Thread(target=self._verify_snapshot, args=(ds, fp, ds.generation, True), daemon=True)
@@ -702,7 +702,7 @@ class Backend:
               {'label': 'DIŠ NA — atf transliteration', 'pattern': ['DIŠ', 'NA'], 'field': 'atf', 'policy': 'source', 'engine': 'index', 'expect': 3},
               {'label': 'ina ? — reading then any position', 'pattern': ['ina', '?'], 'field': 'atf', 'policy': 'source', 'engine': 'index'},
               {'label': 'ABZ215 ? ABZ13 — wildcard', 'pattern': ['ABZ215', '?', 'ABZ13'], 'field': 'signs', 'policy': 'source', 'engine': 'index'},
-              {'label': 'ABZ215 ABZ13 — strict (eBL asserts no certainty)', 'pattern': ['ABZ215', 'ABZ13'], 'field': 'signs', 'policy': 'strict', 'engine': 'index', 'expect': 0}]),
+              {'label': 'ABZ215 ABZ13 — strict (parser does not infer certainty)', 'pattern': ['ABZ215', 'ABZ13'], 'field': 'signs', 'policy': 'strict', 'engine': 'index', 'expect': 0}]),
             ('synthetic-fixtures', 'synthetic', 'Synthetic fixtures (eBL + CDLI)',
              'Backend test fixtures: uncertainty, gaps, alternatives, compounds, duplicate aliases.',
              [('ebl', fx / 'ebl-synthetic.json'), ('cdli', fx / 'cdli-synthetic.csv')],
@@ -986,7 +986,7 @@ class Backend:
             raise VersionChanged('snapshot files changed since verification; the result was discarded and the snapshot will be re-verified')
 
     def _reverify_bytes(self, ds: Dataset, version: str | None) -> None:
-        """Per-request check by the backend: every payload hash plus the ledger (storage.verified, ledger='require').
+        """Size-dependent per-request verification: full hashes or stat/manifest checks, plus the backend ledger.
 
         A publication refusal (reserved, mismatch, corrupt ledger, symlinked entry...) retires the version with its typed
         state; a byte failure invalidates it. Either way the result is refused (HTTP 409).
@@ -1002,6 +1002,8 @@ class Backend:
                     if ds.version == version:
                         ds.publication = pub
                         self._retire(ds, pub['dataset_status'], pub['note'])
+                        # Recheck even if the ledger returns to its prior bytes before discovery.
+                        ds.fingerprint = {}
                 raise VersionChanged(f'snapshot is no longer served ({state}): {pub["note"]} Result refused.') from exc
             self._invalidate(ds, f'per-request verification failed: {exc}')
             raise VersionChanged(f'snapshot failed byte verification on this request ({exc}); result refused') from exc
@@ -1039,7 +1041,7 @@ class Backend:
 
         In-memory datasets use their own connection. Snapshots get a fresh read-only connection that is closed
         afterwards; the stat fingerprint is checked before opening and after closing, and the backend
-        re-verifies every file hash before opening.
+        runs the size-dependent integrity check before opening.
         """
         t = time.monotonic()
         if not ds.lock.acquire(timeout=LOCK_WAIT_S):

@@ -136,3 +136,9 @@ Suggested QUEUE update (for the atlas/queue owner): Q-002 → `IN_REVIEW` with t
 ### Storage
 
 UI runtime ~30 MiB (exports, FalkorDB data, pinned export 21 files). No new images (pinned digest already cached), packages, downloads or public exposure.
+
+## Full-corpus review follow-ups N1–N3 (2026-11-05)
+
+Parent fixed typed per-request ledger retirement to invalidate its discovery fingerprint. Restoring the original ledger before discovery now triggers re-verification instead of leaving the snapshot unavailable until restart. New hermetic regression exercises refusal, byte-identical ledger restoration, discovery and a successful query. Strict empty-posting text and parser attribution corrected; integrity wording now distinguishes full hash checks from bounded per-request checks and approximate background cadence. No data or backend pin changed.
+
+Validation: `bin/cuneiform-ui test`: 24 isolation checks, 45 tests OK, zero skipped, 163.809 s. `node --check web/app.js` passed. Secret scan clean. Rollback: revert this follow-up commit and use ui-stop/ui-start (no FalkorDB restart).

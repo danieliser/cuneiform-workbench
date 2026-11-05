@@ -436,7 +436,7 @@
     if (!state.ds) return;
     try {
       const t = await api('/api/top' + q(bound({ field: $('#field').value, policy: document.querySelector('input[name=policy]:checked').value })));
-      if (!t.postings.length && !t.bigrams.length) { box.appendChild(el('span', { class: 'muted', text: `No indexed ${$('#field').value} postings in this dataset.` })); return; }
+      if (!t.postings.length && !t.bigrams.length) { box.appendChild(el('span', { class: 'muted', text: document.querySelector('input[name=policy]:checked').value === 'strict' ? 'No strict-policy postings: no position is marked intact AND certain. See Coverage → position states.' : `No indexed ${$('#field').value} postings in this dataset.` })); return; }
       for (const g of t.bigrams.slice(0, 8)) box.appendChild(el('button', { title: 'bigram', onclick: () => { $('#pattern').value = g.readings.join(' '); runQuery(0); } }, g.readings.join(' '), el('small', { text: String(g.n) })));
       for (const p of t.postings.slice(0, 12)) box.appendChild(el('button', { title: 'single reading', onclick: () => { $('#pattern').value = p.label; runQuery(0); } }, p.label, el('small', { text: String(p.n) })));
     } catch (e) { box.appendChild(el('span', { class: 'error', text: e.message })); }

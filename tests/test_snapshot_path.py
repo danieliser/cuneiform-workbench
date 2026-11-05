@@ -566,6 +566,25 @@ class LedgerFormatTest(Roots, unittest.TestCase):
         b.discover(wait=30)
         self.assertTrue(wait_until(lambda: ds.status == 'ready'), ds.error)
 
+    def test_restored_ledger_recovers_without_intermediate_discovery(self):
+        sid = self.import_fixture()
+        b = self.backend()
+        b.discover(wait=30)
+        ds = wait_ready(b, sid)
+        version = ds.version
+        led = self.ledger()
+        saved = led.read_text()
+        from server.bridge import VersionChanged
+        from server.explore import Explorer
+        led.write_text('not json\n' + saved)
+        with self.assertRaises(VersionChanged):
+            Explorer(b).query({'dataset': sid, 'version': version, 'pattern': ['A', 'B']})
+        led.write_text(saved)
+        b.discover(wait=30)
+        self.assertTrue(wait_until(lambda: ds.status == 'ready'), ds.error)
+        self.assertEqual(ds.version, version)
+        self.assertGreater(Explorer(b).query({'dataset': sid, 'version': version, 'pattern': ['A', 'B']})['count'], 0)
+
     def test_ledger_only_ids_are_typed(self):
         sid = self.import_fixture()
         reserved, abandoned, aborted = ('snapshot:' + c * 32 for c in 'abc')

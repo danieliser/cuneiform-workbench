@@ -307,8 +307,8 @@ class Explorer:
                                                 'Offline graph/array/index parity: python -m cuneiform parity <snapshot> <pattern> --field <field>'}
             if policy == 'strict' and out['count'] == 0:
                 certain = db.execute("SELECT count(*) FROM token_context WHERE field=? AND preservation='intact' AND certainty='certain'", [field]).fetchone()[0]
-                out['strict_note'] = (f'Strict = 0 here because no {field} position in this dataset is marked intact AND certain by the source'
-                                      + (' (eBL does not assert certainty from an absence of editorial marks).' if str(scope['namespace']).startswith('ebl') else '.')
+                out['strict_note'] = (f'Strict = 0 here because no {field} position in this dataset is represented as intact AND certain'
+                                      + (' (the conservative-3 parser does not infer intact/certain from absent editorial marks).' if str(scope['namespace']).startswith('ebl') else '.')
                                       + ' See Coverage → position states.') if certain == 0 else \
                     f'{certain} {field} positions are intact AND certain, but none form this pattern.'
             self._enrich(db, hits)
