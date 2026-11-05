@@ -88,7 +88,9 @@ def cpu_s() -> float:
 def git_state() -> dict:
     def run(*a):
         return subprocess.run(['git', *a], cwd=ROOT, capture_output=True, text=True).stdout.strip()
-    return {'commit': run('rev-parse', 'HEAD') or None, 'dirty': bool(run('status', '--porcelain'))}
+    # Uncommitted result directories do not make code dirty; anything else does.
+    changed = [ln for ln in run('status', '--porcelain', '--untracked-files=all').splitlines() if not ln[3:].startswith('results/')]
+    return {'commit': run('rev-parse', 'HEAD') or None, 'dirty': bool(changed)}
 
 
 def connect(snapshot: Path = SNAPSHOT):

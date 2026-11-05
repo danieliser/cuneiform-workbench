@@ -1,0 +1,208 @@
+[
+ {
+  "qid": "Q000",
+  "pattern": [
+   "ABZ366",
+   "ABZ13"
+  ],
+  "max_skip": 0,
+  "graph_count": 1169,
+  "graph_witnesses": 983,
+  "graph_artifacts": 983,
+  "oracle_count": 1169,
+  "agree": true,
+  "graph_ms": 1584.1
+ },
+ {
+  "qid": "Q001",
+  "pattern": [
+   "ABZ15",
+   "ABZ342"
+  ],
+  "max_skip": 0,
+  "graph_count": 1109,
+  "graph_witnesses": 744,
+  "graph_artifacts": 744,
+  "oracle_count": 1109,
+  "agree": true,
+  "graph_ms": 875.6
+ },
+ {
+  "qid": "Q006",
+  "pattern": [
+   "ABZ336",
+   "ABZ59"
+  ],
+  "max_skip": 0,
+  "graph_count": 81,
+  "graph_witnesses": 66,
+  "graph_artifacts": 66,
+  "oracle_count": 81,
+  "agree": true,
+  "graph_ms": 485.8
+ },
+ {
+  "qid": "Q007",
+  "pattern": [
+   "ABZ367",
+   "ABZ335"
+  ],
+  "max_skip": 0,
+  "graph_count": 19,
+  "graph_witnesses": 16,
+  "graph_artifacts": 16,
+  "oracle_count": 19,
+  "agree": true,
+  "graph_ms": 499.8
+ },
+ {
+  "qid": "Q018",
+  "pattern": [
+   "ABZ579",
+   "ABZ579",
+   "ABZ214"
+  ],
+  "max_skip": 0,
+  "graph_count": 208,
+  "graph_witnesses": 181,
+  "graph_artifacts": 181,
+  "oracle_count": 208,
+  "agree": true,
+  "graph_ms": 801.3
+ },
+ {
+  "qid": "Q019",
+  "pattern": [
+   "ABZ381",
+   "ABZ206",
+   "ABZ579"
+  ],
+  "max_skip": 0,
+  "graph_count": 713,
+  "graph_witnesses": 556,
+  "graph_artifacts": 556,
+  "oracle_count": 713,
+  "agree": true,
+  "graph_ms": 908.5
+ },
+ {
+  "qid": "Q022",
+  "pattern": [
+   "ABZ68",
+   "ABZ335",
+   "ABZ308"
+  ],
+  "max_skip": 0,
+  "graph_count": 13,
+  "graph_witnesses": 12,
+  "graph_artifacts": 12,
+  "oracle_count": 13,
+  "agree": true,
+  "graph_ms": 700.8
+ },
+ {
+  "qid": "Q023",
+  "pattern": [
+   "ABZ449",
+   "ABZ449",
+   "ABZ307"
+  ],
+  "max_skip": 0,
+  "graph_count": 14,
+  "graph_witnesses": 13,
+  "graph_artifacts": 13,
+  "oracle_count": 14,
+  "agree": true,
+  "graph_ms": 723.3
+ },
+ {
+  "qid": "Q048",
+  "pattern": [
+   "ABZ366",
+   "?",
+   "ABZ396"
+  ],
+  "max_skip": 0,
+  "graph_count": 600,
+  "graph_witnesses": 540,
+  "graph_artifacts": 540,
+  "oracle_count": 600,
+  "agree": true,
+  "graph_ms": 975.8
+ },
+ {
+  "qid": "Q049",
+  "pattern": [
+   "ABZ461",
+   "?",
+   "ABZ55"
+  ],
+  "max_skip": 0,
+  "graph_count": 587,
+  "graph_witnesses": 532,
+  "graph_artifacts": 532,
+  "oracle_count": 587,
+  "agree": true,
+  "graph_ms": 973.3
+ },
+ {
+  "qid": "Q054",
+  "pattern": [
+   "ABZ468",
+   "?",
+   "ABZ295"
+  ],
+  "max_skip": 0,
+  "graph_count": 22,
+  "graph_witnesses": 19,
+  "graph_artifacts": 19,
+  "oracle_count": 22,
+  "agree": true,
+  "graph_ms": 773.5
+ },
+ {
+  "qid": "Q055",
+  "pattern": [
+   "ABZ312",
+   "?",
+   "ABZ429"
+  ],
+  "max_skip": 0,
+  "graph_count": 16,
+  "graph_witnesses": 8,
+  "graph_artifacts": 8,
+  "oracle_count": 16,
+  "agree": true,
+  "graph_ms": 787.9
+ },
+ {
+  "qid": "Q064",
+  "pattern": [
+   "ABZ366",
+   "ABZ1",
+   "ABZ101"
+  ],
+  "max_skip": 2,
+  "graph_count": 542,
+  "graph_witnesses": 357,
+  "graph_artifacts": 357,
+  "oracle_count": 542,
+  "agree": true,
+  "graph_ms": 2298.6
+ },
+ {
+  "qid": "Q067",
+  "pattern": [
+   "ABZ296",
+   "ABZ589",
+   "ABZ537"
+  ],
+  "max_skip": 2,
+  "graph_count": 40,
+  "graph_witnesses": 34,
+  "graph_artifacts": 34,
+  "oracle_count": 40,
+  "agree": true,
+  "graph_ms": 2145.1
+ }
+]

@@ -1,0 +1,91 @@
+{
+ "run_id": "A-20261105T220825Z-da32a56",
+ "stage": "A",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "da32a56724d4a587204b440b02fb6c5ffe3dcbe2",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-05T22:08:25.537221+00:00",
+ "wall_s": 259.31,
+ "cpu_s": 470.87,
+ "peak_rss_bytes": 3016867840,
+ "disk_bytes": {
+  "results": 103906,
+  "raw": 0
+ },
+ "free_gib": {
+  "before": 176.9,
+  "after": 176.7
+ },
+ "loadavg": {
+  "before": [
+   11.80224609375,
+   9.87890625,
+   10.76904296875
+  ],
+  "after": [
+   9.42431640625,
+   9.359375,
+   10.2734375
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "load_universe": {
+   "wall_s": 7.63,
+   "cpu_s": 8.26,
+   "peak_rss_bytes": 1344356352
+  },
+  "query_mix": {
+   "wall_s": 18.99,
+   "cpu_s": 19.24,
+   "peak_rss_bytes": 1588084736
+  },
+  "main_loop": {
+   "wall_s": 223.13,
+   "cpu_s": 406.62,
+   "peak_rss_bytes": 2792898560
+  },
+  "graph_subset": {
+   "wall_s": 237.67,
+   "cpu_s": 432.73,
+   "peak_rss_bytes": 3014082560
+  },
+  "stage_scaling": {
+   "wall_s": 259.28,
+   "cpu_s": 470.84,
+   "peak_rss_bytes": 3016867840
+  }
+ },
+ "partial": [],
+ "raw_outputs": {},
+ "summary": {
+  "queries": 82,
+  "agree_all_checks": 82,
+  "graph_subset": {
+   "queries": 14,
+   "agree": 14
+  },
+  "index_cold_ms": {
+   "p50": 374.75,
+   "p95": 1105.11,
+   "n": 82
+  },
+  "index_warm_ms": {
+   "p50": 371.3,
+   "p95": 1095.26,
+   "n": 328
+  },
+  "oracle_ms": {
+   "p50": 101.6,
+   "p95": 276.31,
+   "n": 82
+  }
+ }
+}
