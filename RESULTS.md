@@ -13,6 +13,10 @@ Primary families merge 100 artifacts through 43 shared CDLI numbers (candidate a
 
 The uncertain near-duplicate links (3,475 edges, 2,777 artifacts) were used **only** to stratify results. Of the test families, 614 have a near-duplicate partner in train.
 
+## Independent review and corrected interpretation
+
+See [independent review](reviews/benchmark-review-v0.1.md). All four stages reproduce; protocol chronology and primary-family separation check out. Shared passages across different families remain a major dependence, not a clean test of unseen compositions. Original machine-readable runs are preserved unchanged. The sensitivity analyses below are post-hoc reviewer diagnostics, not new preregistered endpoints.
+
 ## Runs
 
 | Stage | Run | Code | Wall / CPU s | Peak RSS | Key output hash |
@@ -63,12 +67,12 @@ Latency, index lookup through the pinned `projections.lookup` (count plus first 
 
 | Measure | p50 | p95 | Samples |
 |---|---|---|---|
-| process-cold | 375 ms | 1,105 ms | 82 queries |
+| first call per query, shared warm connection | 375 ms | 1,105 ms | 82 queries |
 | warm | 371 ms | 1,095 ms | 328 calls |
 | oracle verification (separate) | 102 ms | 276 ms | 82 queries |
 | graph engine | 0.49–1.58 s exact; 2.1–2.3 s bounded gap | — | 14 queries |
 
-The OS cache was not flushed and its state is unknown. Cold and warm are equal, which means the index is not cache-bound: **every lookup is a full scan** of the length partition, using JSON extraction.
+The OS cache was not flushed and its state is unknown. All calls shared a connection: these are not process-cold measurements, and the timings do not establish whether caching matters. The reviewer inspected the query plan: each lookup scans the 12.29M-row n-gram table twice (count and page), with the existing index unused.
 
 Bounded gaps cost about 1.1 s, because each one is three scans. Latency does not depend on selectivity: rare (count 1) and common (count 4,021) bigrams both take 370 ms.
 
@@ -81,7 +85,7 @@ Scaling on the existing read-only stage snapshots (24 queries each, warm p50):
 | 5,000 | 2.99M | 95 ms |
 | 20,896 | 12.29M | about 371 ms |
 
-Latency is linear in n-gram rows. That is acceptable for an interactive UI at this size, but **it does not scale to larger corpora without a key index on the leading token**. This is an engineering finding, not a correctness defect.
+Latency is linear in n-gram rows. That is acceptable for an interactive UI at this size, but larger corpora warrant testing a usable leading-token index or another access-path improvement. This is an engineering finding, not a correctness defect.
 
 Sample `A ? C` filler distributions (occurrences / distinct families):
 
@@ -109,7 +113,7 @@ The B0 resource pilot (train only) fixed T = 10, the first rule value. At that t
 | trigram ABC | 4.51 | −0.05 | **4.56 [4.39, 4.66]** | 3.95 [3.78, 4.06] |
 | frame A?C | 3.70 | −0.15 | **3.85 [3.61, 3.98]** | 3.46 [3.23, 3.61] |
 
-H_B1 is supported for both test families. Effect sizes shrink from discovery to confirmation: the mean d falls from 5.38 to 4.51 for trigrams and from 4.57 to 3.70 for frames. That is expected regression to the mean.
+H_B1 is supported for both test families. Effect sizes shrink from discovery to confirmation: the mean d falls from 5.38 to 4.51 for trigrams and from 4.57 to 3.70 for frames. This decline cannot be attributed to regression to the mean: the reviewer estimates that 0.67 of the 0.87-bit trigram decline is explained by smaller confirmation counts interacting with smoothing. The reported effect uses a +0.5 pseudocount; changing it moves the trigram difference from 5.96 to 3.17 bits. Treat its magnitude as estimator-dependent.
 
 **Exploratory, uncorrected per-motif replication:** the 95% lower bound is above 0 for 185 of 200 trigram candidates against 13 of 200 controls, and for 83 of 100 frame candidates against 3 of 100 controls.
 
@@ -136,7 +140,7 @@ The full ranked list, with denominators, maximum family share, discovery and con
 
 **What this does and does not show:**
 - The order-1 null is weak: any multi-sign word, logogram spelling or stock phrase beats a bigram chain. Many top motifs are probably **orthographic or lexical units**, not formulae.
-- Held-out families replicate the excess, but because composition labels are absent, test families can share compositions with train families. Removing the 614 test families with near-duplicate partners lowers the effect only slightly (4.56 → 3.95). So this is held-out-family replication of **recurrent sign sequences**. It is not independent-composition replication, and it is not semantics.
+- Held-out families replicate the excess, but because composition labels are absent, test families can share compositions with train families. The original near-duplicate detector omits runs appearing more than 50 times, so its 614-family stratum understates shared text. The reviewer found 2,327 test families sharing an eight-sign run with train, containing 80% of test windows. Excluding these gives trigram excess 2.05 [1.90, 2.23] and frame excess 1.75 [1.55, 2.00], a substantial reduction. So this is held-out-family replication of **recurrent sign sequences**. It is not independent-composition replication, and it is not semantics.
 - No UI ranking change.
 
 ## C. Masked edited-sign completion diagnostic
@@ -170,19 +174,23 @@ Breakdowns (cascade top-1):
 | target train frequency 1000+ | 1,919 | 0.514 | |
 | OOV | 3 | 0 | |
 
+**Reviewer sensitivity checks (post-hoc):** 12% of targets have a whole line appearing verbatim in train; these score 98.8%. Artifacts sharing no eight-sign run with train score about 30%. Artifacts with no editorial restorations score 39.9%, versus 60.0% for heavily restored artifacts. These are artifact-level diagnostics, not proof of the preservation state of each masked sign. Editorial restoration from parallels may contribute to the retrieval signal.
+
 **Interpretation for the next decision:**
 - Most of the measured skill is retrieval of parallel text. Where no exact 5-gram frame exists, the best n-gram statistic gets about 20% top-1.
-- A trained model is worth trying only if it beats the cascade on a fresh sealed split, **especially in the frame-2-unseen and no-near-duplicate strata**.
+- A trained model is worth trying only if it beats the cascade on a fresh sealed split, **especially in the frame-2-unseen and no-shared-eight-sign-run strata**, with a longest-match retrieval baseline.
 - This is edited-text completion of a reading-derived sign whose restoration status is unknown. It is not restoration of natural damage, and it is not comparable to EvaCun 2025, which masked 20% of complete words in ATF.
 
 ## D. Retrieval baseline and blinded packet
 
-The paper-equivalent local baseline (Simonjetz et al. 2024 §5): binary sign n-grams with n = 1..3 and the overlap coefficient, plus a length × smoothed-IDF variant. TF-IDF cosine was added as a size-robust comparator. There were 12 dev queries over 20,896 artifact documents. Each query excluded its own primary family; independent parallels stayed in the pool. The top 10 of the three methods were pooled into **271 blinded items** (IDs and catalog keys only) in `results/D-…/packet_blinded.json`. The unblinding key is in `out/` (hash committed).
+The paper-equivalent local baseline (Simonjetz et al. 2024 §5): binary sign n-grams with n = 1..3 and the overlap coefficient, plus a length × smoothed-IDF variant. TF-IDF cosine was added as an exploratory size-robust comparator; this was an unregistered protocol deviation. There were 12 dev queries over 20,896 artifact documents. Each query excluded its own primary family; independent parallels stayed in the pool. The top 10 of the three methods were pooled into **271 blinded items** (IDs and catalog keys only) in `results/D-…/packet_blinded.json`. The unblinding key is in `out/` (hash committed).
 
 **Negative finding:** at artifact level the overlap coefficient is degenerate.
-- For 9 of 12 queries the median top-10 candidate has only 3–7 n-grams, and 7 of 12 queries have a top-1 overlap score of 1.0. Tiny fragments whose few signs all occur in the query rank first.
+- For 10 of 12 queries the median top-10 candidate has only 3–7 n-grams, and 7 of 12 queries have a top-1 overlap score of 1.0. Tiny fragments whose few signs all occur in the query rank first.
 - The paper avoided this by matching against large merged chapter documents, which do not exist here.
 - Agreement between methods is near zero: the top-10 Jaccard between overlap and cosine is 0.00–0.05.
+
+Artifact-ID tie breaking determines 22 of the 120 overlap top-10 slots, including all ten for K.16666. These rankings require tie-sensitivity analysis before judging retrieval quality.
 
 There are no gold labels, so **no accuracy claim** is made and the 0.94 P@3 is not replicated. The packet is for future expert judgment only.
 
