@@ -1,0 +1,69 @@
+{
+ "run_id": "C-20261105T221533Z-357520f",
+ "stage": "C",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "357520fff1b84da8aefe639785e2bba6fb9861e4",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-05T22:15:33.057840+00:00",
+ "wall_s": 17.62,
+ "cpu_s": 17.45,
+ "peak_rss_bytes": 1748533248,
+ "disk_bytes": {
+  "results": 42373,
+  "raw": 2610198
+ },
+ "free_gib": {
+  "before": 176.8,
+  "after": 176.8
+ },
+ "loadavg": {
+  "before": [
+   10.94677734375,
+   9.8779296875,
+   10.30224609375
+  ],
+  "after": [
+   10.13671875,
+   9.75634765625,
+   10.24755859375
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "train_statistics": {
+   "wall_s": 13.11,
+   "cpu_s": 13.18,
+   "peak_rss_bytes": 1639251968
+  },
+  "predict": {
+   "wall_s": 14.63,
+   "cpu_s": 14.65,
+   "peak_rss_bytes": 1738244096
+  }
+ },
+ "partial": [],
+ "raw_outputs": {
+  "predictions.json": "ebf4437471a775eb349bc0092258b7a47491e6ff4173cb1c1bd7f86c05622e21"
+ },
+ "summary": {
+  "targets": 2000,
+  "eligible_positions_test": 535221,
+  "target_families": 1209,
+  "oov_targets": 3,
+  "frame2_contains_target_rate": 0.4195,
+  "train": {
+   "lines": 188337,
+   "derived_signs": 1470494,
+   "vocab": 584,
+   "frame1_contexts": 49398,
+   "frame2_contexts": 743807
+  }
+ }
+}
