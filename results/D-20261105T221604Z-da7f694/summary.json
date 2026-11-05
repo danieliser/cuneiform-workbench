@@ -1,0 +1,275 @@
+{
+ "documents": 20896,
+ "queries": 12,
+ "packet_items": 271,
+ "packet_sha256": "53580bc7d223389b097ce8a9b0e4fe0daf46db89e89a5a37647f498d29836bd8",
+ "key_sha256": "216ed84cd381e07f568acaf6bef1db4964ef5558ebe67b85c095444b2f112c43",
+ "per_query": [
+  {
+   "query_catalog_key": "K.6853",
+   "query_grams": 442,
+   "excluded_same_family": 1,
+   "pooled": 22,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 0.7176
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.538,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.053
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 7,
+    "ovl_len_tfidf": 5,
+    "tfidf_cosine": 500
+   },
+   "uncertain_near_dup_partners_in_pool": 2
+  },
+  {
+   "query_catalog_key": "K.16666",
+   "query_grams": 11,
+   "excluded_same_family": 1,
+   "pooled": 21,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 1.0
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.818,
+    "ovl~cosine": 0.0,
+    "len_tfidf~cosine": 0.0
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 367,
+    "ovl_len_tfidf": 354,
+    "tfidf_cosine": 14
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "UM.29-16-660",
+   "query_grams": 200,
+   "excluded_same_family": 1,
+   "pooled": 24,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 0.1196
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.25,
+    "ovl~cosine": 0.0,
+    "len_tfidf~cosine": 0.111
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 6,
+    "ovl_len_tfidf": 7,
+    "tfidf_cosine": 65
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "BM.35097",
+   "query_grams": 51,
+   "excluded_same_family": 1,
+   "pooled": 22,
+   "top1_score": {
+    "ovl": 0.6667,
+    "ovl_len_tfidf": 0.8088,
+    "tfidf_cosine": 0.2781
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.333,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.176
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 7,
+    "ovl_len_tfidf": 31,
+    "tfidf_cosine": 44
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "BM.52056",
+   "query_grams": 57,
+   "excluded_same_family": 1,
+   "pooled": 22,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 0.1383
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.429,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.111
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 7,
+    "ovl_len_tfidf": 8,
+    "tfidf_cosine": 57
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.12473",
+   "query_grams": 42,
+   "excluded_same_family": 1,
+   "pooled": 22,
+   "top1_score": {
+    "ovl": 0.8333,
+    "ovl_len_tfidf": 0.9195,
+    "tfidf_cosine": 0.4565
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.538,
+    "ovl~cosine": 0.0,
+    "len_tfidf~cosine": 0.053
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 890,
+    "ovl_len_tfidf": 762,
+    "tfidf_cosine": 45
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.12782",
+   "query_grams": 241,
+   "excluded_same_family": 1,
+   "pooled": 21,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 0.1345
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.429,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.176
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 7,
+    "ovl_len_tfidf": 8,
+    "tfidf_cosine": 54
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.7201",
+   "query_grams": 459,
+   "excluded_same_family": 1,
+   "pooled": 21,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 0.1284
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.667,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.053
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 4,
+    "ovl_len_tfidf": 4,
+    "tfidf_cosine": 105
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.7889",
+   "query_grams": 60,
+   "excluded_same_family": 1,
+   "pooled": 23,
+   "top1_score": {
+    "ovl": 0.8,
+    "ovl_len_tfidf": 0.8202,
+    "tfidf_cosine": 0.261
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.176,
+    "ovl~cosine": 0.0,
+    "len_tfidf~cosine": 0.25
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 7,
+    "ovl_len_tfidf": 25,
+    "tfidf_cosine": 35
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.6801",
+   "query_grams": 68,
+   "excluded_same_family": 1,
+   "pooled": 25,
+   "top1_score": {
+    "ovl": 0.6667,
+    "ovl_len_tfidf": 0.6219,
+    "tfidf_cosine": 0.1358
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.111,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.176
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 4,
+    "ovl_len_tfidf": 17,
+    "tfidf_cosine": 52
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.10953",
+   "query_grams": 82,
+   "excluded_same_family": 1,
+   "pooled": 23,
+   "top1_score": {
+    "ovl": 0.7143,
+    "ovl_len_tfidf": 0.843,
+    "tfidf_cosine": 0.0979
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.25,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.176
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 7,
+    "ovl_len_tfidf": 11,
+    "tfidf_cosine": 37
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  },
+  {
+   "query_catalog_key": "K.17023",
+   "query_grams": 36,
+   "excluded_same_family": 1,
+   "pooled": 25,
+   "top1_score": {
+    "ovl": 1.0,
+    "ovl_len_tfidf": 1.0,
+    "tfidf_cosine": 0.1164
+   },
+   "top10_overlap_jaccard": {
+    "ovl~len_tfidf": 0.053,
+    "ovl~cosine": 0.053,
+    "len_tfidf~cosine": 0.25
+   },
+   "top10_candidate_grams_median": {
+    "ovl": 3,
+    "ovl_len_tfidf": 10,
+    "tfidf_cosine": 41
+   },
+   "uncertain_near_dup_partners_in_pool": 0
+  }
+ ],
+ "claims": "none: no gold labels; descriptive only",
+ "deviation": "artifacts not chapters; real dev queries not synthetic fragments; not a replication of 0.94"
+}
