@@ -34,8 +34,10 @@ CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' 
        "font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
 log = logging.getLogger('cuneiform-ui')
 UNTIMED = {'/api/status', '/api/health'}
-TIMING_NOTE = ('end_to_end_ms covers the whole request on the server, including re-hashing every snapshot file and the ledger '
-               'check; query_ms is only the SQL/graph part and is not the request latency.')
+TIMING_NOTE = ('end_to_end_ms covers the whole request on the server, including the per-request snapshot check named in '
+               'breakdown.per_request_check (a full re-hash of every file plus the ledger up to 2 GiB; above it, stat fingerprint, '
+               'manifest bytes and ledger) and any backend trace (which re-hashes every file itself); query_ms is only the SQL/graph '
+               'part and is not the request latency.')
 # Backend 63f4221 refusal types, surfaced as typed states instead of a generic 400/500 (review N-2).
 TYPED_BACKEND_ERRORS = {
     'PublicationError': (409, 'publication-refused'), 'LedgerCorrupt': (409, 'publication-refused'),
