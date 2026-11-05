@@ -15,9 +15,13 @@ from __future__ import annotations
 import json
 import threading
 from typing import Any
+from urllib.parse import quote
 
 from .bridge import NODE_RE, TOKEN_RE, Dataset, UserError
 from .explore import Explorer, _jsonable, _rows
+from . import reading_aids as RA
+from .explorations import Explorations
+from .translations import is_comment_line, place
 
 POLICY = 'source'  # questions use readings as edited; the strict policy stays in Advanced query
 FIELD_LABELS = {'atf': 'Transliteration', 'signs': 'Sign numbers (ABZ)'}
@@ -79,6 +83,7 @@ class Questions:
         self.b = explorer.b
         self._examples: dict[tuple, dict] = {}
         self._lock = threading.Lock()
+        self.explorations = Explorations(self)
 
     # -- registry -----------------------------------------------------------
     def registry(self, key: str | None, version: str | None) -> dict:
@@ -86,6 +91,7 @@ class Questions:
         if key:
             ds = self.x._ds(key, version)
             out['examples'] = self.examples(ds)
+            out['explorations'] = self.explorations.registry(ds)
             out = self.x._bind(ds, out)
         return _jsonable(out)
 
@@ -125,10 +131,63 @@ class Questions:
                     ex['tablet'].append({'params': {'catalog': r['catalog_key']}, 'n': r['n'], 'unit': 'lines'})
             return ex
         ex = self.b.run(ds, work)
+        ex = self._curated_examples(ds, scope, ex)
         with self._lock:
             if len(self._examples) > 32:
                 self._examples.clear()
             self._examples[cache_key] = ex
+        return ex
+
+    def _curated_examples(self, ds: Dataset, scope, ex: dict) -> dict:
+        """Purpose-named examples first, each kept only if it occurs in this dataset; the rest keep a label naming the
+        rule that picked them (most frequent ...). Labels describe the example, never translate it."""
+        for e in ex['sequence']:
+            e.setdefault('label', 'Most frequent pair of readings')
+        for e in ex['between']:
+            e.setdefault('label', 'Frequent frame with many different fillers')
+        for e in ex['usage']:
+            e.setdefault('label', 'One of the most frequent readings')
+        for e in ex['tablet']:
+            e.setdefault('label', 'Tablet with the most source translation lines' if e.get('unit') == 'translation lines' else 'Tablet with the most lines')
+        if scope is None:
+            return ex
+        curated = {
+            'sequence': [{'params': {'tokens': 'DIŠ ina'}, 'label': 'How omen lines often open',
+                          'note': 'At the start of an omen, editors read DIŠ as šumma ‘if’ (Borger, MZL 748).'},
+                         {'params': {'tokens': 'ina ŠA₃'}, 'label': 'A preposition before a logogram'}],
+            'usage': [{'params': {'token': 'ina'}, 'label': 'A preposition (ORACC lemmatizes it as ina, PRP)'},
+                      {'params': {'token': 'DIŠ'}, 'label': 'One sign, several uses depending on context'},
+                      {'params': {'token': 'KUR'}, 'label': 'A logogram read as different Akkadian words'}],
+        }
+
+        def work(db):
+            out = {}
+            for qid, items in curated.items():
+                keep = []
+                for c in items:
+                    toks = (c['params'].get('tokens') or c['params'].get('token')).split()
+                    if len(toks) == 1:
+                        n = db.execute('SELECT count(*) FROM posting WHERE namespace=? AND snapshot_id=? AND field=? AND policy=? AND label=?',
+                                       [scope['namespace'], scope['snapshot_id'], 'atf', POLICY, toks[0]]).fetchone()[0]
+                    else:
+                        n = db.execute('SELECT count(*) FROM ngram WHERE namespace=? AND snapshot_id=? AND field=? AND policy=? AND length=? AND readings=?',
+                                       [scope['namespace'], scope['snapshot_id'], 'atf', POLICY, len(toks), json.dumps(toks, ensure_ascii=False, separators=(',', ':'))]).fetchone()[0]
+                    if n:
+                        keep.append(dict(c, n=n))
+                out[qid] = keep
+            return out
+        found = self.b.run(ds, work)
+        arts = self.explorations.genres.get(self.b, ds)
+        for label, prefix in (('A medical text with an English translation', 'CANONICAL > Technical > Medicine'),
+                              ('An omen text with an English translation', 'CANONICAL > Divination'),
+                              ('A letter with an English translation', 'ARCHIVAL > Letter')):
+            best = max((a for a in arts.values() if a['tr'].get('en') and any(g == prefix or g.startswith(prefix + ' > ') for g in a['genres'])),
+                       key=lambda a: (a['tr']['en'], a['catalog']), default=None)
+            if best:
+                found.setdefault('tablet', []).append({'params': {'catalog': best['catalog']}, 'n': best['tr']['en'], 'unit': 'English translation lines', 'label': label})
+        for qid, items in found.items():
+            seen = {json.dumps(e['params'], sort_keys=True) for e in items}
+            ex[qid] = items + [e for e in ex[qid] if json.dumps(e['params'], sort_keys=True) not in seen]
         return ex
 
     # -- dispatch -----------------------------------------------------------
@@ -510,27 +569,27 @@ class Questions:
         layers = sorted({s['field'] for s in seqs})
         seq = next((s for s in seqs if s['field'] == field), None)
         lines, translations, truncated = [], [], False
+        all_genres = [' > '.join(str(c) for c in g['category']) for g in meta.get('genres') or [] if isinstance(g, dict) and isinstance(g.get('category'), list)]
         if seq:
-            lr = _rows(db, 'SELECT id, ordinal, label, surface, column_label, start_byte, end_byte FROM line WHERE sequence_id=? ORDER BY ordinal LIMIT ?', [seq['id'], MAX_LINES + 1])
-            truncated = len(lr) > MAX_LINES
-            lr = lr[:MAX_LINES]
-            toks = self._line_tokens(db, [r['id'] for r in lr])
-            lines = [dict(r, tokens=toks.get(r['id'], [])) for r in lr]
-            if field == 'atf':
-                for t in _rows(db, 'SELECT language, text, locator FROM translation_segment WHERE source_record_id=? ORDER BY id LIMIT 400', [seq['source_record_id']]):
-                    parts = str(t['locator'] or '').split(':')
-                    start = int(parts[2]) if len(parts) == 4 and parts[0] == 'atf' and parts[1] == 'utf8' and parts[2].isdigit() else None
-                    after = None
-                    if start is not None:
-                        prior = [ln for ln in lines if ln['end_byte'] <= start]
-                        after = prior[-1]['id'] if prior else None
-                    translations.append({'language': t['language'], 'text': t['text'], 'after_line': after, 'start_byte': start})
-                translations.sort(key=lambda t: (t['start_byte'] is None, t['start_byte'] or 0))
+            t = self.explorations.load_text(db, seq['source_record_id'], field, MAX_LINES)
+            truncated = t['truncated']
+            toks = self._line_tokens(db, [r['id'] for r in t['lines']])
+            lines = [dict(r, tokens=RA.annotate(toks.get(r['id'], []), field), comment=is_comment_line(r)) for r in t['lines']]
+            translations = [{k: p[k] for k in ('id', 'language', 'text', 'status', 'extent', 'first_line', 'last_line', 'lines')} for p in t['placed']]
         for ln in lines:
             ln.pop('start_byte', None)
             ln.pop('end_byte', None)
+        info['recordings'] = RA.recordings_for(all_genres)
+        info['record'] = seq['source_record_id'] if seq else None
+        info['source_link'] = 'https://www.ebl.lmu.de/library/' + quote(a['catalog_key'], safe='') if a['namespace'] == 'ebl' else None
+        tr_status = {}
+        for x in translations:
+            tr_status[x['status']] = tr_status.get(x['status'], 0) + 1
         return {'tablet': info, 'layers': layers, 'lines': lines, 'lines_truncated': truncated, 'translations': translations,
-                'translation_note': 'Translations are the source’s own, shown after the line they follow in the source; which words they render is not aligned.'}
+                'translation_status': tr_status,
+                'translation_note': ('Translations are the source edition’s own. Each is shown beside the lines it covers, following the eBL rule: '
+                                     'a translation line belongs to the text line before it, or runs to the line its extent names. '
+                                     'It renders the passage; it is not aligned word by word.')}
 
     # -- helpers for the client -------------------------------------------------------
     def suggest(self, key: str, version: str | None, field: str | None, prefix: str | None) -> dict:
@@ -591,7 +650,7 @@ class Questions:
             except ValueError:
                 pass
             script = meta.get('script') if isinstance(meta.get('script'), dict) else {}
-            return {'line_id': line_id, 'field': r['field'], 'lines': [dict(x, tokens=toks.get(x['id'], [])) for x in lr], 'lines_in_text': total,
+            return {'line_id': line_id, 'field': r['field'], 'lines': [dict(x, tokens=RA.annotate(toks.get(x['id'], []), r['field'])) for x in lr], 'lines_in_text': total,
                     'tablet': {'catalog': a['catalog_key'], 'artifact_id': r['artifact_id'], 'description': meta.get('description') or None,
                                'period': script.get('period') if script.get('period') not in (None, 'None') else None}}
         return _jsonable(self.x._bind(ds, self.b.run(ds, work)))

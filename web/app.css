@@ -364,3 +364,105 @@ pre.cell { margin: 0; white-space: pre-wrap; font: 11.5px var(--mono); max-heigh
 .callout.incident { border-color: var(--warn); color: var(--warn); }
 details.timing { margin: .5rem 0; font-size: .85rem; }
 details.timing summary { cursor: pointer; color: var(--muted, inherit); }
+
+/* ---------- Q-025: explorations, glyph pairing, translation blocks, reading panel ---------- */
+@font-face { font-family: "Workbench Cuneiform"; src: url("/fonts/NotoSansCuneiform-Regular.otf") format("opentype"); font-display: swap; }
+.cun, button.tk .g { font-family: "Workbench Cuneiform", "Noto Sans Cuneiform", sans-serif; font-style: normal; font-weight: 400; }
+.qnav-title + .q-list { margin-bottom: 22px; }
+.q-item .q-count { display: block; font: 11.5px/1.3 var(--sans); color: var(--muted); font-weight: 400; margin-top: 2px; }
+.x-counts { margin: 0; font-size: 13px; color: var(--muted); }
+.x-counts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.x-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.x-tools select { width: auto; max-width: 320px; padding: 5px 8px; }
+label.inline.check { gap: 6px; color: var(--ink); font-size: 13px; }
+.x-explain { margin: 10px 0 16px; max-width: 80ch; }
+table.x-texts td { vertical-align: top; }
+.x-desc { max-width: 52ch; }
+.x-genre { display: block; font-weight: 550; }
+.x-d { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.x-rec { display: block; color: var(--lapis); font-size: 12px; margin-top: 2px; }
+
+/* examples: purpose first, query second */
+.q-examples { display: block; }
+.ex-title { display: block; margin: 0 0 6px; }
+.ex-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.ex-list li { display: flex; flex-direction: column; gap: 3px; }
+.ex-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; white-space: normal; padding: 8px 10px; border-color: var(--line); }
+.ex-label { font: 600 14px/1.3 var(--serif); color: var(--ink); }
+.ex-q { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; color: var(--muted); }
+.ex-q .seq { font: 14px var(--serif); color: var(--ink); }
+.ex-note { font-size: 12px; color: var(--muted); padding: 0 2px; }
+
+/* paired reading + glyph */
+button.tk.paired { display: inline-flex; flex-direction: column; align-items: center; vertical-align: top; line-height: 1.15; padding: 3px 4px 2px; }
+button.tk .g { font-size: 22px; line-height: 1.2; min-height: 1.2em; color: var(--ink); }
+button.tk .g.none { color: var(--rule); font-family: var(--sans); font-size: 15px; }
+button.tk .g.partial { opacity: .7; }
+button.tk .rd { font: inherit; font-size: 15px; }
+.ln-toks:has(.paired) { line-height: 1.2; display: flex; flex-wrap: wrap; gap: 2px 4px; padding: 2px 0; }
+.glyph-legend { margin: 8px 0; max-width: 90ch; }
+.glyph-legend .cun { font-size: 16px; color: var(--ink); }
+.glyph-legend .dim { color: var(--rule); font-weight: 700; }
+.views-key { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; margin: 12px 0 4px; padding: 8px 0; border-top: 1px solid var(--line); }
+.views-key b { font-weight: 650; }
+.tablet-head a, .rd-sec a, .x-passage a { color: var(--lapis); }
+
+/* translation blocks: lines on the left, the source's translation beside them */
+.tablet-lines li.tblock { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, 1fr); gap: 0 24px; padding: 0; border-bottom: 1px solid var(--rule); background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.tb-lines { list-style: none; margin: 0; padding: 0; }
+.tb-lines li:last-child { border-bottom: 0; }
+.tb-tr { padding: 8px 12px 8px 14px; border-left: 2px solid color-mix(in srgb, var(--lapis) 45%, var(--line)); }
+.pb-tr + .pb-tr { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.pb-cap { display: block; font: 600 11px/1.4 var(--sans); letter-spacing: .05em; text-transform: uppercase; color: var(--lapis); }
+.pb-tr .tr-text { margin: 4px 0 2px; padding: 0; }
+.tablet-lines li.comment { opacity: .8; }
+
+/* explorations: passages and openings */
+.x-passage { margin: 0 0 26px; padding-top: 12px; border-top: 2px solid var(--ink); }
+.x-passage > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 8px; }
+.xp-title { font: 600 18px/1.3 var(--serif); margin: 0; }
+.pblock { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(220px, 1fr); gap: 0 24px; border-bottom: 1px solid var(--line); padding: 6px 0; }
+.pb-lines { list-style: none; margin: 0; padding: 0; }
+.pb-lines li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
+.pblock .pb-tr { padding: 4px 0 4px 14px; border-left: 2px solid color-mix(in srgb, var(--lapis) 45%, var(--line)); }
+table.openings td { vertical-align: top; }
+.op-ex { max-width: 60ch; }
+button.op-line { display: block; border: 0; background: none; padding: 0; text-align: left; white-space: normal; font: 15px/1.4 var(--serif); color: var(--ink); }
+button.op-line:hover { text-decoration: underline; text-decoration-color: var(--rule); }
+.op-line .tab-id { font: 12px var(--sans); color: var(--muted); margin-right: 4px; }
+.op-tr { display: block; font: italic 14px/1.45 var(--serif); color: color-mix(in srgb, var(--ink) 80%, var(--muted)); margin-top: 2px; }
+
+/* reading panel */
+.rd-sec { border-top: 1px solid var(--line); padding: 10px 0 4px; }
+.rd-sec h3 { font: 600 15px/1.3 var(--serif); margin: 0 0 6px; }
+.rd-sec p { margin: 4px 0 8px; font-size: 13.5px; }
+.rd-list { margin: 4px 0 8px; padding-left: 18px; font-size: 13.5px; }
+.rd-list li { margin: 3px 0; }
+.cite { color: var(--muted); font-size: 12px; }
+.sign-card { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; align-items: center; padding: 6px 0; font-size: 13.5px; }
+.cun.big { font-size: 38px; line-height: 1; text-align: center; color: var(--ink); }
+.rd-exs { list-style: none; margin: 4px 0; padding: 0; }
+.rd-ex { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.rd-foot { margin-top: 12px; }
+
+@media (max-width: 860px) {
+  .qnav-title { display: block; margin: 10px 0 6px; }
+  .qnav-title + .q-list { margin-bottom: 4px; }
+  .q-item .q-count { display: inline; margin: 0 0 0 6px; }
+  .tablet-lines li.tblock, .pblock { grid-template-columns: 1fr; }
+  .tb-tr, .pblock .pb-tr { border-left: 0; border-top: 2px solid color-mix(in srgb, var(--lapis) 45%, var(--line)); padding: 8px 0 10px; margin: 0 0 0 48px; }
+  .ex-list { grid-template-columns: 1fr; }
+  table.openings, table.openings tbody, table.openings tr, table.openings td { display: block; }
+  table.openings thead { display: none; }
+  table.openings tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  table.openings td { border: 0; padding: 0; }
+  table.openings td.n { display: inline; margin-right: 10px; color: var(--muted); }
+  table.x-texts, table.x-texts tbody, table.x-texts tr, table.x-texts td { display: block; }
+  table.x-texts thead { display: none; }
+  table.x-texts tr { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  table.x-texts td { border: 0; padding: 1px 0; }
+  table.x-texts td.n::after { content: " lines"; }
+}
+.tr-text .anc, .op-tr .anc { font-style: normal; font-family: var(--serif); letter-spacing: .01em; }
+.qform:empty { display: none; }
+dl.meta > div { display: flex; gap: 6px; min-width: 0; } dl.meta > div dd { margin: 0; }

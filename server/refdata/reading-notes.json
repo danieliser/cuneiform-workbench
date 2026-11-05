@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "what": "A deliberately small, cited set of notes for readings whose use depends on context. Each use names where it applies. None of these is a universal English meaning, and none is a translation of a particular line.",
+    "sources": {
+      "mzl": {"title": "R. Borger, Mesopotamisches Zeichenlexikon (AOAT 305, 2nd ed. 2010)", "via": "eBL sign list, field mesZl", "url": "https://www.ebl.lmu.de/signs/DI%C5%A0"},
+      "ebl-atf": {"title": "eBL-ATF specification (ebl-api docs/ebl-atf.md)", "commit": "36c41664a3cde0c0ed227fa1755eaeaa74a0f817", "url": "https://github.com/ElectronicBabylonianLiterature/ebl-api/blob/36c41664a3cde0c0ed227fa1755eaeaa74a0f817/docs/ebl-atf.md", "sha256": "be7c5ccf8ea01719644ee19f4fb8cb746da0c07a11b6cda1d754a0e4cf72440d"},
+      "ebl-tr": {"title": "eBL translation-line extent rule (ebl-api ebl/transliteration/domain/labels_validator.py)", "commit": "36c41664a3cde0c0ed227fa1755eaeaa74a0f817", "url": "https://github.com/ElectronicBabylonianLiterature/ebl-api/blob/36c41664a3cde0c0ed227fa1755eaeaa74a0f817/ebl/transliteration/domain/labels_validator.py"},
+      "baplar": {"title": "SOAS, Babylonian and Assyrian Poetry and Literature: An Archive of Recordings (BAPLAR)", "url": "https://www.soas.ac.uk/baplar/recordings"}
+    }
+  },
+  "readings": {
+    "DIŠ": {
+      "summary": "The sign of a single vertical wedge. What it stands for depends on where it is written.",
+      "uses": [
+        {"context": "At the start of a line in omen collections", "use": "read šumma, Akkadian ‘if’, opening the observed sign (the protasis). Borger marks this equation with a query and notes that some editors transliterate it as ¶.", "language": "Akkadian (logographic use)", "kind": "contextual reading", "cite": "mzl", "where": "MZL no. 748"},
+        {"context": "As a number", "use": "the numeral 1 (also 60 in the sexagesimal system)", "language": "number sign", "kind": "numeral", "cite": "mzl", "where": "MZL no. 748"},
+        {"context": "Before a personal name", "use": "a determinative (unpronounced classifier) marking a, usually male, personal name; transliterated {m} or {I} when used this way", "language": "determinative", "kind": "classifier", "cite": "mzl", "where": "MZL no. 748"},
+        {"context": "In some first-millennium spellings", "use": "the Akkadian preposition ana ‘to, for’ (the release’s sign layer writes ana with the same sign, ABZ 480)", "language": "Akkadian", "kind": "syllabic or logographic value", "cite": "mzl", "where": "MZL no. 748"}
+      ],
+      "caution": "The transliteration keeps DIŠ because the editor did not commit to one reading in the text itself; the source's English translation of the line, where it exists, shows the editor's contextual rendering."
+    }
+  },
+  "conventions": {
+    "logogram": {"text": "Written in capitals: a logogram, a sign used for a whole word. Its Akkadian reading is usually a different word from the sign name (KUR can stand for mātu ‘land’). Capitals mark the sign; they do not spell the spoken word.", "cite": "ebl-atf", "where": "grammar: logogram, reading"},
+    "syllabic": {"text": "Lower case: a sound value of a sign, usually one syllable of a word that is split across several signs with hyphens (a-na).", "cite": "ebl-atf", "where": "grammar: reading, value"},
+    "subindex": {"text": "Subscript numbers tell apart different signs with the same sound value (du, du₂, du₃ are three signs). ₓ means a value whose sign number is not settled.", "cite": "ebl-atf", "where": "grammar: sub-index"},
+    "determinative": {"text": "Curly braces mark a determinative, an unpronounced classifier: {d} before a god's name, {ki} after a place, {m} before a man's name.", "cite": "ebl-atf", "where": "table: Determinative { }"},
+    "flags": {"text": "# damaged, ? uncertain, ! corrected by the editor, [ ] broken away, x an unreadable sign. These describe the tablet and the edition, not the word.", "cite": "ebl-atf", "where": "grammar: flag, broken-away"},
+    "number": {"text": "A number. Cuneiform counts in base 60, and the same wedge can mean 1 or 60.", "cite": "mzl", "where": "MZL no. 748"}
+  },
+  "recordings": {
+    "note": "Linked only when the source's own genre names the composition. A recording is a modern scholar reading another manuscript or edition of the same composition, not this tablet.",
+    "by_genre": {
+      "CANONICAL > Literature > Narrative > Gilgameš": [
+        {"title": "Epic of Gilgamesh, Standard Version, Tablet XI, lines 1–163", "reader": "Karl Hecker", "url": "https://www.soas.ac.uk/baplar/recordings/epic-gilgames-standard-version-tablet-xi-lines-1-163-read-karl-hecker"},
+        {"title": "Epic of Gilgamesh, Old Babylonian Version, Tablet II, lines 1–239", "reader": "Karl Hecker", "url": "https://www.soas.ac.uk/baplar/recordings/epic-gilgamesh-old-babylonian-version-tablet-ii-lines-1-239-read-karl-hecker"}],
+      "CANONICAL > Literature > Narrative > Enūma eliš": [
+        {"title": "Babylonian Epic of Creation (Enūma elîš), Tablet I, lines 1–20", "reader": "Ivan Hrůša", "url": "https://www.soas.ac.uk/baplar/recordings/babylonian-epic-creation-enuma-elis-tablet-i-lines-1-20-read-ivan-hrusa"}],
+      "CANONICAL > Literature > Monologue and dialogue > Ludlul bēl nēmeqi": [
+        {"title": "Poem of the Righteous Sufferer (Ludlul bēl nēmeqi), Tablet II, entire tablet", "reader": "Karl Hecker", "url": "https://www.soas.ac.uk/baplar/recordings/poem-righteous-sufferer-ludlul-bel-nemeqi-tablet-ii-entire-tablet-read-karl-hecker"}],
+      "CANONICAL > Literature > Narrative > Atraḫasīs (Story of the Flood)": [
+        {"title": "Atra-Hasīs, Old Babylonian Version, Tablet I, lines i.1–iii.16", "reader": "Claus Wilcke", "url": "https://www.soas.ac.uk/baplar/recordings/atramhasis-ob-version-sippir-tablet-i-lines-i1-iii16-read-claus-wilcke"}],
+      "CANONICAL > Literature > Narrative > Anzû": [
+        {"title": "Epic of Anzû, Old Babylonian Version, Tablet II, lines 1–83", "reader": "Claus Wilcke", "url": "https://www.soas.ac.uk/baplar/recordings/epic-anzu-old-babylonian-version-susa-tablet-ii-lines-1-83-read-claus-wilcke"}]
+    }
+  },
+  "pronunciation": {
+    "label": "Reading & pronunciation",
+    "points": [
+      "A transliteration names the signs as they are written; it is not a spelling of how the words sounded. Scholars write a separate normalized (transcribed) form for that, for example šumma for the word written DIŠ in omens.",
+      "A logogram is read as an Akkadian word that can be unrelated to its sign name: KUR is read mātu ‘land’ (among other words).",
+      "Normalized forms are modern scholarly reconstructions. The exact ancient sound is not known, and it varied by period and region; this workbench does not generate audio.",
+      "Modern Assyriologists have recorded readings of literary texts in normalized Akkadian (SOAS BAPLAR). They show one scholar's informed reading, not an ancient voice."
+    ],
+    "cite": "baplar"
+  }
+}

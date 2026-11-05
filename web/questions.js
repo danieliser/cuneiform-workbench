@@ -5,13 +5,15 @@
   const CW = window.CW;
   const { el, clear, fmt, api, q, bound, state } = CW;
   const $ = s => document.querySelector(s);
-  const QS = { registry: null, regFor: null, current: 'sequence', inputs: {}, results: {}, drill: {}, view: {}, lastDs: null,
-    notice: null, seq: 0, insp: null, sel: null, inspReturn: null };
+  const QS = { registry: null, regFor: null, current: null, inputs: {}, results: {}, drill: {}, view: {}, lastDs: null,
+    notice: null, seq: 0, insp: null, sel: null, inspReturn: null, glyphs: 'paired' };
+  const isX = id => typeof id === 'string' && id.startsWith('x:');
 
   // ---------- small helpers ----------
   const share = (n, of) => { const v = 100 * n / of; return v < 1 ? '<1%' : (of >= 1000 && v < 10 ? v.toFixed(1) : Math.round(v)) + '%'; };
   const plural = (n, one, many) => `${fmt(n)} ${n === 1 ? one : (many || one + 's')}`;
   const qdef = id => QS.registry && QS.registry.questions.find(x => x.id === id);
+  const xdef = id => QS.registry && (QS.registry.explorations || []).find(x => 'x:' + x.id === id);
   const SUB = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉' };
   // ASCII ATF conveniences: sz → š, s, → ṣ, t, → ṭ, trailing digits after letters → subscript (du3 → du₃).
   function normToken(t, field) {
@@ -75,15 +77,26 @@
 
   // ---------- rendering: shell ----------
   function renderNav() {
+    const xl = clear($('#x-list'));
+    for (const d of QS.registry.explorations || []) {
+      xl.appendChild(el('li', {}, el('button', { type: 'button', class: 'q-item', 'aria-current': 'x:' + d.id === QS.current ? 'true' : null,
+        onclick: () => select('x:' + d.id, true) }, d.title, el('span', { class: 'q-count', text: fmt(d.texts) + ' texts' }))));
+    }
+    $('#x-title').hidden = !(QS.registry.explorations || []).length;
     const ol = clear($('#q-list'));
     for (const d of QS.registry.questions) {
       ol.appendChild(el('li', {}, el('button', { type: 'button', class: 'q-item', 'aria-current': d.id === QS.current ? 'true' : null,
         onclick: () => select(d.id, true) }, d.title)));
     }
+    // Narrow screens scroll the nav sideways: keep the current entry visible without moving the page.
+    for (const list of [xl, ol]) {
+      const cur = list.querySelector('[aria-current=true]');
+      if (cur && list.scrollWidth > list.clientWidth) list.scrollLeft = Math.max(0, cur.parentNode.offsetLeft - list.offsetLeft - 8);
+    }
   }
   function select(id, focus) {
-    if (!qdef(id)) return;
-    readForm();
+    if (!qdef(id) && !xdef(id)) return;
+    if (!isX(QS.current)) readForm();
     QS.current = id;
     closeInspector();
     render();
@@ -92,6 +105,8 @@
   }
   function render() {
     if (!QS.registry) return;
+    if (!QS.current || (!qdef(QS.current) && !xdef(QS.current))) QS.current = (QS.registry.explorations || []).length ? 'x:' + QS.registry.explorations[0].id : 'sequence';
+    if (isX(QS.current)) { renderNav(); return renderExploration(xdef(QS.current)); }
     const d = qdef(QS.current);
     renderNav();
     $('#q-title').textContent = d.title;
@@ -129,7 +144,7 @@
     form.onsubmit = ev => { ev.preventDefault(); readForm(); run(d.id, {}); };
   }
   function readForm() {
-    const d = qdef(QS.current); if (!d) return;
+    const d = qdef(QS.current); if (!d || isX(QS.current)) return;
     const form = $('#q-form'); const vals = Object.assign({}, QS.inputs[d.id] || {});
     for (const f of d.fields) { const n = form.querySelector(`[name="${f.name}"]`); if (n) vals[f.name] = n.value; }
     QS.inputs[d.id] = vals;
@@ -140,14 +155,19 @@
   }
   function renderExamples(d) {
     const box = clear($('#q-examples'));
-    const ex = (QS.registry.examples || {})[d.id] || [];
+    const ex = ((QS.registry.examples || {})[d.id] || []).slice(0, 5);
     if (!ex.length) return;
-    box.appendChild(el('span', { class: 'hint', text: 'Try' }));
+    box.appendChild(el('span', { class: 'hint ex-title', text: 'Examples' }));
+    const list = el('ul', { class: 'ex-list' });
     for (const e of ex) {
-      box.appendChild(el('button', { type: 'button', class: 'chip-btn', title: e.unit ? `${fmt(e.n)} ${e.unit}` : `${fmt(e.n)} in this dataset`,
+      list.appendChild(el('li', {}, el('button', { type: 'button', class: 'ex-btn', title: e.note || null,
         onclick: () => { QS.inputs[d.id] = Object.assign({ field: 'atf' }, e.params); renderForm(d); run(d.id, {}); } },
-        exampleLabel(d.id, e.params), el('span', { class: 'n', text: fmt(e.n) })));
+        el('span', { class: 'ex-label', text: e.label || 'Example' }),
+        el('span', { class: 'ex-q' }, el('span', { class: 'seq', text: exampleLabel(d.id, e.params) }),
+          el('span', { class: 'n', text: `${fmt(e.n)} ${e.unit || 'in this dataset'}` }))),
+        e.note ? el('span', { class: 'ex-note', text: e.note }) : null));
     }
+    box.appendChild(list);
   }
 
   // ---------- running ----------
@@ -194,6 +214,7 @@
 
   // ---------- result shell ----------
   function renderResult() {
+    if (isX(QS.current)) return renderExplorationResult();
     const box = clear($('#q-result'));
     box.removeAttribute('aria-busy');
     const qid = QS.current, res = QS.results[qid];
@@ -437,32 +458,66 @@
       ['CDLI', tb.cdli], ['Genre', tb.genres.join('; ') || null], ['Joins', tb.joins ? String(tb.joins) : null]].filter(x => x[1]);
     box.appendChild(el('div', { class: 'answer tablet-head' }, el('h2', { class: 'headline', text: tb.catalog }),
       tb.description ? el('p', { class: 'desc', text: tb.description }) : null,
-      meta.length ? el('dl', { class: 'meta' }, meta.map(([k, v]) => [el('dt', { text: k }), el('dd', { text: v })])) : null));
+      meta.length ? el('dl', { class: 'meta' }, meta.map(([k, v]) => el('div', {}, el('dt', { text: k }), el('dd', { text: v })))) : null,
+      tb.source_link ? el('p', { class: 'hint' }, 'Source record: ', el('a', { href: tb.source_link, target: '_blank', rel: 'noopener noreferrer', text: `${tb.catalog} in the eBL library` }),
+        ' (photographs, where eBL has them, are there; this dataset has none).') : null));
     const field = r.field;
-    if (r.layers.length > 1) box.appendChild(el('div', { class: 'toolbar' }, segmented('Layer', r.layers.map(l => [l, l === 'atf' ? 'Transliteration' : 'Sign numbers (ABZ)']), field,
-      v => { QS.inputs.tablet = Object.assign({}, QS.inputs.tablet, { field: v }); renderForm(qdef('tablet')); run('tablet', {}); })));
+    const redraw = () => renderResult();
+    const tools = el('div', { class: 'toolbar' });
+    if (r.layers.length > 1) tools.appendChild(segmented('Layer', r.layers.map(l => [l, l === 'atf' ? 'Transliteration' : 'Sign numbers (ABZ)']), field,
+      v => { QS.inputs.tablet = Object.assign({}, QS.inputs.tablet, { field: v }); renderForm(qdef('tablet')); run('tablet', {}); }));
+    tools.appendChild(glyphToggle(redraw));
+    box.appendChild(tools);
     if (!r.lines.length) { box.appendChild(el('div', { class: 'state unavailable', text: `This tablet has no ${r.field_label.toLowerCase()} layer in this dataset.` })); return; }
+    const nTr = r.translations.filter(t => t.first_line).length;
+    box.appendChild(el('div', { class: 'views-key' },
+      el('span', {}, el('b', { text: 'Reading' }), ' the edition’s transliteration: sign values as the editor read them.'),
+      QS.glyphs === 'paired' ? el('span', {}, el('b', { text: 'Glyph' }), ' a standard Unicode sign for that reading, not this tablet’s handwriting.') : null,
+      field === 'atf' ? el('span', {}, el('b', { text: 'Translation' }), nTr ? ` the source’s own (${fmt(nTr)} lines), beside the lines it covers.` : ' none in the source for this tablet.') : null,
+      el('span', { class: 'hint', text: 'Select a reading to explain it, or two in a line to ask about the span.' })));
     QS.sel = null;
-    const trAfter = {};
-    const loose = [];
-    for (const t of r.translations) { if (t.after_line) (trAfter[t.after_line] = trAfter[t.after_line] || []).push(t); else loose.push(t); }
+    const ctx = { tablet: tb.catalog, record: tb.record || null, recordings: tb.recordings || [] };
+    const idx = {}; r.lines.forEach((ln, i) => { idx[ln.id] = i; });
+    const starts = {};
+    for (const t of r.translations) if (t.first_line && idx[t.first_line] !== undefined) (starts[idx[t.first_line]] = starts[idx[t.first_line]] || []).push(t);
     const list = el('ol', { class: 'tablet-lines', 'aria-label': 'Lines' });
     let lastSurface = null;
-    for (const ln of r.lines) {
+    const lineRow = ln => {
       const surf = [ln.surface, ln.column_label ? 'column ' + ln.column_label : null].filter(Boolean).join(', ');
-      if (surf && surf !== lastSurface) list.appendChild(el('li', { class: 'surface', text: surf }));
+      const out = [];
+      if (surf && surf !== lastSurface) out.push(el('li', { class: 'surface', text: surf }));
       lastSurface = surf || lastSurface;
+      if (ln.comment) {
+        out.push(el('li', { class: 'ln comment' }, el('span', { class: 'ln-no', text: '' }), el('span', { class: 'hint', text: 'A translation or note line that the backend parser kept as text (conservative-3); not part of the transliteration.' })));
+        return out;
+      }
       const toks = el('span', { class: 'ln-toks' }, ln.tokens.map((t, i) => [i ? ' ' : null,
-        el('button', { type: 'button', class: 'tk ' + tokenSpan(t).className, title: CW.tokenTitle(t), 'data-line': ln.id, 'data-i': String(i), onclick: ev => pick(ln, i, ev) }, t.raw)]));
-      list.appendChild(el('li', { class: 'ln' }, el('span', { class: 'ln-no', text: ln.label || '' }), toks));
-      for (const t of trAfter[ln.id] || []) list.appendChild(el('li', { class: 'tr' }, el('span', { class: 'ln-no', text: t.language }), el('span', { class: 'tr-text', text: t.text })));
+        readingButton(t, field, ctx, { attrs: { 'data-line': ln.id, 'data-i': String(i) }, onclick: ev => pick(ln, i, ev) })]));
+      out.push(el('li', { class: 'ln' }, el('span', { class: 'ln-no', text: ln.label || '' }), toks));
+      return out;
+    };
+    const names = { en: 'English', de: 'German', ar: 'Arabic' };
+    let i = 0;
+    while (i < r.lines.length) {
+      if (!starts[i]) { lineRow(r.lines[i]).forEach(x => list.appendChild(x)); i++; continue; }
+      let end = i; const trs = [];
+      for (let j = i; j <= end; j++) for (const t of starts[j] || []) { trs.push(t); end = Math.max(end, idx[t.last_line]); }
+      const inner = el('ol', { class: 'tb-lines' });
+      for (let j = i; j <= end; j++) lineRow(r.lines[j]).forEach(x => inner.appendChild(x));
+      const lab = k => r.lines[k].label || '';
+      list.appendChild(el('li', { class: 'tblock' }, inner, el('div', { class: 'tb-tr' }, trs.map(t => el('div', { class: 'pb-tr', lang: t.language },
+        el('span', { class: 'pb-cap', text: `${names[t.language] || t.language} · source edition · ${t.lines > 1 ? `lines ${lab(idx[t.first_line])}–${lab(idx[t.last_line])}` : `line ${lab(idx[t.first_line])}`}` }),
+        trText(t.text),
+        t.status === 'extent-unresolved' ? el('span', { class: 'hint', text: `The source says it runs to “${t.extent}”; that label is not in this edition, so it is shown at its first line.` }) : null)))));
+      i = end + 1;
     }
-    box.appendChild(el('p', { class: 'hint', text: 'Select a reading, then another in the same line, to ask about that span.' }));
+    if (QS.glyphs === 'paired') box.appendChild(glyphLegend());
     box.appendChild(list);
     if (r.lines_truncated) box.appendChild(el('p', { class: 'hint', text: `First ${r.lines.length} lines shown.` }));
     if (r.translations.length) box.appendChild(el('p', { class: 'hint', text: r.translation_note }));
-    for (const t of loose) box.appendChild(el('p', { class: 'tr-loose', text: `${t.language}: ${t.text}` }));
+    for (const t of r.translations.filter(x => !x.first_line)) box.appendChild(el('p', { class: 'tr-loose', text: `${t.language} (placed before any text line in the source): ${t.text}` }));
     box.appendChild(el('div', { id: 'sel-bar', class: 'sel-bar', hidden: true, role: 'region', 'aria-label': 'Selection' }));
+    QS.tabletCtx = ctx;
   }
   function pick(ln, i, ev) {
     const s = QS.sel;
@@ -483,7 +538,8 @@
     clear(barEl); barEl.hidden = false;
     const tooLong = toks.length > 5;
     barEl.appendChild(el('span', { class: 'sel-text' }, 'Selected ', seqPhrase(slots)));
-    barEl.appendChild(el('button', { type: 'button', class: 'primary', disabled: tooLong ? true : null, title: tooLong ? 'At most 5 positions' : null,
+    if (toks.length === 1) barEl.appendChild(el('button', { type: 'button', class: 'primary', onclick: ev => openReading(toks[0], field, QS.tabletCtx || {}, ev.currentTarget) }, 'Explain this reading'));
+    barEl.appendChild(el('button', { type: 'button', class: toks.length === 1 ? null : 'primary', disabled: tooLong ? true : null, title: tooLong ? 'At most 5 positions' : null,
       onclick: () => { QS.inputs.sequence = { tokens: text.join(' '), field }; QS.current = 'sequence'; render(); run('sequence', { slots }); } }, 'Where else does this occur?'));
     const canBetween = toks.length >= 3 && toks.length <= 4;
     barEl.appendChild(el('button', { type: 'button', disabled: canBetween ? null : true, title: canBetween ? null : 'Select 3 or 4 readings: the first and last frame the gap',
@@ -588,17 +644,309 @@
     input.addEventListener('blur', () => setTimeout(close, 120));
   }
 
+  // eBL translation markup: @i{…} italic, @akk{…}/@sux{…} words in the ancient language, @url{…} kept as text.
+  function trText(text, tag, cls) {
+    const kids = [];
+    const re = /@(i|akk|sux|url|b|sup|sub)\{([^{}]*)\}/g;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) kids.push(text.slice(last, m.index));
+      const k = m[1];
+      kids.push(k === 'url' ? m[2] : el(k === 'b' ? 'b' : k === 'sup' ? 'sup' : k === 'sub' ? 'sub' : 'i', { lang: k === 'akk' ? 'akk' : k === 'sux' ? 'sux' : null, class: k === 'akk' || k === 'sux' ? 'anc' : null, text: m[2] }));
+      last = re.lastIndex;
+    }
+    if (last < text.length) kids.push(text.slice(last));
+    return el(tag || 'p', { class: cls || 'tr-text' }, kids);
+  }
+  // ---------- glyph-paired tokens ----------
+  // A glyph is a standardized Unicode sign looked up from the reading (eBL sign list, checked against ORACC OSL);
+  // it is never the tablet's handwriting. Unmapped or ambiguous parts get no glyph.
+  function glyphLegend() {
+    return el('p', { class: 'glyph-legend hint' },
+      el('span', { class: 'cun', 'aria-hidden': 'true', text: '𒁹' }), ' Glyphs are standard Unicode cuneiform looked up from each reading in the eBL sign list. They are not this tablet’s handwriting, and this dataset has no photographs. ',
+      el('span', { class: 'dim', text: '·' }), ' marks a reading with no verified glyph.');
+  }
+  function glyphToggle(redraw) {
+    return segmented('Show', [['paired', 'Reading + glyph'], ['reading', 'Reading only']], QS.glyphs, v => { QS.glyphs = v; redraw(); });
+  }
+  function tokBody(t) {
+    const kids = [];
+    if (QS.glyphs === 'paired') {
+      const g = t.glyph && t.glyph.g;
+      kids.push(el('span', { class: 'g' + (g ? (t.glyph.full ? '' : ' partial') : ' none'), 'aria-hidden': 'true', text: g || '·' }));
+    }
+    kids.push(el('span', { class: 'rd', text: t.raw }));
+    return kids;
+  }
+  function readingButton(t, field, ctx, extra) {
+    const cls = ['tk', tokenSpan(t).className, QS.glyphs === 'paired' ? 'paired' : ''].join(' ');
+    return el('button', Object.assign({ type: 'button', class: cls, title: CW.tokenTitle(t) + ' — select to explain',
+      onclick: ev => { if (extra && extra.onclick) return extra.onclick(ev); openReading(t, field, ctx, ev.currentTarget); } }, extra && extra.attrs), tokBody(t));
+  }
+
+  // ---------- explorations ----------
+  function renderExploration(e) {
+    $('#q-title').textContent = e.title;
+    $('#q-title').tabIndex = -1;
+    $('#q-prompt').textContent = e.prompt;
+    clear($('#q-form'));
+    const box = clear($('#q-examples'));
+    box.appendChild(el('p', { class: 'x-counts' }, el('b', { text: fmt(e.texts) }), ` texts · `, el('b', { text: fmt(e.with_english) }), ' with an English translation in the source',
+      e.with_any_translation > e.with_english ? ` · ${fmt(e.with_any_translation)} with any translation` : ''));
+    const id = QS.current;
+    if (!QS.results[id] || QS.results[id].stale) runExplore(id, {});
+    else renderExplorationResult();
+  }
+  function xParams(id, extra) {
+    const v = Object.assign({}, QS.inputs[id] || {}, extra || {});
+    for (const k of Object.keys(v)) if (v[k] === null || v[k] === undefined || v[k] === '') delete v[k];
+    return v;
+  }
+  async function runExplore(id, extra) {
+    const p = xParams(id, extra);
+    QS.inputs[id] = p;
+    if (!state.version) { QS.results[id] = { error: 'This dataset is not being served right now.' }; return renderExplorationResult(); }
+    const seq = ++QS.seq;
+    QS.results[id] = { loading: true, params: p };
+    renderExplorationResult();
+    CW.setHash();
+    try {
+      const data = await api('/api/explore', bound({ exploration: id.slice(2), params: p }));
+      if (seq !== QS.seq && QS.results[id] && !QS.results[id].loading) return;
+      QS.results[id] = { data, params: p };
+    } catch (e) { QS.results[id] = { error: friendlyError(e.message), params: p }; }
+    if (QS.current === id) renderExplorationResult();
+  }
+  function renderExplorationResult() {
+    const id = QS.current, res = QS.results[id], e = xdef(id);
+    const box = clear($('#q-result'));
+    box.removeAttribute('aria-busy');
+    if (QS.notice) box.appendChild(el('div', { class: 'state stale', role: 'alert' }, el('b', { text: 'Results cleared. ' }), QS.notice));
+    if (!res) return;
+    if (res.loading) { box.setAttribute('aria-busy', 'true'); box.appendChild(el('p', { class: 'state loading' }, el('span', { class: 'spinner', 'aria-hidden': 'true' }), 'Gathering texts…')); return; }
+    if (res.error) { box.appendChild(el('div', { class: 'state error', role: 'alert', text: res.error })); return; }
+    const r = res.data;
+    const views = [['texts', 'Texts'], ['passages', 'Passages with translations']];
+    if (e.id === 'omens') views.unshift(['openings', 'How lines open']);
+    const bar = el('div', { class: 'toolbar x-tools' }, segmented('View', views, r.view, v => runExplore(id, { view: v, offset: null })));
+    if (r.subgenres.length) {
+      const sel = el('select', { 'aria-label': 'Narrow by genre', onchange: ev => runExplore(id, { subgenre: ev.target.value || null, offset: null }) },
+        el('option', { value: '', text: 'All genres in this exploration' }),
+        r.subgenres.map(g => el('option', { value: g.genre, selected: r.filters.subgenre === g.genre ? true : null, text: `${g.label} (${fmt(g.texts)})` })));
+      bar.appendChild(el('label', { class: 'inline' }, el('span', { class: 'sr-only', text: 'Genre' }), sel));
+    }
+    if (r.view !== 'openings' && r.languages.length > 1) {
+      const names = { en: 'English', de: 'German', ar: 'Arabic' };
+      bar.appendChild(el('label', { class: 'inline' }, el('span', { class: 'sr-only', text: 'Translation language' }),
+        el('select', { 'aria-label': 'Translation language', onchange: ev => runExplore(id, { language: ev.target.value || null, offset: null }) },
+          el('option', { value: '', text: 'Any translation language' }),
+          r.languages.filter(l => names[l.code]).map(l => el('option', { value: l.code, selected: r.filters.language === l.code ? true : null, text: `${names[l.code]} (${fmt(l.texts)} texts)` })))));
+    }
+    if (r.view === 'texts' && !e.filter.translated) {
+      const cb = el('input', { type: 'checkbox', checked: r.filters.translated_only ? true : null, onchange: ev => runExplore(id, { translated_only: ev.target.checked || null, offset: null }) });
+      bar.appendChild(el('label', { class: 'inline check' }, cb, 'Only texts with a translation'));
+    }
+    box.appendChild(bar);
+    box.appendChild(el('p', { class: 'hint x-explain', text: r.explain }));
+    if (r.view === 'texts') renderXTexts(r, box, id);
+    if (r.view === 'passages') renderXPassages(r, box, id);
+    if (r.view === 'openings') renderXOpenings(r, box);
+    box.appendChild(el('footer', { class: 'q-foot' }, el('details', { class: 'method' }, el('summary', { text: 'Where these come from' }),
+      el('ul', {}, el('li', { text: 'Genres and periods are the source catalogue’s labels (eBL). Texts without a genre label are left out rather than guessed.' }),
+        el('li', { text: 'Translations are the source edition’s own lines, shown beside the transliteration lines they cover. Nothing here is machine-translated.' }),
+        r.timing ? el('li', { class: 'hint', text: `Answered in ${fmt(Math.round(r.timing.end_to_end_ms))} ms, dataset version ${String(r.dataset.version).slice(0, 12)}.` }) : null))));
+  }
+  function trSummary(tr) {
+    const names = { en: 'English', de: 'German', ar: 'Arabic' };
+    const ks = Object.keys(tr || {}).filter(k => names[k]);
+    if (!ks.length) return el('span', { class: 'muted', text: 'None in the source' });
+    return el('span', {}, ks.sort((a, b) => tr[b] - tr[a]).map((k, i) => [i ? ', ' : null, `${names[k]} · ${fmt(tr[k])} ${tr[k] === 1 ? 'line' : 'lines'}`]));
+  }
+  function pagerX(r, id, unit) {
+    const pg = r.page, total = r.totals.shown_texts;
+    return el('div', { class: 'pager' }, el('span', { text: `${fmt(pg.offset + 1)}–${fmt(Math.min(pg.offset + pg.limit, total))} of ${fmt(total)} ${unit}` }),
+      el('span', { class: 'btns' },
+        el('button', { type: 'button', disabled: pg.offset > 0 ? null : true, onclick: () => runExplore(id, { offset: Math.max(0, pg.offset - pg.limit) }) }, '← Previous'),
+        el('button', { type: 'button', disabled: pg.next_offset === null ? true : null, onclick: () => runExplore(id, { offset: pg.next_offset }) }, 'Next →')));
+  }
+  function renderXTexts(r, box, id) {
+    const e = xdef(id);
+    if (!r.texts.length) { box.appendChild(el('div', { class: 'state empty', text: 'No texts match these filters.' })); return; }
+    box.appendChild(el('table', { class: 'data x-texts' }, el('caption', { class: 'sr-only', text: 'Texts' }),
+      el('thead', {}, el('tr', {}, ['Museum number', 'What the catalogue says', 'Period', 'Lines', 'Translation in the source'].map((h, i) => el('th', { scope: 'col', class: i === 3 ? 'n' : null, text: h })))),
+      el('tbody', {}, r.texts.map(t => el('tr', {},
+        el('td', {}, el('button', { type: 'button', class: 'linkish', onclick: () => openTablet(t.catalog) }, t.catalog)),
+        el('td', { class: 'x-desc' }, el('span', { class: 'x-genre', text: t.genres.join('; ') || (e.filter.genres ? 'No finer genre recorded' : 'No genre recorded') }),
+          t.description ? el('span', { class: 'x-d', text: t.description }) : null,
+          t.recordings ? el('span', { class: 'x-rec', text: 'Scholars’ recordings of this composition exist' }) : null),
+        el('td', { text: t.period || '—' }), el('td', { class: 'n', text: fmt(t.lines) }), el('td', {}, trSummary(t.translations)))))));
+    box.appendChild(pagerX(r, id, 'texts, translated first'));
+  }
+  function passageBlock(bl, ctx) {
+    const tr = bl.translation;
+    const lines = el('ol', { class: 'pb-lines' }, bl.lines.map(ln => el('li', {}, el('span', { class: 'ln-no', text: ln.label || '' }),
+      el('span', { class: 'ln-toks' }, ln.tokens.map((t, i) => [i ? ' ' : null, readingButton(t, 'atf', ctx)])))));
+    const names = { en: 'English', de: 'German', ar: 'Arabic' };
+    const span = bl.lines.length > 1 ? `lines ${bl.lines[0].label}–${bl.lines[bl.lines.length - 1].label}` : `line ${bl.lines[0].label}`;
+    return el('div', { class: 'pblock' }, lines,
+      el('div', { class: 'pb-tr', lang: tr.language },
+        el('span', { class: 'pb-cap', text: `${names[tr.language] || tr.language} translation · source edition · ${span}` }),
+        trText(tr.text),
+        tr.status === 'extent-unresolved' ? el('span', { class: 'hint', text: `The source says this runs to “${tr.extent}”, which is not among this edition’s line labels; shown at its first line.` }) : null));
+  }
+  function renderXPassages(r, box, id) {
+    if (!r.passages.length) { box.appendChild(el('div', { class: 'state empty', text: 'No translated passages match these filters.' })); return; }
+    for (const t of r.passages) {
+      const ctx = { tablet: t.catalog };
+      box.appendChild(el('section', { class: 'x-passage' },
+        el('header', {}, el('h2', { class: 'xp-title' }, el('button', { type: 'button', class: 'linkish', onclick: () => openTablet(t.catalog) }, t.catalog)),
+          el('span', { class: 'hint', text: [t.genres.join('; '), t.period].filter(Boolean).join(' · ') }),
+          el('span', { class: 'hint', text: `first ${t.shown} of ${fmt(Object.values(t.translations).reduce((a, b) => a + b, 0))} translation lines` })),
+        t.blocks.map(b => passageBlock(b, ctx)),
+        el('button', { type: 'button', class: 'ghost', onclick: () => openTablet(t.catalog) }, 'Read the whole tablet →')));
+    }
+    box.insertBefore(el('div', { class: 'toolbar' }, glyphToggle(renderExplorationResult)), box.querySelector('.x-passage'));
+    box.insertBefore(glyphLegend(), box.querySelector('.x-passage'));
+    box.appendChild(pagerX(r, id, 'translated texts'));
+  }
+  function renderXOpenings(r, box) {
+    const o = r.openings;
+    const pct = o.lines ? Math.round(100 * o.opened.lines / o.lines) : 0;
+    box.appendChild(el('div', { class: 'answer' }, el('h2', { class: 'headline' },
+      `${fmt(o.opened.lines)} of ${fmt(o.lines)} lines (${pct}%) in ${fmt(o.tablets)} divination texts open with `, el('span', { class: 'r', text: o.opening }), '.'),
+      el('p', { class: 'sub' }, 'In this position editors read DIŠ as ', el('i', { text: 'šumma' }), ' ‘if’: the line states an observation, and the result follows. ',
+        el('button', { type: 'button', class: 'linkish', onclick: ev => openReading({ raw: o.opening, reading: o.opening }, 'atf', {}, ev.currentTarget) }, 'Why DIŠ can mean different things'))));
+    const max = o.next.length ? o.next[0].lines : 0;
+    const tb = el('tbody');
+    for (const x of o.next) {
+      const slots = [{ reading: o.opening }, x.parsed ? { reading: x.word } : { raw: x.word }];
+      const ex = x.example;
+      tb.appendChild(el('tr', {},
+        el('td', { class: 'filler' }, el('button', { type: 'button', class: 'linkish', title: 'Every context of this opening, in all texts',
+          onclick: () => { QS.inputs.sequence = { tokens: `${o.opening} ${x.word}`, field: 'atf' }; QS.current = 'sequence'; render(); run('sequence', { slots }); } },
+          el('span', { class: 'r', text: o.opening }), ' ', partEl({ text: x.word, parsed: x.parsed, kind: x.kind }))),
+        el('td', { class: 'n', text: fmt(x.lines) }), el('td', { class: 'n', text: fmt(x.tablets) }), el('td', { class: 'barcell' }, bar(x.lines, max)),
+        el('td', { class: 'op-ex' }, ex ? [
+          el('button', { type: 'button', class: 'op-line', onclick: ev => openPassage({ tablet: ex.tablet, line: { label: ex.line_label }, line_id: ex.line_id, occurrence_ids: ex.tokens.slice(0, 2).map(t => t.id) }, ev.currentTarget) },
+            el('span', { class: 'tab-id', text: `${ex.tablet} ${ex.line_label || ''}` }), ' ', ex.tokens.slice(0, 9).map(t => t.raw).join(' ') + (ex.tokens.length > 9 ? ' …' : '')),
+          ex.translation ? trText('“' + ex.translation.text + '”', 'span', 'op-tr') : el('span', { class: 'hint', text: 'No source translation covers this example.' })] : null)));
+    }
+    box.appendChild(el('table', { class: 'data openings' }, el('caption', { class: 'sr-only', text: 'What follows the opening' }),
+      el('thead', {}, el('tr', {}, el('th', { scope: 'col', text: 'Opening' }), el('th', { scope: 'col', class: 'n', text: 'Lines' }), el('th', { scope: 'col', class: 'n', text: 'Tablets' }),
+        el('th', { scope: 'col' }), el('th', { scope: 'col', text: 'Example, with the source’s translation where it has one' }))), tb));
+    box.appendChild(el('p', { class: 'hint', text: `The ${o.next.length} most frequent of ${fmt(o.distinct_next)} different second readings. Select an opening to see every line with it across all texts. Translations are the editors’ renderings of the whole line.` }));
+  }
+
+  // ---------- reading explanation ----------
+  async function openReading(t, field, ctx, fromEl) {
+    const aside = $('#inspector'), body = clear($('#insp-body'));
+    QS.inspReturn = fromEl || null;
+    const text = t.reading !== null && t.reading !== undefined && field === 'atf' ? t.reading : t.raw;
+    $('#insp-title').textContent = text;
+    aside.hidden = false; document.body.classList.add('insp-open');
+    $('#insp-title').tabIndex = -1; $('#insp-title').focus();
+    body.appendChild(el('p', { class: 'state loading' }, el('span', { class: 'spinner', 'aria-hidden': 'true' }), 'Looking up this reading…'));
+    const token = ++QS.seq; QS.insp = token;
+    try {
+      const r = await api('/api/reading' + q(bound(Object.assign({ text, field }, ctx && ctx.record ? { record: ctx.record } : {}))));
+      if (QS.insp !== token) return;
+      renderReading(clear(body), r, ctx || {}, t);
+    } catch (e) {
+      if (QS.insp !== token) return;
+      clear(body).appendChild(el('div', { class: 'state error', text: friendlyError(e.message) }));
+    }
+  }
+  function srcCite(sources, key, where) {
+    const s = sources[key]; if (!s) return null;
+    return el('span', { class: 'cite' }, '— ', el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer', text: s.title }), where ? `, ${where}` : '');
+  }
+  function signLine(card, label) {
+    return el('div', { class: 'sign-card' }, el('span', { class: 'cun big', 'aria-hidden': card.glyph ? 'true' : null, text: card.glyph || '·' }),
+      el('span', {}, label ? el('span', { class: 'hint', text: label + ' ' }) : null, el('b', { text: card.name }),
+        card.abz && card.abz.length ? el('span', { class: 'hint', text: ` · ABZ ${card.abz.join(', ')}` }) : null,
+        card.codepoints && card.codepoints.length ? el('span', { class: 'hint mono', text: ' · ' + card.codepoints.join(' ') }) : null,
+        el('br'), el('span', { class: 'hint', text: card.glyph ? (card.check === 'agrees' ? 'Glyph: eBL sign list, same code point in ORACC OSL.' : 'Glyph: eBL sign list only (not in ORACC OSL under this name).') : 'No verified glyph.' }),
+        ' ', el('a', { href: card.link, target: '_blank', rel: 'noopener noreferrer', text: 'eBL sign page' })));
+  }
+  function renderReading(body, r, ctx, t) {
+    const S = r.sources;
+    const sec = (title, ...kids) => el('section', { class: 'rd-sec' }, el('h3', { text: title }), kids);
+    // 1. what is written
+    const kinds = r.conventions.map(c => el('li', {}, c.text, ' ', srcCite(S, c.cite, c.where)));
+    const parts = [];
+    if (r.field === 'signs') {
+      const a = r.abz;
+      parts.push(el('p', { text: a.status === 'ambiguous' ? `${r.text} is one sign-list number that covers ${a.signs.length} signs; the transliteration of the same line says which one the editor read.` :
+        a.status === 'not-in-map' ? `${r.text} is not an ABZ number in the sign map, so no glyph is shown.` : `${r.text} is a sign number from R. Borger’s sign list (ABZ), computed by eBL from the transliteration.` }));
+      a.signs.forEach(c => parts.push(c.link ? signLine(c, a.status === 'ambiguous' ? 'could be' : null) : el('p', { text: c.name })));
+    } else {
+      for (const p of r.parts) {
+        if (p.sign) parts.push(signLine(p.sign, p.determinative ? `{${p.part}} determinative:` : `${p.part}:`));
+        else if (p.candidates) { parts.push(el('p', { class: 'hint', text: `${p.part} is a value of ${p.candidates.length} signs in the eBL list:` })); p.candidates.forEach(c => parts.push(signLine(c, 'could be'))); }
+        else parts.push(el('p', { class: 'hint', text: `${p.part}: ${p.status === 'number' ? 'a number (no glyph lookup).' : 'not found as a sign value in the eBL list, so no glyph.'}` }));
+      }
+    }
+    body.appendChild(sec('What is written', el('ul', { class: 'rd-list' }, kinds), parts));
+    // 2. how it is read (cited contextual uses)
+    if (r.note) {
+      body.appendChild(sec('How it is read', el('p', { text: r.note.summary }),
+        el('ul', { class: 'rd-list' }, r.note.uses.map(u => el('li', {}, el('b', { text: u.context + ': ' }), u.use, ' ', srcCite(S, u.cite, u.where)))),
+        el('p', { class: 'hint', text: r.note.caution })));
+    }
+    // 3. ORACC lemmatization
+    const L = r.lemmas;
+    if (L) {
+      if (!L.available) body.appendChild(sec('Dictionary words (ORACC)', el('p', { class: 'hint', text: L.note })));
+      else if (!L.lemmas.length) body.appendChild(sec('Dictionary words (ORACC)', el('p', { class: 'hint', text: `ORACC ccpo (${L.texts} lemmatized texts) has no word written exactly “${L.form}”. That says nothing about the word in general.` })));
+      else body.appendChild(sec('Dictionary words (ORACC)', el('p', { class: 'hint', text: `How editors of ${L.project} (${L.texts} texts) lemmatized words written “${L.form}”:` }),
+        el('ul', { class: 'rd-list lem' }, L.lemmas.slice(0, 6).map(l => el('li', {}, el('i', { text: l.citation_form }), ` [${l.guideword}] `, el('span', { class: 'hint', text: `${l.pos} · ${fmt(l.n)}×` }),
+          l.senses.length > 1 ? el('span', { class: 'hint', text: ' · senses: ' + l.senses.map(s => `${s.gloss} ${s.n}×`).join(', ') } ) : null))),
+        el('p', { class: 'hint', text: L.note })));
+    }
+    // 4. in this dataset
+    const C = r.corpus;
+    const relatedBtns = el('div', { class: 'insp-actions' },
+      el('button', { type: 'button', class: 'primary', onclick: () => { QS.inputs.sequence = { tokens: r.text, field: r.field }; closeInspector(); QS.current = 'sequence'; render(); run('sequence', {}); } }, 'Where else does it occur?'),
+      el('button', { type: 'button', onclick: () => { QS.inputs.usage = { token: r.text, field: r.field }; closeInspector(); QS.current = 'usage'; render(); run('usage', {}); } }, 'How is it used?'));
+    const exs = (C.translated_examples || []).map(e => el('li', { class: 'rd-ex' },
+      el('button', { type: 'button', class: 'op-line', onclick: () => openTablet(e.tablet) }, el('span', { class: 'tab-id', text: `${e.tablet} ${e.line_label || ''}` }), ' ',
+        e.tokens.map((x, i) => [i ? ' ' : null, x.id === e.occurrence_id ? el('mark', { class: 't hit', text: x.raw }) : x.raw])),
+      trText('“' + e.translation.text + '”', 'span', 'op-tr'),
+      e.translation.lines > 1 ? el('span', { class: 'hint', text: ` (this translation covers ${e.translation.lines} lines)` }) : null));
+    body.appendChild(sec('In this dataset',
+      el('p', { text: C.positions ? `${fmt(C.positions)} times on ${fmt(C.tablets)} tablets${C.matched_as === 'unparsed source text' ? ' (as an unparsed written word)' : ''}.` : 'Not found in this dataset.' }),
+      C.by_genre && C.by_genre.length ? el('p', { class: 'hint', text: 'Most often in: ' + C.by_genre.slice(0, 5).map(g => `${g.genre} (${fmt(g.tablets)} tablets)`).join('; ') }) : null,
+      exs.length ? [el('p', { class: 'hint', text: 'Lines with this reading that the source translates. The translation renders the whole line or passage, not this reading alone:' }), el('ul', { class: 'rd-exs' }, exs)] :
+        (C.positions ? el('p', { class: 'hint', text: 'No line with this reading is covered by an English source translation.' }) : null),
+      C.positions ? relatedBtns : null));
+    // 5. reading & pronunciation
+    const P = r.pronunciation;
+    const norm = L && L.available && L.lemmas.length ? L.lemmas.slice(0, 3).map(l => l.citation_form) : [];
+    const recs = (ctx.recordings || []);
+    body.appendChild(sec(P.label,
+      norm.length ? el('p', {}, 'Normalized form in ORACC ccpo: ', norm.map((n, i) => [i ? ', ' : null, el('i', { text: n })]), el('span', { class: 'hint', text: ' (a modern scholarly transcription, not a recording of ancient speech).' })) :
+        (r.note ? null : el('p', { class: 'hint', text: 'No cited normalized form for this exact spelling here.' })),
+      el('ul', { class: 'rd-list' }, P.points.map(x => el('li', { text: x }))),
+      recs.length ? el('p', {}, 'Recordings of this composition (another manuscript, not this tablet): ', recs.map((x, i) => [i ? '; ' : null, el('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer', text: `${x.title}, read by ${x.reader}` })])) : null,
+      el('p', { class: 'hint' }, 'Listen to scholars reading Akkadian aloud: ', el('a', { href: S.baplar.url, target: '_blank', rel: 'noopener noreferrer', text: S.baplar.title }), '. Links open the SOAS site; nothing plays here.')));
+    body.appendChild(el('p', { class: 'hint rd-foot', text: 'Sign data: eBL sign list (fetched for this workbench) checked against ORACC OSL (CC0). Notes cite their source; nothing here is a word-for-word translation.' }));
+    void t;
+  }
+
   // ---------- integration with app.js ----------
   const HASH_KEYS = { sequence: ['tokens', 'field'], between: ['before', 'gap', 'after', 'field'], usage: ['token', 'field'], tablet: ['catalog', 'field'] };
+  const XHASH = { view: 'xv', subgenre: 'xg', language: 'xl' };
   CW.hashParams = () => {
+    if (!QS.current) return {};
     const v = QS.inputs[QS.current] || {}, out = { q: QS.current };
+    if (isX(QS.current)) { for (const [k, h] of Object.entries(XHASH)) if (v[k]) out[h] = v[k]; return out; }
     for (const k of HASH_KEYS[QS.current] || []) if (v[k] && !(k === 'field' && v[k] === 'atf')) out[k] = v[k];
     return out;
   };
   CW.onReset = () => {
     const userSwitched = QS.lastDs !== null && QS.lastDs !== state.ds;
     const had = Object.keys(QS.results).length > 0;
-    QS.results = {}; QS.drill = {}; QS.regFor = null;
+    QS.results = {}; QS.drill = {}; QS.regFor = null; QS.tabletCtx = null;
     closeInspector();
     const stale = state.stale && state.stale.key === state.ds && !state.version;
     QS.notice = stale ? `The dataset you chose is not being served right now (${String(state.stale.reason).replace(/\.\s*$/, '')}). Nothing else was selected; it returns automatically once it verifies again.`
@@ -615,6 +963,11 @@
   function fromHash() {
     const h = new URLSearchParams(location.hash.slice(1));
     const qid = h.get('q');
+    if (qid && isX(qid)) {
+      QS.current = qid; const v = {};
+      for (const [k, hk] of Object.entries(XHASH)) if (h.get(hk)) v[k] = h.get(hk);
+      QS.inputs[qid] = v; return false;
+    }
     if (!qid || !HASH_KEYS[qid]) return false;
     QS.current = qid;
     const v = {};

@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-<a class="skip" href="#q-main">Skip to question</a>
+<a class="skip" href="#q-main">Skip to content</a>
 <header class="topbar">
   <div class="brand"><span class="brand-name">Cuneiform Workbench</span></div>
   <nav class="tabs" role="tablist" aria-label="Workspace">
@@ -28,9 +28,11 @@
 <main>
   <section id="view-questions" class="view">
     <div class="qlayout">
-      <nav class="qnav" aria-label="Questions">
-        <h2 class="qnav-title">Ask</h2>
-        <ol id="q-list" class="q-list"></ol>
+      <nav class="qnav" aria-label="Explore and ask">
+        <h2 class="qnav-title" id="x-title">Explore</h2>
+        <ol id="x-list" class="q-list" aria-labelledby="x-title"></ol>
+        <h2 class="qnav-title" id="q-nav-title">Ask a question</h2>
+        <ol id="q-list" class="q-list" aria-labelledby="q-nav-title"></ol>
       </nav>
       <div class="qmain" id="q-main" tabindex="-1">
         <header class="qhead">

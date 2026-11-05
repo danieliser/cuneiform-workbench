@@ -31,6 +31,8 @@ STATIC = {  # fixed allow-list; no filesystem path is derived from the URL
     '/questions.js': ('questions.js', 'text/javascript; charset=utf-8'),
     '/app.css': ('app.css', 'text/css; charset=utf-8'),
     '/favicon.svg': ('favicon.svg', 'image/svg+xml'),
+    '/fonts/NotoSansCuneiform-Regular.otf': ('fonts/NotoSansCuneiform-Regular.otf', 'font/otf'),
+    '/fonts/OFL.txt': ('fonts/OFL.txt', 'text/plain; charset=utf-8'),
 }
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; "
        "font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
@@ -115,6 +117,8 @@ class App:
             return self.questions.tablets(one('dataset'), ver, one('prefix'))
         if path == '/api/passage':
             return self.questions.passage(one('dataset'), ver, one('line'), one('around'))
+        if path == '/api/reading':
+            return self.questions.explorations.reading(one('dataset'), ver, one('text'), one('field'), one('record'))
         if path == '/api/falkordb/status':
             return self.falkor.status()
         raise NotFound
@@ -128,6 +132,8 @@ class App:
             return self.explorer.query(body)
         if path == '/api/ask':
             return self.questions.ask(body)
+        if path == '/api/explore':
+            return self.questions.explorations.explore(body)
         if path == '/api/falkordb/load':
             return self.falkor.load(self.backend.get(body.get('dataset'), body.get('version')))
         if path == '/api/falkordb/verify':
