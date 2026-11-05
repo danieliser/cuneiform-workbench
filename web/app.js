@@ -4,7 +4,7 @@
   'use strict';
   const $ = sel => document.querySelector(sel);
   const SAVED_KEY = 'cuneiform-ui:saved-queries';
-  const state = { status: null, ds: null, version: null, view: 'query', lastQuery: null, result: null, selectedRow: null,
+  const state = { status: null, ds: null, version: null, view: 'questions', lastQuery: null, result: null, selectedRow: null,
     graph: { center: null, data: null, history: [], selected: null, pos: null }, report: null, falkor: null,
     epoch: 0,        // bumped whenever dataset-bound views are reset; late responses from an older epoch are dropped
     stale: null };   // explicit stale state for the chosen dataset (review N-1): { key, version, reason }
@@ -20,7 +20,7 @@
       else if (k === 'dataset') Object.assign(e.dataset, v);
       else e.setAttribute(k, v === true ? '' : String(v));
     }
-    for (const kid of kids.flat()) {
+    for (const kid of kids.flat(Infinity)) {
       if (kid === null || kid === undefined || kid === false) continue;
       e.appendChild(kid instanceof Node ? kid : document.createTextNode(String(kid)));
     }
@@ -95,6 +95,29 @@
     state.status = st;
     if (changed) renderStatus();
   }
+  // Plain name for a dataset, from the backend's own selection facts (never invented).
+  function plainName(d) {
+    const s = d.selection || {};
+    const n = v => (typeof v === 'number' ? v.toLocaleString() : v);
+    let name;
+    if (d.kind !== 'snapshot') name = (d.kind === 'sample' ? 'Sample: ' : 'Synthetic: ') + d.title;
+    else if (s.kind === 'cohort' && /^FULL/.test(s.label || '')) name = `eBL fragments — full release (${n(s.records_in_snapshot)} texts)`;
+    else if (s.kind === 'cohort') name = `eBL fragments — sample of ${n(s.records_in_snapshot)}`;
+    else if (s.namespace === 'cdli') name = `CDLI catalogue — ${n(s.records_in_snapshot)} records`;
+    else if (String(s.namespace || '').startsWith('oracc')) {
+      const ad = s.oracc && s.oracc.adapter ? ` (${s.oracc.adapter})` : '';
+      name = `ORACC ${String(s.namespace).split('/')[1] || ''} — ${n(s.records_in_snapshot)} texts${ad}`;
+    } else name = d.title;
+    if (d.superseded) name += ' · superseded';
+    if (d.publication && d.publication.status === 'legacy-incident') name += ' · rebuilt ID';
+    return name;
+  }
+  // Default: the largest ready snapshot with a transliteration layer (the full release when present).
+  function defaultDataset(ready) {
+    const text = ready.filter(d => (d.scopes || []).some(x => x.field === 'atf'));
+    const pool = text.length ? text : ready;
+    return pool.slice().sort((a, b) => ((b.selection || {}).records_in_snapshot || 0) - ((a.selection || {}).records_in_snapshot || 0))[0];
+  }
   function tagFor(d) {
     if (d.kind === 'snapshot') return 'SNAPSHOT' + (d.selection && d.selection.label ? ' · ' + d.selection.label : '');
     return d.kind === 'sample' ? 'SAMPLE' : 'SYNTHETIC';
@@ -107,10 +130,10 @@
     chip.textContent = `backend ${b.commit ? b.commit.slice(0, 7) : '?'}${b.code_equivalent_to && b.code_equivalent_to !== b.commit ? ' (code = ' + b.code_equivalent_to.slice(0, 7) + ')' : ''}${b.dirty ? '+dirty code' : ''} · schema ${b.versions.schema} · ${b.versions.parser} · ${b.versions.projection} · ${b.compatibility}`;
     chip.title = b.repo + (b.problems.length ? '\n' + b.problems.join('\n') : '');
     const sel = clear($('#dataset'));
-    const label = d => `[${tagFor(d)}] ${d.title}${d.status !== 'ready' ? ' — ' + d.status + (d.publication && d.publication.status && d.publication.status !== d.status ? ` (${d.publication.status})` : '') : d.reverifying ? ' — re-verifying' : ''}${d.superseded ? ' — ' + SENSE_NOTE : ''}`;
+    const label = d => `${plainName(d)}${d.status !== 'ready' ? ' — ' + d.status + (d.publication && d.publication.status && d.publication.status !== d.status ? ` (${d.publication.status})` : '') : d.reverifying ? ' — re-verifying' : ''}${d.superseded ? ' — ' + SENSE_NOTE : ''}`;
     for (const d of st.datasets) {
       // The chosen dataset stays selected (shown) even while it is not ready, so the picker never jumps.
-      sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready' && d.key !== state.ds, text: label(d) }));
+      sel.appendChild(el('option', { value: d.key, disabled: d.status !== 'ready' && d.key !== state.ds, text: label(d), title: `[${tagFor(d)}] ${d.title}` }));
     }
     const ready = st.datasets.filter(d => d.status === 'ready');
     const keys = ready.map(d => d.key);
@@ -120,7 +143,8 @@
     const msgs = [];
     if (!state.ds) {
       // First load only: choose a default. After that the dataset changes only when the user picks one.
-      state.ds = keys.includes(fromHash) ? fromHash : keys[0] || null;
+      const best = defaultDataset(ready);
+      state.ds = keys.includes(fromHash) ? fromHash : (best ? best.key : null);
       cur = st.datasets.find(d => d.key === state.ds);
       state.version = cur ? cur.version : null;
     } else if (!cur) {
@@ -131,9 +155,9 @@
     } else if (cur.status === 'ready') {
       if (state.version && cur.version !== state.version) {
         state.stale = null;
-        msgs.push(`Dataset ${state.ds} now serves a new verified version (${String(cur.version).slice(0, 12)}); results from ${String(state.version).slice(0, 12)} were cleared.`);
+        msgs.push(`${plainName(cur)} now serves a newly verified version; earlier results were cleared.`);
       } else if (!state.version && state.stale && state.stale.key === state.ds) {
-        msgs.push(`Dataset ${state.ds} verified again (version ${String(cur.version).slice(0, 12)}). Run your query again; earlier results stay cleared.`);
+        msgs.push(`${plainName(cur)} verified again. Earlier results stay cleared; ask again to recount.`);
         state.stale = null;
       }
       state.version = cur.version;
@@ -162,8 +186,8 @@
     const failing = st.datasets.filter(d => d.kind === 'snapshot' && d.status !== 'ready' && d.key !== state.ds);
     const pubTag = d => (d.publication && d.publication.status && d.publication.status !== 'not-a-snapshot' ? ` [${d.publication.status}]` : '');
     for (const d of failing) msgs.push(`Snapshot ${d.key.slice(0, 21)}…: ${d.status}${pubTag(d)}${d.error ? ' — ' + d.error : ''} (last scan ${scanned})`);
-    if (cur && cur.status === 'ready' && cur.publication && cur.publication.status === 'legacy-incident') msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.publication.note}`);
-    if (cur && cur.superseded) msgs.push(`Note for ${cur.key.slice(0, 21)}…: ${cur.superseded.note}`);
+    if (cur && cur.status === 'ready' && cur.publication && cur.publication.status === 'legacy-incident') msgs.push('This sample’s ID was deleted and rebuilt before the publication ledger existed: its current bytes verify, but results produced from it before the rebuild cannot be reproduced. Details under Data & system.');
+    if (cur && cur.superseded) msgs.push(`Superseded for sense provenance by ${cur.superseded.by.slice(0, 21)}…; kept as historical evidence. Details under Data & system.`);
     const led = st.ledger || {};
     if (led.corrupt) msgs.push(`Publication ledger refused by the backend: ${led.corrupt}`);
     if (led.tail_note) msgs.push(`Publication ledger: ${led.tail_note}`);
@@ -172,7 +196,7 @@
     clear(banner);
     msgs.forEach(m => banner.appendChild(el('div', { text: m })));
     $('#foot').textContent = `Server ${st.server.bind} · pid ${st.server.pid} · backend ${b.repo} · Python ${b.python} · DuckDB ${b.duckdb} · research root ${b.research_root} · last scan ${scanned}`;
-    renderDatasetBadge();
+    renderDatasetBadge(); renderCoveragePill();
     if (reset || notice) resetDatasetViews();
   }
   function current() { return state.status && state.status.datasets.find(d => d.key === state.ds); }
@@ -189,9 +213,21 @@
     badge.className = 'badge ' + d.kind + (pub.status === 'legacy-incident' ? ' incident' : '') + (d.reverifying ? ' pending' : '');
     badge.title = `${d.authority}\n${pub.note || ''}${pub.ledger_tail_note ? '\n' + pub.ledger_tail_note : ''}\n${(d.selection && d.selection.note) || ''}${d.superseded ? '\n' + d.superseded.note : ''}\nversion ${d.version || '—'}`;
   }
-  function setHash() {
+  function renderCoveragePill() {
+    const d = current(), pill = $('#coverage-pill');
+    if (!d || d.status !== 'ready') { pill.textContent = state.ds ? 'not available' : 'no data'; pill.className = 'pill-link stale'; return; }
+    const s = d.selection || {};
+    const n = v => (typeof v === 'number' ? v.toLocaleString() : v);
+    pill.className = 'pill-link';
+    if (s.kind === 'cohort' && s.parent_records) pill.textContent = /^FULL/.test(s.label || '') ? `${n(s.records_in_snapshot)} of ${n(s.parent_records)} records usable` : `sample · not corpus counts`;
+    else if (d.kind !== 'snapshot') pill.textContent = d.kind === 'sample' ? 'sample' : 'synthetic test data';
+    else pill.textContent = `${n(s.records_in_snapshot)} records`;
+    pill.title = (s.note || d.description || '') + '\nOpen Data & system for coverage, exclusions and verification.';
+  }
+  function setHash(extra) {
     const p = new URLSearchParams({ view: state.view });
     if (state.ds) p.set('ds', state.ds);
+    if (state.view === 'questions' && window.CW && CW.hashParams) for (const [k, v] of Object.entries(CW.hashParams())) if (v !== undefined && v !== null && v !== '') p.set(k, v);
     history.replaceState(null, '', '#' + p.toString());
   }
 
@@ -203,7 +239,7 @@
     setHash();
     if (view === 'graph' && !state.graph.data && !skipStart) startGraph();
     if (view === 'coverage') renderCoverage();
-    if (view === 'falkordb') renderFalkor();
+    if (view === 'questions' && window.CW && CW.onShowQuestions) CW.onShowQuestions();
   }
 
   // ---------- query ----------
@@ -264,7 +300,7 @@
     const head = r.missing ? el('div', { class: 'count' }, 'Unavailable', el('small', { text: 'no sequences for this field' }))
       : el('div', { class: 'count' }, fmt(r.count), el('small', { text: (r.kind === 'postings' ? 'postings' : 'matching windows') + (r.selection_label ? ` within ${r.selection_label}` : '') }));
     sum.appendChild(el('div', { style: null }, head));
-    if (r.scope_note) sum.appendChild(el('div', { class: 'callout scope', text: 'Scope: ' + r.scope_note }));
+    if (r.scope_note) sum.appendChild(el('details', { class: 'scope-details' }, el('summary', { text: 'What these counts cover' }), el('div', { class: 'callout scope', text: r.scope_note })));
     const ds = current() || { kind: r.dataset.kind, authority: '' };
     sum.appendChild(el('div', { class: 'summary-grid' },
       el('div', {}, el('b', { text: 'Pattern' }), el('span', { class: 'mono', text: r.pattern.join(' ') })),
@@ -320,16 +356,16 @@
   }
 
   // ---------- occurrence detail ----------
-  async function openOccurrence(id, windowIds) {
-    const box = clear($('#detail'));
+  async function openOccurrence(id, windowIds, target) {
+    const box = clear(target || $('#detail'));
     box.appendChild(el('p', { class: 'muted', text: 'Loading occurrence…' }));
     try {
       const d = await api('/api/occurrence' + q(bound({ id })));
-      renderOccurrence(d, windowIds || []);
+      renderOccurrence(d, windowIds || [], box);
     } catch (e) { clear(box).appendChild(el('p', { class: 'error', text: e.message })); }
   }
-  function renderOccurrence(d, windowIds) {
-    const o = d.occurrence, box = clear($('#detail'));
+  function renderOccurrence(d, windowIds, target) {
+    const o = d.occurrence, box = clear(target || $('#detail'));
     box.appendChild(el('h2', {}, el('span', {}, 'Occurrence ', el('span', { class: 'tok focus', text: o.raw })),
       el('button', { class: 'ghost', onclick: () => openGraph(o.id) }, 'Open in graph')));
     box.appendChild(kv([
@@ -344,7 +380,7 @@
     const ctx = el('div', { class: 'line-ctx' });
     for (const p of d.line_positions.rows) {
       ctx.appendChild(el('button', { class: tokenClass(p, windowIds.includes(p.id)) + (p.id === o.id ? ' focus' : ''), title: tokenTitle(p),
-        onclick: () => openOccurrence(p.id, windowIds) }, p.raw));
+        onclick: () => openOccurrence(p.id, windowIds, box) }, p.raw));
     }
     box.appendChild(ctx);
     if (d.line_positions.truncated) box.appendChild(el('div', { class: 'hint', text: 'Line shows first 100 positions.' }));
@@ -814,7 +850,8 @@
     clear($('#detail')).appendChild(el('p', { class: 'muted', text: 'Select a result row, then a token, to see occurrence detail and raw-source evidence.' }));
     clear($('#graph')); clear($('#gdetail')); clear($('#wresults'));
     $('#gnote').textContent = '';
-    renderDatasetBadge(); renderExamples(); setHash();
+    renderDatasetBadge(); renderCoveragePill(); renderExamples(); setHash();
+    if (window.CW && CW.onReset) CW.onReset();
     const d = current();
     if (d && d.examples.length) setForm(d.examples[0]);
     if (state.view !== 'query') show(state.view);
@@ -830,6 +867,9 @@
   async function init() {
     document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
     $('#dataset').addEventListener('change', onDatasetChange);
+    $('#coverage-pill').addEventListener('click', () => show('coverage'));
+    $('#falkor-section').addEventListener('toggle', () => { if ($('#falkor-section').open) renderFalkor(); });
+    $('#glyph-note').textContent = 'Cuneiform glyphs are not drawn: the sources give readings and ABZ sign-list numbers without a sign-list revision, and no cited ABZ-to-Unicode table is available here, so any glyph would be a guess. Readings and ABZ numbers are shown as the source gives them.';
     $('#refresh').addEventListener('click', async () => {
       $('#refresh').disabled = true;
       try {
@@ -868,10 +908,14 @@
     await loadStatus();
     const hashView = new URLSearchParams(location.hash.slice(1)).get('view');
     onDatasetChange();
-    show(['query', 'graph', 'coverage', 'falkordb'].includes(hashView) ? hashView : 'query');
-    if (current() && current().examples.length) runQuery(0);
+    const view = hashView === 'falkordb' ? 'coverage' : hashView;
+    if (hashView === 'falkordb') $('#falkor-section').open = true;
+    show(['questions', 'query', 'graph', 'coverage'].includes(view) ? view : 'questions');
+    if (state.view === 'query' && current() && current().examples.length) runQuery(0);
     // Poll status only; the server scans in the background (an open tab no longer triggers discovery).
     setInterval(() => pollStatus().catch(() => { /* server restarting */ }), 30000);
   }
+  window.CW = Object.assign(window.CW || {}, { el, clear, fmt, api, q, bound, state, current, show, setHash, openOccurrence, openGraph, shortId,
+    tokenTitle, plainName });
   init().catch(e => { document.body.appendChild(el('p', { class: 'error', text: 'Startup failed: ' + e.message })); });
 })();

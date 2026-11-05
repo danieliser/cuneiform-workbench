@@ -9,28 +9,46 @@
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
+<a class="skip" href="#q-main">Skip to question</a>
 <header class="topbar">
-  <div class="brand">
-    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M6 8l6 3-6 3zM14 6l6 3-6 3zM14 16l6 3-6 3zM22 11l6 3-6 3zM6 20l6 3-6 3z"/></svg>
-    <div><div class="brand-name">Cuneiform Workbench</div><div class="brand-sub">local · read-only · source-preserving</div></div>
-  </div>
+  <div class="brand"><span class="brand-name">Cuneiform Workbench</span></div>
+  <nav class="tabs" role="tablist" aria-label="Workspace">
+    <button role="tab" data-view="questions" aria-selected="true">Questions</button>
+    <button role="tab" data-view="query">Advanced query</button>
+    <button role="tab" data-view="graph">Graph</button>
+    <button role="tab" data-view="coverage">Data &amp; system</button>
+  </nav>
   <div class="dataset-picker">
-    <label for="dataset">Dataset</label>
+    <label for="dataset" class="sr-only">Dataset</label>
     <select id="dataset" aria-label="Dataset"></select>
-    <span id="dataset-badge" class="badge"></span>
-    <button id="refresh" class="ghost" title="Re-scan snapshots and re-verify every file hash now">Refresh &amp; re-verify</button>
+    <button id="coverage-pill" class="pill-link" type="button" title="What this dataset covers"></button>
   </div>
-  <div id="backend-chip" class="chip" role="status"></div>
 </header>
-<div id="banner" class="banner" hidden></div>
-<nav class="tabs" role="tablist">
-  <button role="tab" data-view="query" aria-selected="true">Query</button>
-  <button role="tab" data-view="graph">Graph</button>
-  <button role="tab" data-view="coverage">Coverage</button>
-  <button role="tab" data-view="falkordb">FalkorDB</button>
-</nav>
+<div id="banner" class="banner" role="status" hidden></div>
 <main>
-  <section id="view-query" class="view">
+  <section id="view-questions" class="view">
+    <div class="qlayout">
+      <nav class="qnav" aria-label="Questions">
+        <h2 class="qnav-title">Ask</h2>
+        <ol id="q-list" class="q-list"></ol>
+      </nav>
+      <div class="qmain" id="q-main" tabindex="-1">
+        <header class="qhead">
+          <h1 id="q-title"></h1>
+          <p id="q-prompt" class="q-prompt"></p>
+        </header>
+        <form id="q-form" class="qform" autocomplete="off" novalidate></form>
+        <div id="q-examples" class="q-examples"></div>
+        <div id="q-result" class="q-result" aria-live="polite"></div>
+      </div>
+      <aside id="inspector" class="inspector" aria-label="Selected passage" hidden>
+        <div class="insp-head"><h2 id="insp-title">Passage</h2><button type="button" id="insp-close" class="ghost icon" aria-label="Close passage">×</button></div>
+        <div id="insp-body" class="insp-body"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="view-query" class="view" hidden>
     <div class="query-layout">
       <aside class="panel query-form">
         <h2>Motif query</h2>
@@ -62,7 +80,7 @@
         <h3>Frequent in dataset</h3>
         <div id="frequent" class="frequent"></div>
         <h3>Word lookup <span class="hint">(lemma / sense; glosses are not translations)</span></h3>
-        <form id="wform" autocomplete="off"><input id="wq" placeholder="form, citation form or gloss" maxlength="64" spellcheck="false"><button class="ghost">Find words</button></form>
+        <form id="wform" autocomplete="off"><input id="wq" placeholder="form, citation form or gloss" maxlength="64" spellcheck="false" aria-label="Word lookup"><button class="ghost">Find words</button></form>
         <div id="wresults" class="examples"></div>
       </aside>
       <div class="query-main">
@@ -78,7 +96,7 @@
     <div class="graph-layout">
       <div class="panel graph-stage">
         <div class="graph-toolbar">
-          <form id="gsearch" autocomplete="off"><input id="gq" placeholder="Search artifact, sign, source key, alias, or paste a node ID" maxlength="64" spellcheck="false"><button class="ghost">Find</button></form>
+          <form id="gsearch" autocomplete="off"><input id="gq" placeholder="Search artifact, sign, source key, alias, or paste a node ID" maxlength="64" spellcheck="false" aria-label="Search graph"><button class="ghost">Find</button></form>
           <label class="inline">Per type <select id="gper"><option>4</option><option selected>8</option><option>16</option></select></label>
           <button id="gback" class="ghost" disabled>Back</button>
           <div id="gcrumbs" class="crumbs"></div>
@@ -92,12 +110,26 @@
     </div>
   </section>
 
-  <section id="view-coverage" class="view" hidden><div id="coverage" class="coverage"></div></section>
-
-  <section id="view-falkordb" class="view" hidden><div id="falkordb" class="falkordb"></div></section>
+  <section id="view-coverage" class="view" hidden>
+    <div class="system panel wide">
+      <h2>System</h2>
+      <div class="system-row">
+        <span id="backend-chip" class="chip" role="status"></span>
+        <span id="dataset-badge" class="badge"></span>
+        <button id="refresh" class="ghost" title="Re-scan snapshots and re-verify every file hash now">Refresh &amp; re-verify</button>
+      </div>
+      <p id="glyph-note" class="hint"></p>
+      <p class="hint"><span id="foot"></span></p>
+    </div>
+    <div id="coverage" class="coverage"></div>
+    <details id="falkor-section" class="panel wide falkor-wrap">
+      <summary><h2>FalkorDB projection</h2> <span class="hint">isolated graph export, verify and read-only templates</span></summary>
+      <div id="falkordb" class="falkordb"></div>
+    </details>
+  </section>
 </main>
-<footer class="foot"><span id="foot"></span></footer>
 <script src="/graph.js"></script>
 <script src="/app.js"></script>
+<script src="/questions.js"></script>
 </body>
 </html>

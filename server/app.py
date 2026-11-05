@@ -18,6 +18,7 @@ sys.dont_write_bytecode = True
 from .bridge import Backend, UserError, VersionChanged  # noqa: E402
 from .explore import Explorer  # noqa: E402
 from .falkor import Falkor  # noqa: E402
+from .questions import Questions  # noqa: E402
 
 HOST = '127.0.0.1'  # never configurable: no public exposure
 MAX_BODY = 64 * 1024
@@ -27,6 +28,7 @@ STATIC = {  # fixed allow-list; no filesystem path is derived from the URL
     '/': ('index.html', 'text/html; charset=utf-8'),
     '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
     '/graph.js': ('graph.js', 'text/javascript; charset=utf-8'),
+    '/questions.js': ('questions.js', 'text/javascript; charset=utf-8'),
     '/app.css': ('app.css', 'text/css; charset=utf-8'),
     '/favicon.svg': ('favicon.svg', 'image/svg+xml'),
 }
@@ -58,6 +60,7 @@ class App:
                                Path(os.environ.get('CUNEIFORM_RESEARCH_ROOT', str(Path.home() / '.local/share/cuneiform-research'))),
                                os.environ.get('CUNEIFORM_UI_SHOW_DEMOS', 'auto'), home=home)
         self.explorer = Explorer(self.backend)
+        self.questions = Questions(self.explorer)
         self.falkor = Falkor(self.backend, home, port=int(os.environ.get('CUNEIFORM_FALKORDB_PORT', '26380')))
         self.allowed_hosts = {f'127.0.0.1:{port}', f'localhost:{port}'}
         self.backend.discover(wait=discover_wait)
@@ -104,6 +107,14 @@ class App:
             return self.explorer.word(one('dataset'), one('id'), ver)
         if path == '/api/words':
             return self.explorer.words(one('dataset'), one('q'), ver, one('offset'))
+        if path == '/api/questions':
+            return self.questions.registry(one('dataset'), ver)
+        if path == '/api/suggest':
+            return self.questions.suggest(one('dataset'), ver, one('field'), one('prefix'))
+        if path == '/api/tablets':
+            return self.questions.tablets(one('dataset'), ver, one('prefix'))
+        if path == '/api/passage':
+            return self.questions.passage(one('dataset'), ver, one('line'), one('around'))
         if path == '/api/falkordb/status':
             return self.falkor.status()
         raise NotFound
@@ -115,6 +126,8 @@ class App:
             return self.backend.discover(deep=bool(body.get('deep')))
         if path == '/api/query':
             return self.explorer.query(body)
+        if path == '/api/ask':
+            return self.questions.ask(body)
         if path == '/api/falkordb/load':
             return self.falkor.load(self.backend.get(body.get('dataset'), body.get('version')))
         if path == '/api/falkordb/verify':
