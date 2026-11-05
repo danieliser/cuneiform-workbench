@@ -191,7 +191,7 @@ POISSON_CASE = ("CASE WHEN u<0.36787944 THEN 0 WHEN u<0.73575888 THEN 1 WHEN u<0
 
 def confirm(args):
     import duckdb
-    frozen_path = Path(args.frozen)
+    frozen_path = Path(args.frozen).resolve()
     frozen_bytes = frozen_path.read_bytes()
     fz = json.loads(frozen_bytes)
     run = Run('B2', allow_dirty=args.allow_dirty)
