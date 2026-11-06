@@ -49,7 +49,7 @@ The full corpus is **not bundled or automatically downloaded**. Expect roughly *
 
 Existing tests establish bounded retrieval, source tracing, snapshot version handling and access controls. They do **not** establish scholarly discovery or restoration quality. Read the separate benchmark [RESULTS](../cuneiform-benchmarks/RESULTS.md), [protocol](../cuneiform-benchmarks/protocol.md) and [reviews](../cuneiform-benchmarks/reviews/), together with the [reading aids review](../cuneiform-research/reviews/reading-aids-review-v0.1.md), [source documentation](../cuneiform-research/docs/READING-AIDS-SOURCES.md) and [UI reviews](reviews/). These sibling links require the corresponding local repositories; they are not published URLs.
 
-Restoration suggestions, ranked semantic similarity and collaborative annotation are **future possibilities, not implemented or validated capabilities**. No restoration accuracy is claimed. Any future work needs philological evaluation, leakage-resistant comparisons and evidence that it helps researchers.
+The [future experiments](docs/FUTURE-EXPERIMENTS.md) describe testing proposed interpretations for individual signs, groups of signs, words and phrases across their contexts, including reversible propagation and agent-assisted review. These, restoration suggestions, ranked semantic similarity and collaborative annotation are **future possibilities, not implemented or validated capabilities**. No restoration accuracy is claimed. Any future work needs philological evaluation, leakage-resistant comparisons and evidence that it helps researchers.
 
 ## Development and publication readiness
 
