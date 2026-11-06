@@ -2,22 +2,65 @@
 
 A local tool for browsing edited cuneiform texts, following their sources, and asking small, reproducible questions about represented sign sequences. It is a useful starting point for Assyriologists, students learning transliteration, and computational researchers inspecting a corpus before designing an experiment. It is experimental software; scholarly usefulness has not been established by a researcher study.
 
-## Screenshots
+## See it in use
 
-Browse the corpus and choose a question without leaving the workbench. See the **[workflow gallery](docs/GALLERY.md)** for sequence results, gap fillers, reading neighbours, side-by-side translations, glyphs and the reading inspector.
+These are actual full-corpus captures from 5 November 2026. The quickstart uses synthetic data; the development corpus has since been removed. White/grey captures show the final simplified design. Brown captures show the earlier design, with the same question workflows.
 
-![Desktop passage browser](docs/screenshots/after-desktop.png)
+### Read passages beside their translation
+
+Compare edited readings with the source translation. A translation can cover several lines; this is not word-by-word alignment.
+
+![Passage and source translation side by side](docs/screenshots/passage-side-by-side.png)
+
+### Find a sequence in context
+
+Search a sequence, see its surrounding readings, and group results by tablet or catalogue period. Earlier design.
+
+![Sequence search results in their surrounding lines](docs/screenshots/sequence-results.png)
+
+### See what occurs between signs
+
+Compare attested fillers and open their contexts. This retrieves examples; it does not predict missing text. Earlier design.
+
+![Attested fillers between signs](docs/screenshots/between-signs.png)
 
 <details>
-<summary>Mobile view</summary>
+<summary><strong>How is this reading used? — neighbouring readings</strong></summary>
+
+Compare the positions immediately before and after a reading. Earlier design.
+
+![Preceding and following readings](docs/screenshots/reading-usage.png)
+
+</details>
+
+<details>
+<summary><strong>Read a tablet — glyphs, transliteration and translation</strong></summary>
+
+Standardized glyphs are not tablet photographs. This earlier capture predates corrected translation-attachment labels: “LINE 7” does not establish an exact translation range.
+
+![Tablet glyphs and source translations](docs/screenshots/tablet-glyphs-translation.png)
+
+</details>
+
+<details>
+<summary><strong>Explain a reading — mobile inspector</strong></summary>
+
+Inspect the written form, sign mapping and dictionary senses. Final simplified design.
+
+<img src="docs/screenshots/reading-inspector-mobile.png" alt="Reading explanation on mobile" width="390">
+
+</details>
+
+<details>
+<summary><strong>Browse texts — desktop and mobile</strong></summary>
+
+![Desktop passage browser](docs/screenshots/after-desktop.png)
 
 <img src="docs/screenshots/after-mobile.png" alt="Passage browser on mobile" width="390">
 
 </details>
 
-These are actual captures of the final simplified UI, taken during local full-corpus testing on 5 November 2026. They show the historical corpus and parser warning; the downloadable demo uses synthetic fixtures, and the development corpus has since been removed. Screenshots are not a hosted service.
-
-Start with **Change task**, choose a sequence or tablet question, then open a result for context. Source and system details remain available on demand.
+Source passages and editorial translations are from eBL; dictionary aids use ORACC. Source rights remain separate from the UI. See [capture provenance and caveats](docs/GALLERY.md#capture-provenance).
 
 ## Try it without a corpus or Docker
 
