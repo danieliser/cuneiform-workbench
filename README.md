@@ -4,7 +4,7 @@ A local tool for browsing edited cuneiform texts, following their sources, and a
 
 ## Screenshots
 
-Browse the corpus and choose a question without leaving the workbench.
+Browse the corpus and choose a question without leaving the workbench. See the **[workflow gallery](docs/GALLERY.md)** for sequence results, gap fillers, reading neighbours, side-by-side translations, glyphs and the reading inspector.
 
 ![Desktop passage browser](docs/screenshots/after-desktop.png)
 
