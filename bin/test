@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Fixture suites only; no corpus download, graph service or disk-test opt-in.
+set -euo pipefail
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export CUNEIFORM_PY="${CUNEIFORM_PY:-$APP_DIR/.venv/bin/python}"
+export CUNEIFORM_UI_HOME="$APP_DIR/output/test-runtime"
+export CUNEIFORM_UI_REAL_HOME="$CUNEIFORM_UI_HOME"
+export TMPDIR="$CUNEIFORM_UI_HOME/tmp"
+mkdir -p "$TMPDIR"
+"$APP_DIR/bin/cuneiform-ui" pin-backend
+export CUNEIFORM_SOURCE_REPO="$CUNEIFORM_UI_HOME/backend-pin/057a0b757ed3dc05e486893bc344a15dd73c86d8"
+export CUNEIFORM_BENCH_BACKEND="$CUNEIFORM_SOURCE_REPO"
+(cd "$APP_DIR" && "$CUNEIFORM_PY" -B -m unittest discover -s tests -v)
+(cd "$APP_DIR/backend" && "$CUNEIFORM_PY" -B -m unittest discover -s tests -v)
+(cd "$APP_DIR/benchmarks" && "$CUNEIFORM_PY" -B -m unittest discover -s tests -t . -v)

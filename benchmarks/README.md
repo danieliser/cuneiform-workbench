@@ -7,7 +7,7 @@ Executable protocols and historical results for the eligible eBL snapshot `snaps
 Install the root requirements, then run from the repository root:
 
 ```sh
-(cd benchmarks && ../.venv/bin/python -B -m unittest discover -s tests -t . -v)
+bin/test  # UI, backend and benchmark fixture suites with an isolated backend pin
 ```
 
 ## Reproduce with your own inputs
@@ -35,6 +35,6 @@ cd benchmarks
 ../.venv/bin/python -B -m bench.stage_d
 ```
 
-Follow VALUE-VERDICT.md for the sealed E1 select → tune → evaluate sequence and E2/E3 prerequisites; do not treat the command list as a new sealed run. `CUNEIFORM_BENCH_CONFIG` and `CUNEIFORM_BENCH_VALUE_CONFIG` can select explicit configs. The original runconfigs remain byte-identical, including their historical paths; live path selection uses the environment variables above. Defaults use an isolated `output/benchmarks` runtime, never Daniel's former runtime. New run receipts include the supplied paths. Config changes require a new protocol/deviation record, not rewriting previous runs.
+Follow VALUE-VERDICT.md for the sealed E1 select → tune → evaluate sequence and E2/E3 prerequisites; do not treat the command list as a new sealed run. `CUNEIFORM_BENCH_CONFIG` and `CUNEIFORM_BENCH_VALUE_CONFIG` can select explicit configs. The original runconfigs remain byte-identical, including their historical paths; live path selection uses the environment variables above. Defaults use an isolated `output/benchmarks` runtime, never Daniel's former runtime. New run receipts include the supplied paths. `CUNEIFORM_BENCH_STAGE_STORE` optionally supplies the parent directory of smaller stage snapshots; otherwise scaling checks have no inputs. Config changes require a new protocol/deviation record, not rewriting previous runs.
 
 Historical runs, protocols and reviews are preserved unchanged. Their old paths and private-only recommendations describe the original experiment; [consolidation](../docs/CONSOLIDATION.md) records the owner's authorization to publish benchmarks. The eBL source-license conflict remains unresolved. Small catalogue/sign examples and their source notices remain; this repository grants no new source-data rights and ships no corpus payloads.

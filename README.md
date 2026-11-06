@@ -125,11 +125,7 @@ The UI binds to loopback and is experimental local software, not a maintained ho
 
 ```sh
 # From the repository root, after installing requirements.txt:
-CUNEIFORM_UI_HOME="$PWD/output/dev" bin/cuneiform-ui pin-backend
-CUNEIFORM_SOURCE_REPO="$PWD/output/dev/backend-pin/057a0b757ed3dc05e486893bc344a15dd73c86d8" \
-  CUNEIFORM_UI_REAL_HOME="$PWD/output/tests" .venv/bin/python -B -m unittest discover -s tests -v
-(cd backend && ../.venv/bin/python -B -m unittest discover -s tests -v)
-(cd benchmarks && ../.venv/bin/python -B -m unittest discover -s tests -t . -v)
+bin/test
 ```
 
 Tests use synthetic fixtures; absent retained samples, optional FalkorDB and opt-in disk/corpus checks skip with reasons. These skips are not full-corpus evidence. Disk tests require explicit storage admission; do not enable them against an existing corpus casually. The current backend lives under `backend/`; the demo stays pinned for compatibility. The original atlas and queues are historical references, as explained in [consolidation](docs/CONSOLIDATION.md).
