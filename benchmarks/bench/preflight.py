@@ -4,7 +4,7 @@ Writes results/preflight.json with the stat fingerprint that every stage compare
 import json
 import time
 
-from .core import CONFIG, ROOT, SNAPSHOT, SNAPSHOT_ID, backend, cpu_s, stat_fingerprint, free_gib, git_state
+from .core import CONFIG, ROOT, PIN, SNAPSHOT, SNAPSHOT_ID, backend, cpu_s, stat_fingerprint, free_gib, git_state
 
 
 def main():
@@ -24,6 +24,7 @@ def main():
         'publication': checked['publication'], 'verify_wall_s': verify_s, 'verify_cpu_s': round(cpu_s() - c, 2),
         'payload_bytes': manifest['snapshot_payload_bytes'], 'counts': manifest['counts'],
         'backend_pin': CONFIG['input']['backend_commit'], 'code': git_state(), 'free_gib': round(free_gib(), 1),
+        'runtime_paths': {'snapshot': str(SNAPSHOT), 'backend': str(PIN), 'runtime': str(ROOT)},
         'verified_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'stat_fingerprint': fp1,
     }
     (ROOT / 'results').mkdir(exist_ok=True)

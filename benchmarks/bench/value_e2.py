@@ -15,7 +15,7 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from .core import ROOT, SNAPSHOT, Run, h, peak_rss
+from .core import SOURCE_ROOT, ROOT, SNAPSHOT, Run, h, peak_rss
 from .value_common import VCONFIG, VSEED, vconfig_sha
 
 E = VCONFIG['e2']
@@ -220,7 +220,7 @@ def main():
     run = Run('V2', allow_dirty=a.allow_dirty)
     res = {}
     for side in ('raw', 'ours'):
-        p = subprocess.run([sys.executable, '-B', '-m', 'bench.value_e2', '--side', side], cwd=ROOT, capture_output=True, text=True)
+        p = subprocess.run([sys.executable, '-B', '-m', 'bench.value_e2', '--side', side], cwd=SOURCE_ROOT, capture_output=True, text=True)
         if p.returncode:
             raise SystemExit(p.stderr)
         res[side] = json.loads(p.stdout)
