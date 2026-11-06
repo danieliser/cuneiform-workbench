@@ -395,10 +395,29 @@ class Logit:
                 H[k][k] += lam
                 g[k] -= lam * w[k]
             step = solve(H, g)
-            w = [wi + si for wi, si in zip(w, step)]
-            if max(abs(s) for s in step) < 1e-6:
+            # Deviation (before any dev score): undamped Newton diverged on one train-B CV fold; step-halving on the penalized objective.
+            cur = self.objective(w, lam, fl)
+            t = 1.0
+            while t > 1e-4:
+                cand = [wi + t * si for wi, si in zip(w, step)]
+                if self.objective(cand, lam, fl) >= cur - 1e-9:
+                    break
+                t /= 2
+            else:
+                break
+            w = cand
+            if max(abs(t * s) for s in step) < 1e-6:
                 break
         return w
+
+    def objective(self, w, lam, fl):
+        d = self.d
+        z = '+'.join(f'f{k}*({w[k]!r})' for k in range(d))
+        ll = self.db.execute(
+            f"WITH s AS (SELECT t,y,{z} AS z FROM r WHERE fold IN ({fl})), m AS (SELECT t,max(z) mz FROM s GROUP BY t) "
+            "SELECT sum(s.y*(s.z - m.mz - ln(q.se))) FROM s JOIN m USING(t) JOIN (SELECT s.t, sum(exp(s.z-m.mz)) se FROM s JOIN m USING(t) GROUP BY s.t) q USING(t)"
+        ).fetchone()[0]
+        return ll - lam / 2 * sum(x * x for x in w)
 
 
 # ------------------------------------------------------------------ commands
