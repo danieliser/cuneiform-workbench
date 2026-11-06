@@ -1,0 +1,26 @@
+{
+  "protocol_version": "cb-value-1",
+  "seed": "cb-value-1-2026-11-06",
+  "split_seed_inherited": "cb-v1-2026-11-05",
+  "raw_fragments_sha256": "4e970d8713315ca9559fb9dfd79956d5b19b1debb9941c22f8bed0339745d753",
+  "resources": {"cpu_budget_minutes_total": 120, "rss_soft_abort_bytes": 4294967296, "duckdb_threads": 2, "duckdb_memory_limit": "2GB"},
+  "e1": {
+    "train_a_buckets": [0, 49], "train_b_buckets": [50, 59], "dev_buckets": [60, 69],
+    "contamination_sources": ["results/D-20261105T221604Z-da7f694/summary.json:per_query.query_catalog_key", "results/D-20261105T221604Z-da7f694/packet_blinded.json:items.candidate_catalog_key"],
+    "strata": ["S1_no_shared_8run", "S2_no_exact_frame", "S3_no_restoration", "ALL"],
+    "shingle": 8, "per_stratum_max": 1500, "caps": {"per_line": 1, "per_family": 10},
+    "atf_contamination_rule": "ATF line label starting with '#'",
+    "lm_K_grid": [2, 3, 4, 6, 8],
+    "lambda_grid": [0.01, 0.1, 1, 10, 100],
+    "candidate_pool": {"cascade_top": 10, "lm_top": 10},
+    "cv_folds": 2, "newton_iters": 12,
+    "practical_threshold_top1": 0.03,
+    "bootstrap": {"reps": 1000, "cluster": "primary family joined by uncertain near-duplicate links"}
+  },
+  "e2": {"t2_with_cdli": 20, "t2_random": 20, "t3_labels": 10, "repeats": 3, "interactive_p95_s": 1.0, "setup_margin_s": 60},
+  "e3": {
+    "gold_dir": "out/value-refs/ebl", "exclude_types_primary": ["Commentary", "Quotation"], "exclude_types_sensitivity": ["Commentary"],
+    "n_values": [1, 2, 3], "bm25": {"k1": 1.2, "b": 0.75}, "rerank_pool": 200, "seed_n": 3,
+    "practical_threshold_recall10": 0.05, "bootstrap": {"reps": 1000, "cluster": "chapter"}
+  }
+}

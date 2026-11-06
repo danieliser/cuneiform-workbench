@@ -1,0 +1,1151 @@
+{
+ "protocol": "cb-value-1",
+ "value_config_sha256": "b69a4392fd1038162f870df4cd2466c7f6a573f9e06d57a91e4d62a478e087bc",
+ "inputs": {
+  "frames": [
+   [
+    "ABZ366",
+    "?",
+    "ABZ396"
+   ],
+   [
+    "ABZ461",
+    "?",
+    "ABZ55"
+   ],
+   [
+    "ABZ1",
+    "?",
+    "ABZ366"
+   ],
+   [
+    "ABZ411",
+    "?",
+    "ABZ142"
+   ],
+   [
+    "ABZ61",
+    "?",
+    "ABZ70"
+   ],
+   [
+    "ABZ411",
+    "?",
+    "ABZ70"
+   ],
+   [
+    "ABZ468",
+    "?",
+    "ABZ295"
+   ],
+   [
+    "ABZ312",
+    "?",
+    "ABZ429"
+   ],
+   [
+    "ABZ128",
+    "?",
+    "ABZ12"
+   ],
+   [
+    "ABZ334",
+    "?",
+    "ABZ383"
+   ],
+   [
+    "ABZ555",
+    "?",
+    "ABZ366"
+   ],
+   [
+    "ABZ60",
+    "?",
+    "ABZ545"
+   ],
+   [
+    "ABZ545",
+    "?",
+    "ABZ63a"
+   ],
+   [
+    "ABZ173",
+    "?",
+    "ABZ307"
+   ],
+   [
+    "ABZ75",
+    "?",
+    "ABZ170a"
+   ],
+   [
+    "ABZ86",
+    "?",
+    "ABZ271"
+   ]
+  ],
+  "labels": [
+   "ABZ366",
+   "ABZ15",
+   "ABZ13",
+   "ABZ5",
+   "ABZ545",
+   "ABZ336",
+   "ABZ367",
+   "ABZ112",
+   "ABZ307",
+   "ABZ342"
+  ],
+  "artifacts": [
+   "K.20845",
+   "YBC.14450",
+   "K.21168",
+   "N.3411",
+   "BM.128124",
+   "K.5999",
+   "Sm.1165",
+   "K.21646",
+   "K.3313",
+   "K.7137",
+   "K.10517",
+   "1881,0727.98",
+   "U.17211u",
+   "K.16003",
+   "YBC.6172",
+   "K.4021",
+   "DT.180",
+   "K.12009",
+   "K.17041",
+   "Rm-II.16",
+   "K.7653",
+   "K.14496",
+   "BM.36821",
+   "K.13697",
+   "K.20218",
+   "VAT.10295.B",
+   "K.7678",
+   "K.11015",
+   "K.9809",
+   "K.12551",
+   "K.4112",
+   "K.6807",
+   "BM.37858",
+   "K.19409",
+   "K.12584",
+   "K.2241",
+   "Rm-II.503",
+   "K.16007",
+   "Sp.733",
+   "BM.43702"
+  ]
+ },
+ "sides": {
+  "raw": {
+   "side": "raw",
+   "setup_s": 5.145,
+   "tasks": {
+    "T1": {
+     "n": 16,
+     "answers_sha256": "bb48b942b320afb9ee352bd3e6a125c171ba6435f39c2d8d117224367c25bda8",
+     "first_p50_s": 0.0,
+     "first_p95_s": 0.0001,
+     "warm_p50_s": 0.0,
+     "warm_p95_s": 0.0,
+     "code_lines": 3,
+     "answers_preview": [
+      {
+       "ABZ13": [
+        496,
+        449
+       ],
+       "ABZ142": [
+        7,
+        6
+       ],
+       "ABZ80": [
+        6,
+        6
+       ],
+       "ABZ79a": [
+        9,
+        9
+       ],
+       "ABZ75": [
+        24,
+        24
+       ],
+       "ABZ332": [
+        3,
+        3
+       ],
+       "ABZ539": [
+        4,
+        4
+       ],
+       "ABZ597": [
+        4,
+        4
+       ],
+       "ABZ214": [
+        1,
+        1
+       ],
+       "ABZ328": [
+        9,
+        9
+       ],
+       "ABZ308": [
+        1,
+        1
+       ],
+       "ABZ393": [
+        1,
+        1
+       ],
+       "ABZ112": [
+        1,
+        1
+       ],
+       "ABZ354": [
+        1,
+        1
+       ],
+       "ABZ532": [
+        2,
+        2
+       ],
+       "ABZ545": [
+        3,
+        3
+       ],
+       "ABZ78": [
+        4,
+        4
+       ],
+       "ABZ7": [
+        1,
+        1
+       ],
+       "ABZ191": [
+        1,
+        1
+       ],
+       "ABZ206": [
+        1,
+        1
+       ],
+       "ABZ1": [
+        3,
+        3
+       ],
+       "ABZ318": [
+        1,
+        1
+       ],
+       "ABZ574": [
+        3,
+        3
+       ],
+       "ABZ533": [
+        2,
+        2
+       ],
+       "ABZ366": [
+        2,
+        2
+       ],
+       "ABZ396": [
+        1,
+        1
+       ],
+       "ABZ5": [
+        1,
+        1
+       ],
+       "ABZ579": [
+        3,
+        3
+       ],
+       "ABZ342": [
+        2,
+        2
+       ],
+       "ABZ343": [
+        1,
+        1
+       ],
+       "ABZ411": [
+        1,
+        1
+       ],
+       "ABZ85": [
+        1,
+        1
+       ]
+      },
+      {
+       "ABZ343": [
+        26,
+        23
+       ],
+       "ABZ481": [
+        52,
+        44
+       ],
+       "ABZ207": [
+        1,
+        1
+       ],
+       "ABZ99": [
+        1,
+        1
+       ],
+       "ABZ342": [
+        289,
+        277
+       ],
+       "ABZ142": [
+        33,
+        32
+       ],
+       "ABZ570": [
+        15,
+        12
+       ],
+       "ABZ559": [
+        4,
+        4
+       ],
+       "ABZ9": [
+        4,
+        4
+       ],
+       "ABZ429": [
+        10,
+        9
+       ],
+       "ABZ579": [
+        3,
+        3
+       ],
+       "ABZ94": [
+        8,
+        7
+       ],
+       "ABZ398": [
+        7,
+        7
+       ],
+       "ABZ564": [
+        21,
+        20
+       ],
+       "ABZ231": [
+        4,
+        4
+       ],
+       "ABZ334": [
+        3,
+        2
+       ],
+       "ABZ73": [
+        12,
+        12
+       ],
+       "GAP": [
+        2,
+        2
+       ],
+       "ABZ322": [
+        6,
+        6
+       ],
+       "ABZ15": [
+        1,
+        1
+       ],
+       "ABZ214": [
+        3,
+        2
+       ],
+       "ABZ80": [
+        2,
+        2
+       ],
+       "ABZ597": [
+        4,
+        4
+       ],
+       "ABZ205": [
+        7,
+        6
+       ],
+       "ABZ545": [
+        6,
+        6
+       ],
+       "ABZ355": [
+        3,
+        3
+       ],
+       "ABZ87": [
+        4,
+        2
+       ],
+       "ABZ399": [
+        2,
+        2
+       ],
+       "ABZ308": [
+        1,
+        1
+       ],
+       "ABZ139": [
+        1,
+        1
+       ],
+       "ABZ461": [
+        2,
+        2
+       ],
+       "ABZ377n1": [
+        1,
+        1
+       ],
+       "ABZ55": [
+        1,
+        1
+       ],
+       "ABZ589": [
+        3,
+        2
+       ],
+       "ABZ354": [
+        2,
+        2
+       ],
+       "ABZ19": [
+        1,
+        1
+       ],
+       "ABZ336": [
+        2,
+        2
+       ],
+       "ABZ431": [
+        2,
+        2
+       ],
+       "ABZ172": [
+        5,
+        5
+       ],
+       "ABZ366": [
+        2,
+        2
+       ],
+       "ABZ170": [
+        2,
+        2
+       ],
+       "ABZ2": [
+        1,
+        1
+       ],
+       "ABZ457": [
+        1,
+        1
+       ],
+       "ABZ151": [
+        2,
+        2
+       ],
+       "ABZ206": [
+        1,
+        1
+       ],
+       "ABZ237": [
+        4,
+        4
+       ],
+       "UNS": [
+        1,
+        1
+       ],
+       "ABZ353": [
+        1,
+        1
+       ],
+       "ABZ58": [
+        1,
+        1
+       ],
+       "ABZ381": [
+        1,
+        1
+       ],
+       "ABZ554": [
+        1,
+        1
+       ],
+       "ABZ86": [
+        1,
+        1
+       ],
+       "ABZ5": [
+        2,
+        2
+       ],
+       "ABZ72": [
+        2,
+        1
+       ],
+       "ABZ427": [
+        1,
+        1
+       ],
+       "ABZ233": [
+        1,
+        1
+       ],
+       "ABZ232": [
+        2,
+        2
+       ],
+       "ABZ7": [
+        1,
+        1
+       ],
+       "ABZ550": [
+        2,
+        2
+       ],
+       "ABZ480": [
+        1,
+        1
+       ],
+       "ABZ335": [
+        1,
+        1
+       ],
+       "ABZ173": [
+        1,
+        1
+       ]
+      }
+     ]
+    },
+    "T2": {
+     "n": 40,
+     "answers_sha256": "cfe02d9436da79ad2b657f8369d1622019b9e111bb5554244396831763af106c",
+     "first_p50_s": 0.0,
+     "first_p95_s": 0.0,
+     "warm_p50_s": 0.0,
+     "warm_p95_s": 0.0,
+     "code_lines": 7,
+     "answers_preview": [
+      {
+       "cdli": "P419219",
+       "same_cdli": [],
+       "oracc_project": null,
+       "bm_id": "W_K-20845",
+       "genre2": null,
+       "period": "Neo-Assyrian",
+       "translation_lines": 0
+      },
+      {
+       "cdli": "P210500",
+       "same_cdli": [],
+       "oracc_project": null,
+       "bm_id": null,
+       "genre2": "ARCHIVAL",
+       "period": "Ur III",
+       "translation_lines": 0
+      }
+     ]
+    },
+    "T3": {
+     "n": 10,
+     "answers_sha256": "6f091312271ebf4924d7cb89e4ed812dc09b9f2eae4babd642d73e2dca8b6247",
+     "first_p50_s": 0.0784,
+     "first_p95_s": 0.2845,
+     "warm_p50_s": 0.079,
+     "warm_p95_s": 0.344,
+     "code_lines": 9,
+     "answers_preview": [
+      {
+       "windows": 313832,
+       "artifacts": 7642
+      },
+      {
+       "windows": 280030,
+       "artifacts": 8509
+      }
+     ]
+    }
+   },
+   "time_to_first_answer_s": 5.145,
+   "setup_code_lines": 29,
+   "peak_rss_bytes": 944439296
+  },
+  "ours": {
+   "side": "ours",
+   "setup_s": 0.045,
+   "tasks": {
+    "T1": {
+     "n": 16,
+     "answers_sha256": "bb48b942b320afb9ee352bd3e6a125c171ba6435f39c2d8d117224367c25bda8",
+     "first_p50_s": 0.2855,
+     "first_p95_s": 3.1586,
+     "warm_p50_s": 0.2862,
+     "warm_p95_s": 3.3988,
+     "code_lines": 9,
+     "answers_preview": [
+      {
+       "ABZ393": [
+        1,
+        1
+       ],
+       "ABZ80": [
+        6,
+        6
+       ],
+       "ABZ354": [
+        1,
+        1
+       ],
+       "ABZ79a": [
+        9,
+        9
+       ],
+       "ABZ191": [
+        1,
+        1
+       ],
+       "ABZ366": [
+        2,
+        2
+       ],
+       "ABZ5": [
+        1,
+        1
+       ],
+       "ABZ533": [
+        2,
+        2
+       ],
+       "ABZ332": [
+        3,
+        3
+       ],
+       "ABZ206": [
+        1,
+        1
+       ],
+       "ABZ214": [
+        1,
+        1
+       ],
+       "ABZ7": [
+        1,
+        1
+       ],
+       "ABZ112": [
+        1,
+        1
+       ],
+       "ABZ532": [
+        2,
+        2
+       ],
+       "ABZ411": [
+        1,
+        1
+       ],
+       "ABZ318": [
+        1,
+        1
+       ],
+       "ABZ13": [
+        496,
+        449
+       ],
+       "ABZ75": [
+        24,
+        24
+       ],
+       "ABZ78": [
+        4,
+        4
+       ],
+       "ABZ343": [
+        1,
+        1
+       ],
+       "ABZ342": [
+        2,
+        2
+       ],
+       "ABZ328": [
+        9,
+        9
+       ],
+       "ABZ308": [
+        1,
+        1
+       ],
+       "ABZ597": [
+        4,
+        4
+       ],
+       "ABZ545": [
+        3,
+        3
+       ],
+       "ABZ539": [
+        4,
+        4
+       ],
+       "ABZ142": [
+        7,
+        6
+       ],
+       "ABZ574": [
+        3,
+        3
+       ],
+       "ABZ396": [
+        1,
+        1
+       ],
+       "ABZ579": [
+        3,
+        3
+       ],
+       "ABZ1": [
+        3,
+        3
+       ],
+       "ABZ85": [
+        1,
+        1
+       ]
+      },
+      {
+       "ABZ94": [
+        8,
+        7
+       ],
+       "ABZ172": [
+        5,
+        5
+       ],
+       "ABZ232": [
+        2,
+        2
+       ],
+       "ABZ5": [
+        2,
+        2
+       ],
+       "ABZ73": [
+        12,
+        12
+       ],
+       "ABZ80": [
+        2,
+        2
+       ],
+       "ABZ207": [
+        1,
+        1
+       ],
+       "ABZ461": [
+        2,
+        2
+       ],
+       "ABZ237": [
+        4,
+        4
+       ],
+       "ABZ399": [
+        2,
+        2
+       ],
+       "ABZ550": [
+        2,
+        2
+       ],
+       "ABZ559": [
+        4,
+        4
+       ],
+       "ABZ398": [
+        7,
+        7
+       ],
+       "ABZ87": [
+        4,
+        2
+       ],
+       "ABZ7": [
+        1,
+        1
+       ],
+       "ABZ72": [
+        2,
+        1
+       ],
+       "ABZ427": [
+        1,
+        1
+       ],
+       "ABZ381": [
+        1,
+        1
+       ],
+       "ABZ214": [
+        3,
+        2
+       ],
+       "ABZ15": [
+        1,
+        1
+       ],
+       "ABZ354": [
+        2,
+        2
+       ],
+       "ABZ206": [
+        1,
+        1
+       ],
+       "ABZ19": [
+        1,
+        1
+       ],
+       "ABZ55": [
+        1,
+        1
+       ],
+       "ABZ366": [
+        2,
+        2
+       ],
+       "GAP": [
+        2,
+        2
+       ],
+       "UNS": [
+        1,
+        1
+       ],
+       "ABZ342": [
+        289,
+        277
+       ],
+       "ABZ481": [
+        52,
+        44
+       ],
+       "ABZ142": [
+        33,
+        32
+       ],
+       "ABZ308": [
+        1,
+        1
+       ],
+       "ABZ343": [
+        26,
+        23
+       ],
+       "ABZ545": [
+        6,
+        6
+       ],
+       "ABZ205": [
+        7,
+        6
+       ],
+       "ABZ151": [
+        2,
+        2
+       ],
+       "ABZ564": [
+        21,
+        20
+       ],
+       "ABZ377n1": [
+        1,
+        1
+       ],
+       "ABZ579": [
+        3,
+        3
+       ],
+       "ABZ231": [
+        4,
+        4
+       ],
+       "ABZ589": [
+        3,
+        2
+       ],
+       "ABZ570": [
+        15,
+        12
+       ],
+       "ABZ335": [
+        1,
+        1
+       ],
+       "ABZ334": [
+        3,
+        2
+       ],
+       "ABZ322": [
+        6,
+        6
+       ],
+       "ABZ170": [
+        2,
+        2
+       ],
+       "ABZ429": [
+        10,
+        9
+       ],
+       "ABZ480": [
+        1,
+        1
+       ],
+       "ABZ355": [
+        3,
+        3
+       ],
+       "ABZ99": [
+        1,
+        1
+       ],
+       "ABZ9": [
+        4,
+        4
+       ],
+       "ABZ233": [
+        1,
+        1
+       ],
+       "ABZ597": [
+        4,
+        4
+       ],
+       "ABZ431": [
+        2,
+        2
+       ],
+       "ABZ58": [
+        1,
+        1
+       ],
+       "ABZ353": [
+        1,
+        1
+       ],
+       "ABZ2": [
+        1,
+        1
+       ],
+       "ABZ336": [
+        2,
+        2
+       ],
+       "ABZ86": [
+        1,
+        1
+       ],
+       "ABZ139": [
+        1,
+        1
+       ],
+       "ABZ173": [
+        1,
+        1
+       ],
+       "ABZ554": [
+        1,
+        1
+       ],
+       "ABZ457": [
+        1,
+        1
+       ]
+      }
+     ]
+    },
+    "T2": {
+     "n": 40,
+     "answers_sha256": "cfe02d9436da79ad2b657f8369d1622019b9e111bb5554244396831763af106c",
+     "first_p50_s": 0.003,
+     "first_p95_s": 0.0125,
+     "warm_p50_s": 0.0026,
+     "warm_p95_s": 0.0033,
+     "code_lines": 11,
+     "answers_preview": [
+      {
+       "cdli": "P419219",
+       "same_cdli": [],
+       "oracc_project": null,
+       "bm_id": "W_K-20845",
+       "genre2": null,
+       "period": "Neo-Assyrian",
+       "translation_lines": 0
+      },
+      {
+       "cdli": "P210500",
+       "same_cdli": [],
+       "oracc_project": null,
+       "bm_id": null,
+       "genre2": "ARCHIVAL",
+       "period": "Ur III",
+       "translation_lines": 0
+      }
+     ]
+    },
+    "T3": {
+     "n": 10,
+     "answers_sha256": "6f091312271ebf4924d7cb89e4ed812dc09b9f2eae4babd642d73e2dca8b6247",
+     "first_p50_s": 0.5233,
+     "first_p95_s": 0.5408,
+     "warm_p50_s": 0.5221,
+     "warm_p95_s": 0.5699,
+     "code_lines": 5,
+     "answers_preview": [
+      {
+       "windows": 313832,
+       "artifacts": 7642
+      },
+      {
+       "windows": 280030,
+       "artifacts": 8509
+      }
+     ]
+    },
+    "T3alt": {
+     "n": 10,
+     "answers_sha256": "6f091312271ebf4924d7cb89e4ed812dc09b9f2eae4babd642d73e2dca8b6247",
+     "first_p50_s": 0.2018,
+     "first_p95_s": 0.3308,
+     "warm_p50_s": 0.1995,
+     "warm_p95_s": 0.3202,
+     "code_lines": 10,
+     "answers_preview": [
+      {
+       "windows": 313832,
+       "artifacts": 7642
+      },
+      {
+       "windows": 280030,
+       "artifacts": 8509
+      }
+     ]
+    }
+   },
+   "time_to_first_answer_s": 2.61,
+   "setup_code_lines": 6,
+   "peak_rss_bytes": 1103544320
+  }
+ },
+ "tasks": {
+  "T1": {
+   "identical_answers": true,
+   "first_differences": [],
+   "ours_variant": "sql",
+   "latency_s": {
+    "raw": {
+     "first_p50_s": 0.0,
+     "first_p95_s": 0.0001,
+     "warm_p50_s": 0.0,
+     "warm_p95_s": 0.0
+    },
+    "ours": {
+     "first_p50_s": 0.2855,
+     "first_p95_s": 3.1586,
+     "warm_p50_s": 0.2862,
+     "warm_p95_s": 3.3988
+    }
+   },
+   "code_lines": {
+    "raw": 3,
+    "ours": 9
+   },
+   "ours_interactive_raw_not": false,
+   "raw_interactive": true,
+   "ours_setup_advantage": false
+  },
+  "T2": {
+   "identical_answers": true,
+   "first_differences": [],
+   "ours_variant": "sql",
+   "latency_s": {
+    "raw": {
+     "first_p50_s": 0.0,
+     "first_p95_s": 0.0,
+     "warm_p50_s": 0.0,
+     "warm_p95_s": 0.0
+    },
+    "ours": {
+     "first_p50_s": 0.003,
+     "first_p95_s": 0.0125,
+     "warm_p50_s": 0.0026,
+     "warm_p95_s": 0.0033
+    }
+   },
+   "code_lines": {
+    "raw": 7,
+    "ours": 11
+   },
+   "ours_interactive_raw_not": false,
+   "raw_interactive": true,
+   "ours_setup_advantage": false
+  },
+  "T3": {
+   "identical_answers": true,
+   "first_differences": [],
+   "ours_variant": "posting",
+   "latency_s": {
+    "raw": {
+     "first_p50_s": 0.0784,
+     "first_p95_s": 0.2845,
+     "warm_p50_s": 0.079,
+     "warm_p95_s": 0.344
+    },
+    "ours": {
+     "first_p50_s": 0.2018,
+     "first_p95_s": 0.3308,
+     "warm_p50_s": 0.1995,
+     "warm_p95_s": 0.3202
+    }
+   },
+   "code_lines": {
+    "raw": 9,
+    "ours": 10
+   },
+   "ours_interactive_raw_not": false,
+   "raw_interactive": true,
+   "ours_setup_advantage": false,
+   "ours_alt": {
+    "identical_to_ngram_variant": true,
+    "warm_p95_s": 0.3202,
+    "first_p95_s": 0.3308
+   }
+  }
+ },
+ "disk": {
+  "ours_snapshot_bytes": 9544593919,
+  "raw_input_bytes": 73854507,
+  "ours_one_time_build": "about 22 min and 6.25 GB RSS for the full build (Q-023 record; not re-run here)"
+ },
+ "C3": "refuted",
+ "C3_tasks_with_construction_advantage": 0
+}

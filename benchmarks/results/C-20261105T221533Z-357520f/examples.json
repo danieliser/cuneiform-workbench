@@ -1,0 +1,1616 @@
+[
+ {
+  "line_id": "line:98b073e996beaf0c04de3f47edbbaa8b",
+  "position": 2,
+  "catalog_key": "K.6595",
+  "family": "artifact:76004fa95e077d42ecc453ad9990e60b",
+  "line_label": "11",
+  "context": [
+   "ABZ480",
+   "ABZ1",
+   "ABZ297",
+   "ABZ381"
+  ],
+  "target": "ABZ52",
+  "target_train_freq": 5363,
+  "frame1_support": 272,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 75,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ52",
+    "ABZ366",
+    "ABZ449",
+    "ABZ384",
+    "ABZ69"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ52",
+    "ABZ411",
+    "IDIM",
+    "ABZ69",
+    "ABZ13"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ52",
+    "ABZ411",
+    "ABZ7",
+    "ABZ393",
+    "ABZ13"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ52"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ52",
+    "ABZ411",
+    "ABZ7",
+    "ABZ393",
+    "ABZ13"
+   ]
+  }
+ },
+ {
+  "line_id": "line:b8c8e1a017cb206737035b9b711bf1e3",
+  "position": 7,
+  "catalog_key": "K.5375",
+  "family": "artifact:196c5338483463ba7cd10d597a894207",
+  "line_label": "1",
+  "context": [
+   "ABZ128",
+   "ABZ139",
+   "ABZ139",
+   "ABZ381"
+  ],
+  "target": "ABZ399",
+  "target_train_freq": 9422,
+  "frame1_support": 252,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": true,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 44,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 21,
+   "top5": [
+    "ABZ579",
+    "ABZ70",
+    "ABZ381",
+    "ABZ307",
+    "ABZ449"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 5,
+   "top5": [
+    "ABZ145",
+    "ABZ70",
+    "ABZ579",
+    "ABZ461",
+    "ABZ399"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 5,
+   "top5": [
+    "ABZ145",
+    "ABZ461",
+    "ABZ79",
+    "ABZ342",
+    "ABZ399"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ399"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ399",
+    "ABZ145",
+    "ABZ461",
+    "ABZ79",
+    "ABZ342"
+   ]
+  }
+ },
+ {
+  "line_id": "line:cfccb603575f119798bb615f22c3e913",
+  "position": 12,
+  "catalog_key": "K.2493",
+  "family": "artifact:a9cb07be12a8fd57f9503564f256512f",
+  "line_label": "22",
+  "context": [
+   "ABZ15",
+   "ABZ579",
+   "ABZ483",
+   "ABZ483"
+  ],
+  "target": "ABZ597",
+  "target_train_freq": 29611,
+  "frame1_support": 73,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 8,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 13,
+   "top5": [
+    "ABZ70",
+    "ABZ13",
+    "ABZ579",
+    "ABZ73",
+    "ABZ449"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 23,
+   "top5": [
+    "ABZ384",
+    "ABZ483",
+    "ABZ70",
+    "ABZ354",
+    "ABZ322"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ483",
+    "ABZ13",
+    "ABZ207",
+    "ABZ335",
+    "ABZ191"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 34,
+   "top5": [
+    "ABZ483",
+    "ABZ13",
+    "ABZ207",
+    "ABZ335",
+    "ABZ191"
+   ]
+  }
+ },
+ {
+  "line_id": "line:4f823739b586092f24b36127718553d7",
+  "position": 2,
+  "catalog_key": "K.16471",
+  "family": "artifact:489c0287a101ec9cbd5ba54377b3092d",
+  "line_label": "1",
+  "context": [
+   "ABZ13",
+   "ABZ60",
+   "ABZ328",
+   "ABZ112"
+  ],
+  "target": "ABZ586",
+  "target_train_freq": 6128,
+  "frame1_support": 56,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": true,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 67,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 108,
+   "top5": [
+    "ABZ1",
+    "ABZ60",
+    "ABZ480",
+    "ABZ533",
+    "ABZ232"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 74,
+   "top5": [
+    "ABZ366",
+    "ABZ232",
+    "ABZ60",
+    "ABZ79",
+    "ABZ579"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 10,
+   "top5": [
+    "ABZ79",
+    "ABZ60",
+    "ABZ308",
+    "ABZ328",
+    "ABZ13"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ586"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ586",
+    "ABZ79",
+    "ABZ60",
+    "ABZ308",
+    "ABZ328"
+   ]
+  }
+ },
+ {
+  "line_id": "line:1d34a620a53957e1f097c60891747768",
+  "position": 2,
+  "catalog_key": "Sm.1996",
+  "family": "artifact:05e29f805381c6e123b2aca10bae6142",
+  "line_label": "11",
+  "context": [
+   "ABZ480",
+   "ABZ129a",
+   "ABZ480",
+   "ABZ384"
+  ],
+  "target": "ABZ570",
+  "target_train_freq": 14523,
+  "frame1_support": 170,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 29,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 15,
+   "top5": [
+    "ABZ1",
+    "ABZ533",
+    "ABZ115",
+    "ABZ537",
+    "ABZ129a"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 6,
+   "top5": [
+    "ABZ480",
+    "ABZ533",
+    "ABZ129a",
+    "ABZ10",
+    "ABZ381"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ570",
+    "ABZ400",
+    "ABZ589",
+    "ABZ439",
+    "ABZ533"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ570",
+    "ABZ129a",
+    "ABZ67"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ570",
+    "ABZ129a",
+    "ABZ67",
+    "ABZ400",
+    "ABZ589"
+   ]
+  }
+ },
+ {
+  "line_id": "line:737e06e6c302f9dc17815c9a3d4ef803",
+  "position": 4,
+  "catalog_key": "K.10302",
+  "family": "artifact:9425ba2e38ed929c2eec7ecd3e9dddc7",
+  "line_label": "8",
+  "context": [
+   "ABZ480",
+   "ABZ330",
+   "ABZ377n1",
+   "ABZ308"
+  ],
+  "target": "ABZ80",
+  "target_train_freq": 7127,
+  "frame1_support": 18,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 62,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 49,
+   "top5": [
+    "ABZ396",
+    "ABZ49",
+    "ABZ214",
+    "ABZ13",
+    "ABZ60"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 18,
+   "top5": [
+    "ABZ214",
+    "ABZ60",
+    "ABZ396",
+    "ABZ49",
+    "ABZ69"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ396",
+    "ABZ60",
+    "ABZ449",
+    "ABZ69",
+    "ABZ214"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 20,
+   "top5": [
+    "ABZ396",
+    "ABZ60",
+    "ABZ449",
+    "ABZ69",
+    "ABZ214"
+   ]
+  }
+ },
+ {
+  "line_id": "line:94ae66d741754807ea0e8ec299b8d6d2",
+  "position": 18,
+  "catalog_key": "CBS.11859",
+  "family": "artifact:63c1c84500bf1970cbe54239c655fc87",
+  "line_label": "2",
+  "context": [
+   "ABZ9",
+   "ABZ68",
+   "ABZ106",
+   "EOS"
+  ],
+  "target": "ABZ68",
+  "target_train_freq": 13881,
+  "frame1_support": 3,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 32,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 11,
+   "top5": [
+    "ABZ457",
+    "ABZ381",
+    "ABZ73",
+    "ABZ342",
+    "ABZ318"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ68",
+    "ABZ1",
+    "ABZ536",
+    "ABZ575",
+    "ABZ342"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ342",
+    "ABZ68",
+    "ABZ384"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ342",
+    "ABZ68",
+    "ABZ384",
+    "ABZ1",
+    "ABZ536"
+   ]
+  }
+ },
+ {
+  "line_id": "line:86aa785213027e4375bf5c4d96319f68",
+  "position": 7,
+  "catalog_key": "Rm-II.144",
+  "family": "artifact:6c2b6169267c1efab500ef38678dd206",
+  "line_label": "24",
+  "context": [
+   "ABZ142",
+   "ABZ322",
+   "ABZ597",
+   "ABZ80"
+  ],
+  "target": "ABZ55",
+  "target_train_freq": 11865,
+  "frame1_support": 70,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 36,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 6,
+   "top5": [
+    "ABZ75",
+    "ABZ324",
+    "ABZ13",
+    "ABZ319",
+    "ABZ449"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 5,
+   "top5": [
+    "ABZ75",
+    "ABZ533",
+    "ABZ545",
+    "ABZ319",
+    "ABZ55"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 12,
+   "top5": [
+    "ABZ75",
+    "ABZ319",
+    "ABZ537",
+    "ABZ59",
+    "ABZ214"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 12,
+   "top5": [
+    "ABZ75",
+    "ABZ319",
+    "ABZ537",
+    "ABZ59",
+    "ABZ214"
+   ]
+  }
+ },
+ {
+  "line_id": "line:162614cd401ae5253220b3d5f3be3caa",
+  "position": 2,
+  "catalog_key": "Rm.603",
+  "family": "artifact:c7d523b7a09b7b15599f65f897262232",
+  "line_label": "8",
+  "context": [
+   "ABZ366",
+   "ABZ579",
+   "ABZ536",
+   "EOS"
+  ],
+  "target": "ABZ70",
+  "target_train_freq": 25687,
+  "frame1_support": 621,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 12,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ70",
+    "ABZ13",
+    "ABZ579",
+    "ABZ73",
+    "ABZ449"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ70",
+    "ABZ554",
+    "ABZ296",
+    "ABZ214",
+    "ABZ575"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ70",
+    "ABZ231",
+    "ABZ115",
+    "ABZ55",
+    "ABZ579"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ70",
+    "ABZ231",
+    "ABZ115",
+    "ABZ55",
+    "ABZ579"
+   ]
+  }
+ },
+ {
+  "line_id": "line:0ea035ab851a08527ba42617dd496d5d",
+  "position": 3,
+  "catalog_key": "K.2155",
+  "family": "artifact:81119b25c193a416bdd777183931567d",
+  "line_label": "4",
+  "context": [
+   "ABZ126",
+   "ABZ533",
+   "ABZ366",
+   "EOS"
+  ],
+  "target": "ABZ151",
+  "target_train_freq": 7623,
+  "frame1_support": 524,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 56,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 27,
+   "top5": [
+    "ABZ545",
+    "ABZ597",
+    "ABZ1",
+    "ABZ342",
+    "ABZ13"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 5,
+   "top5": [
+    "ABZ1",
+    "ABZ545",
+    "ABZ597",
+    "ABZ278",
+    "ABZ151"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 8,
+   "top5": [
+    "ABZ1",
+    "ABZ480",
+    "ABZ597",
+    "ABZ278",
+    "ABZ461"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 8,
+   "top5": [
+    "ABZ1",
+    "ABZ480",
+    "ABZ597",
+    "ABZ278",
+    "ABZ461"
+   ]
+  }
+ },
+ {
+  "line_id": "line:66d76582bf4df3b9e813c3727dfa009e",
+  "position": 13,
+  "catalog_key": "K.14171",
+  "family": "artifact:6401b61ba7988282c4e48fb00366df4a",
+  "line_label": "6",
+  "context": [
+   "ABZ75",
+   "ABZ1",
+   "ABZ330",
+   "ABZ70"
+  ],
+  "target": "ABZ324",
+  "target_train_freq": 12213,
+  "frame1_support": 263,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 35,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 6,
+   "top5": [
+    "ABZ52",
+    "ABZ366",
+    "ABZ449",
+    "ABZ384",
+    "ABZ69"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ324",
+    "ABZ449",
+    "ABZ214",
+    "ABZ366",
+    "ABZ579"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ324",
+    "ABZ7",
+    "ABZ449",
+    "ABZ214",
+    "ABZ115"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ324",
+    "ABZ7",
+    "ABZ449",
+    "ABZ214",
+    "ABZ115"
+   ]
+  }
+ },
+ {
+  "line_id": "line:9ed5e68b501625e2876340a5d23e6784",
+  "position": 3,
+  "catalog_key": "BM.42658",
+  "family": "artifact:b8ad6737acc40b4b7e51c6c119a51056",
+  "line_label": "4",
+  "context": [
+   "ABZ70",
+   "ABZ313",
+   "ABZ376",
+   "ABZ139"
+  ],
+  "target": "ABZ564",
+  "target_train_freq": 1395,
+  "frame1_support": 20,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 156,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 175,
+   "top5": [
+    "ABZ481",
+    "ABZ461",
+    "ABZ13",
+    "ABZ579",
+    "ABZ143"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 163,
+   "top5": [
+    "ABZ99",
+    "ABZ461",
+    "ABZ308",
+    "ABZ139",
+    "ABZ579"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ1",
+    "ABZ532",
+    "ABZ335",
+    "ABZ579",
+    "ABZ449"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 163,
+   "top5": [
+    "ABZ1",
+    "ABZ532",
+    "ABZ335",
+    "ABZ579",
+    "ABZ449"
+   ]
+  }
+ },
+ {
+  "line_id": "line:0238ac5396c2eb960b89945e0a9c6212",
+  "position": 10,
+  "catalog_key": "K.3006",
+  "family": "artifact:5da6d282a2025df0f14cbbd097cdc37c",
+  "line_label": "8",
+  "context": [
+   "ABZ99",
+   "ABZ376",
+   "ABZ328",
+   "ABZ461"
+  ],
+  "target": "ABZ366",
+  "target_train_freq": 18329,
+  "frame1_support": 138,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 20,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 54,
+   "top5": [
+    "ABZ579",
+    "ABZ70",
+    "ABZ308",
+    "ABZ545",
+    "ABZ537"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 3,
+   "top5": [
+    "ABZ579",
+    "ABZ396",
+    "ABZ366",
+    "ABZ74",
+    "ABZ232"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ579",
+    "ABZ367",
+    "ABZ449",
+    "ABZ13",
+    "ABZ354"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 19,
+   "top5": [
+    "ABZ579",
+    "ABZ367",
+    "ABZ449",
+    "ABZ13",
+    "ABZ354"
+   ]
+  }
+ },
+ {
+  "line_id": "line:01872eed24209063d1d6ff4614d9f256",
+  "position": 7,
+  "catalog_key": "BM.82992",
+  "family": "artifact:2a294343aeb7bfead7248c53ca9741f8",
+  "line_label": "18",
+  "context": [
+   "ABZ461",
+   "ABZ461",
+   "ABZ55",
+   "ABZ214"
+  ],
+  "target": "ABZ342",
+  "target_train_freq": 35306,
+  "frame1_support": 345,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 5,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ570",
+    "ABZ342",
+    "ABZ579",
+    "ABZ142",
+    "ABZ322"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ342",
+    "ABZ322",
+    "ABZ564",
+    "ABZ570",
+    "ABZ73"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ342",
+    "ABZ481",
+    "ABZ343",
+    "ABZ142",
+    "ABZ564"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ342"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ342",
+    "ABZ481",
+    "ABZ343",
+    "ABZ142",
+    "ABZ564"
+   ]
+  }
+ },
+ {
+  "line_id": "line:3b340ee1e18ec532a536e62eedaa73a0",
+  "position": 3,
+  "catalog_key": "BM.67673",
+  "family": "artifact:eaeacf5198da45c608f70840d62953e5",
+  "line_label": "33",
+  "context": [
+   "ABZ536",
+   "ABZ449",
+   "ABZ328",
+   "EOS"
+  ],
+  "target": "ABZ536",
+  "target_train_freq": 17623,
+  "frame1_support": 233,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": true,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 24,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 34,
+   "top5": [
+    "ABZ537",
+    "ABZ575",
+    "ABZ393",
+    "ABZ86",
+    "ABZ342"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 26,
+   "top5": [
+    "ABZ575",
+    "ABZ307",
+    "ABZ74",
+    "ABZ232",
+    "ABZ366"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ536",
+    "ABZ74",
+    "ABZ86",
+    "ABZ78",
+    "ABZ579"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ536",
+    "ABZ74",
+    "ABZ86",
+    "ABZ78",
+    "ABZ579"
+   ]
+  }
+ },
+ {
+  "line_id": "line:96ca50f465836263e536fcdbc8ebd8dd",
+  "position": 7,
+  "catalog_key": "BM.32494",
+  "family": "artifact:4d8f161e7aa429c887021f4346efea57",
+  "line_label": "29",
+  "context": [
+   "ABZ214",
+   "ABZ15",
+   "ABZ296",
+   "ABZ87"
+  ],
+  "target": "ABZ214",
+  "target_train_freq": 18664,
+  "frame1_support": 162,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": true,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 17,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 18,
+   "top5": [
+    "ABZ545",
+    "ABZ15",
+    "ABZ342",
+    "ABZ579",
+    "ABZ319"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 10,
+   "top5": [
+    "ABZ59",
+    "ABZ69",
+    "ABZ15",
+    "ABZ231",
+    "ABZ545"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ214",
+    "ABZ59",
+    "ABZ545",
+    "ABZ342",
+    "ABZ1"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ214",
+    "ABZ59",
+    "ABZ545",
+    "ABZ342",
+    "ABZ1"
+   ]
+  }
+ },
+ {
+  "line_id": "line:1130e2368bd6bf0642237611a3d55745",
+  "position": 6,
+  "catalog_key": "K.2367",
+  "family": "artifact:e57d4959a3e0beea3c3cc4dd1ec1e3d5",
+  "line_label": "11",
+  "context": [
+   "ABZ537",
+   "ABZ73",
+   "ABZ579",
+   "ABZ308"
+  ],
+  "target": "ABZ142",
+  "target_train_freq": 18420,
+  "frame1_support": 512,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 19,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 3,
+   "top5": [
+    "ABZ545",
+    "ABZ55",
+    "ABZ142",
+    "ABZ461",
+    "ABZ597"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ142",
+    "ABZ55",
+    "ABZ545",
+    "ABZ461",
+    "ABZ597"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ142",
+    "ABZ13",
+    "ABZ55",
+    "ABZ342",
+    "ABZ597"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ142"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ142",
+    "ABZ13",
+    "ABZ55",
+    "ABZ342",
+    "ABZ597"
+   ]
+  }
+ },
+ {
+  "line_id": "line:fe2f17a1369d68ecefa5a362a6c7fbbe",
+  "position": 14,
+  "catalog_key": "BM.42658",
+  "family": "artifact:b8ad6737acc40b4b7e51c6c119a51056",
+  "line_label": "23",
+  "context": [
+   "ABZ334",
+   "ABZ73",
+   "ABZ396",
+   "ABZ354"
+  ],
+  "target": "ABZ579",
+  "target_train_freq": 55127,
+  "frame1_support": 66,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 9,
+   "top5": [
+    "ABZ545",
+    "ABZ55",
+    "ABZ142",
+    "ABZ461",
+    "ABZ597"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 11,
+   "top5": [
+    "ABZ13",
+    "ABZ142",
+    "ABZ15",
+    "ABZ545",
+    "ABZ55"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ324",
+    "ABZ589",
+    "ABZ75"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ324",
+    "ABZ589",
+    "ABZ75"
+   ]
+  }
+ },
+ {
+  "line_id": "line:71971f55fdadf9e3f08ce382227867e6",
+  "position": 8,
+  "catalog_key": "K.2319",
+  "family": "artifact:6edb81f5deed9bce4489f34aaf4301de",
+  "line_label": "66",
+  "context": [
+   "ABZ1",
+   "ABZ366",
+   "ABZ366",
+   "ABZ343"
+  ],
+  "target": "ABZ80",
+  "target_train_freq": 7127,
+  "frame1_support": 195,
+  "frame2_seen": true,
+  "frame2_contains_target": true,
+  "near_dup_partner_in_train": true,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 62,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 2,
+   "top5": [
+    "ABZ328",
+    "ABZ80",
+    "ABZ366",
+    "ABZ7",
+    "ABZ13"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 6,
+   "top5": [
+    "ABZ366",
+    "ABZ1",
+    "ABZ7",
+    "ABZ60",
+    "ABZ328"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 35,
+   "top5": [
+    "ABZ318",
+    "ABZ1",
+    "ABZ589",
+    "ABZ480",
+    "ABZ366"
+   ]
+  },
+  "frame2": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ80"
+   ]
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 1,
+   "top5": [
+    "ABZ80",
+    "ABZ318",
+    "ABZ1",
+    "ABZ589",
+    "ABZ480"
+   ]
+  }
+ },
+ {
+  "line_id": "line:e81d69673dfe88ec02138512d23c1da7",
+  "position": 9,
+  "catalog_key": "HS.1611",
+  "family": "artifact:1c6a9d7055e55b261c5918332d176bc7",
+  "line_label": "37",
+  "context": [
+   "ABZ170",
+   "ABZ338",
+   "ABZ579",
+   "ABZ589"
+  ],
+  "target": "ABZ144",
+  "target_train_freq": 5405,
+  "frame1_support": 16,
+  "frame2_seen": false,
+  "frame2_contains_target": false,
+  "near_dup_partner_in_train": false,
+  "restoration_status": "unknown (signs field is reading-derived; may be editorial restoration)",
+  "unigram": {
+   "covered": true,
+   "rank": 74,
+   "top5": [
+    "ABZ13",
+    "ABZ579",
+    "ABZ411",
+    "ABZ480",
+    "ABZ342"
+   ]
+  },
+  "left_bigram": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ579",
+    "ABZ308",
+    "ABZ338",
+    "ABZ13",
+    "ABZ533"
+   ]
+  },
+  "markov1_bidir": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ338",
+    "ABZ579",
+    "ABZ308",
+    "ABZ13",
+    "ABZ533"
+   ]
+  },
+  "frame1": {
+   "covered": true,
+   "rank": 0,
+   "top5": [
+    "ABZ86",
+    "ABZ338",
+    "ABZ308",
+    "ABZ579",
+    "ABZ1"
+   ]
+  },
+  "frame2": {
+   "covered": false,
+   "rank": 0,
+   "top5": []
+  },
+  "cascade": {
+   "covered": true,
+   "rank": 98,
+   "top5": [
+    "ABZ86",
+    "ABZ338",
+    "ABZ308",
+    "ABZ579",
+    "ABZ1"
+   ]
+  }
+ }
+]

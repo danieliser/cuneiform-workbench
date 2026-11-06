@@ -1,0 +1,62 @@
+{
+ "run_id": "D-20261105T221604Z-da7f694",
+ "stage": "D",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "da7f6944aec191c3851a038869305b394fe75285",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-05T22:16:04.556594+00:00",
+ "wall_s": 16.2,
+ "cpu_s": 15.72,
+ "peak_rss_bytes": 1889746944,
+ "disk_bytes": {
+  "results": 87645,
+  "raw": 66976
+ },
+ "free_gib": {
+  "before": 176.8,
+  "after": 176.8
+ },
+ "loadavg": {
+  "before": [
+   10.12451171875,
+   9.78125,
+   10.248046875
+  ],
+  "after": [
+   10.58642578125,
+   9.904296875,
+   10.2841796875
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "index": {
+   "wall_s": 14.82,
+   "cpu_s": 14.4,
+   "peak_rss_bytes": 1883553792
+  },
+  "queries": {
+   "wall_s": 16.19,
+   "cpu_s": 15.71,
+   "peak_rss_bytes": 1889730560
+  }
+ },
+ "partial": [],
+ "raw_outputs": {
+  "packet_key.json": "216ed84cd381e07f568acaf6bef1db4964ef5558ebe67b85c095444b2f112c43"
+ },
+ "summary": {
+  "documents": 20896,
+  "queries": 12,
+  "packet_items": 271,
+  "packet_sha256": "53580bc7d223389b097ce8a9b0e4fe0daf46db89e89a5a37647f498d29836bd8",
+  "key_sha256": "216ed84cd381e07f568acaf6bef1db4964ef5558ebe67b85c095444b2f112c43"
+ }
+}

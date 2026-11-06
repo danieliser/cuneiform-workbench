@@ -1,0 +1,88 @@
+{
+ "run_id": "B1-20261105T221333Z-cf8d6ff",
+ "stage": "B1",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "cf8d6ffc54cc81abd62fdbb3e2e1c0e53b8e02ab",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-05T22:13:33.607595+00:00",
+ "wall_s": 13.46,
+ "cpu_s": 13.4,
+ "peak_rss_bytes": 1334296576,
+ "disk_bytes": {
+  "results": 491453,
+  "raw": 989033
+ },
+ "free_gib": {
+  "before": 176.6,
+  "after": 176.6
+ },
+ "loadavg": {
+  "before": [
+   8.56396484375,
+   9.10693359375,
+   10.12548828125
+  ],
+  "after": [
+   8.15625,
+   9.00341796875,
+   10.07666015625
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "load_and_seal": {
+   "wall_s": 10.22,
+   "cpu_s": 10.24,
+   "peak_rss_bytes": 1334296576
+  },
+  "discovery_counts": {
+   "wall_s": 11.34,
+   "cpu_s": 11.3,
+   "peak_rss_bytes": 1334296576
+  },
+  "family_support": {
+   "wall_s": 12.77,
+   "cpu_s": 12.7,
+   "peak_rss_bytes": 1334296576
+  },
+  "rank_and_controls": {
+   "wall_s": 13.46,
+   "cpu_s": 13.39,
+   "peak_rss_bytes": 1334296576
+  }
+ },
+ "partial": [],
+ "raw_outputs": {
+  "split_listing.tsv": "df420d3eec28686092e988f25f18ebeb4f25245102b2cd2aa84849254439c79b"
+ },
+ "frozen_sha256": "186734abfbf72a5faa04666463fdc5edaef6fc7fda7c5768a5ab0f7dd9a16979",
+ "min_count": 10,
+ "pilot": {
+  "10": {
+   "trigram_types_O>=T": 17645,
+   "frame_types_O>=T": 15896
+  },
+  "20": {
+   "trigram_types_O>=T": 7127,
+   "frame_types_O>=T": 10281
+  },
+  "40": {
+   "trigram_types_O>=T": 2663,
+   "frame_types_O>=T": 6000
+  }
+ },
+ "denominators": {
+  "train_trigram_windows": 1091238,
+  "train_adjacent_sign_pairs": 1268533,
+  "train_families": 12520,
+  "train_lines": 188337,
+  "non_train_lines_dropped_before_statistics": 122763
+ }
+}

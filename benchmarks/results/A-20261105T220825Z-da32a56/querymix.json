@@ -1,0 +1,1470 @@
+[
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ366",
+   "ABZ13"
+  ],
+  "selection_count": 1169,
+  "pool_size": 230,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ366",
+   "ABZ13"
+  ],
+  "qid": "Q000"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ15",
+   "ABZ342"
+  ],
+  "selection_count": 1109,
+  "pool_size": 230,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ15",
+   "ABZ342"
+  ],
+  "qid": "Q001"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ13",
+   "ABZ427"
+  ],
+  "selection_count": 3099,
+  "pool_size": 230,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ13",
+   "ABZ427"
+  ],
+  "qid": "Q002"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ13",
+   "ABZ533"
+  ],
+  "selection_count": 4021,
+  "pool_size": 230,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ13",
+   "ABZ533"
+  ],
+  "qid": "Q003"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ5",
+   "ABZ579"
+  ],
+  "selection_count": 1097,
+  "pool_size": 230,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ5",
+   "ABZ579"
+  ],
+  "qid": "Q004"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ545",
+   "ABZ1"
+  ],
+  "selection_count": 1283,
+  "pool_size": 230,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ545",
+   "ABZ1"
+  ],
+  "qid": "Q005"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ336",
+   "ABZ59"
+  ],
+  "selection_count": 81,
+  "pool_size": 17910,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ336",
+   "ABZ59"
+  ],
+  "qid": "Q006"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ367",
+   "ABZ335"
+  ],
+  "selection_count": 19,
+  "pool_size": 17910,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ367",
+   "ABZ335"
+  ],
+  "qid": "Q007"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ112",
+   "ABZ74"
+  ],
+  "selection_count": 74,
+  "pool_size": 17910,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ112",
+   "ABZ74"
+  ],
+  "qid": "Q008"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ307",
+   "ABZ461"
+  ],
+  "selection_count": 133,
+  "pool_size": 17910,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ307",
+   "ABZ461"
+  ],
+  "qid": "Q009"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ342",
+   "ABZ151"
+  ],
+  "selection_count": 286,
+  "pool_size": 17910,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ342",
+   "ABZ151"
+  ],
+  "qid": "Q010"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ145",
+   "ABZ406v2"
+  ],
+  "selection_count": 15,
+  "pool_size": 17910,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ145",
+   "ABZ406v2"
+  ],
+  "qid": "Q011"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ35",
+   "ABZ12"
+  ],
+  "selection_count": 3,
+  "pool_size": 19251,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ35",
+   "ABZ12"
+  ],
+  "qid": "Q012"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ53",
+   "ABZ335"
+  ],
+  "selection_count": 1,
+  "pool_size": 19251,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ53",
+   "ABZ335"
+  ],
+  "qid": "Q013"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ270",
+   "ABZ87"
+  ],
+  "selection_count": 2,
+  "pool_size": 19251,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ270",
+   "ABZ87"
+  ],
+  "qid": "Q014"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ377n1",
+   "ABZ102"
+  ],
+  "selection_count": 1,
+  "pool_size": 19251,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ377n1",
+   "ABZ102"
+  ],
+  "qid": "Q015"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ210",
+   "ABZ173"
+  ],
+  "selection_count": 1,
+  "pool_size": 19251,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ210",
+   "ABZ173"
+  ],
+  "qid": "Q016"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ151",
+   "ABZ377"
+  ],
+  "selection_count": 1,
+  "pool_size": 19251,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ151",
+   "ABZ377"
+  ],
+  "qid": "Q017"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ579",
+   "ABZ579",
+   "ABZ214"
+  ],
+  "selection_count": 208,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ579",
+   "ABZ579",
+   "ABZ214"
+  ],
+  "qid": "Q018"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ381",
+   "ABZ206",
+   "ABZ579"
+  ],
+  "selection_count": 713,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ381",
+   "ABZ206",
+   "ABZ579"
+  ],
+  "qid": "Q019"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ384",
+   "ABZ483",
+   "ABZ483"
+  ],
+  "selection_count": 967,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ384",
+   "ABZ483",
+   "ABZ483"
+  ],
+  "qid": "Q020"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ480",
+   "ABZ13",
+   "ABZ1"
+  ],
+  "selection_count": 235,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ480",
+   "ABZ13",
+   "ABZ1"
+  ],
+  "qid": "Q021"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ68",
+   "ABZ335",
+   "ABZ308"
+  ],
+  "selection_count": 13,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ68",
+   "ABZ335",
+   "ABZ308"
+  ],
+  "qid": "Q022"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ449",
+   "ABZ449",
+   "ABZ307"
+  ],
+  "selection_count": 14,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ449",
+   "ABZ449",
+   "ABZ307"
+  ],
+  "qid": "Q023"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ579",
+   "ABZ330",
+   "ABZ314"
+  ],
+  "selection_count": 16,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ579",
+   "ABZ330",
+   "ABZ314"
+  ],
+  "qid": "Q024"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ554",
+   "ABZ5",
+   "ABZ371"
+  ],
+  "selection_count": 17,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ554",
+   "ABZ5",
+   "ABZ371"
+  ],
+  "qid": "Q025"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ151",
+   "ABZ296",
+   "ABZ5"
+  ],
+  "selection_count": 2,
+  "pool_size": 319501,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ151",
+   "ABZ296",
+   "ABZ5"
+  ],
+  "qid": "Q026"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ334",
+   "ABZ330",
+   "ABZ446"
+  ],
+  "selection_count": 1,
+  "pool_size": 319501,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ334",
+   "ABZ330",
+   "ABZ446"
+  ],
+  "qid": "Q027"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ427",
+   "ABZ449",
+   "ABZ148"
+  ],
+  "selection_count": 2,
+  "pool_size": 319501,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ427",
+   "ABZ449",
+   "ABZ148"
+  ],
+  "qid": "Q028"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ383",
+   "ABZ75",
+   "ABZ142"
+  ],
+  "selection_count": 1,
+  "pool_size": 319501,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ383",
+   "ABZ75",
+   "ABZ142"
+  ],
+  "qid": "Q029"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ57",
+   "ABZ86",
+   "ABZ142",
+   "ABZ579"
+  ],
+  "selection_count": 285,
+  "pool_size": 178,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ57",
+   "ABZ86",
+   "ABZ142",
+   "ABZ579"
+  ],
+  "qid": "Q030"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ295",
+   "ABZ537",
+   "ABZ84",
+   "ABZ13"
+  ],
+  "selection_count": 241,
+  "pool_size": 178,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ295",
+   "ABZ537",
+   "ABZ84",
+   "ABZ13"
+  ],
+  "qid": "Q031"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ381",
+   "ABZ411",
+   "ABZ411",
+   "ABZ411"
+  ],
+  "selection_count": 598,
+  "pool_size": 178,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ381",
+   "ABZ411",
+   "ABZ411",
+   "ABZ411"
+  ],
+  "qid": "Q032"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ13",
+   "ABZ437",
+   "ABZ381",
+   "ABZ1"
+  ],
+  "selection_count": 71,
+  "pool_size": 15930,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ13",
+   "ABZ437",
+   "ABZ381",
+   "ABZ1"
+  ],
+  "qid": "Q033"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ411",
+   "ABZ411",
+   "ABZ579",
+   "ABZ112"
+  ],
+  "selection_count": 117,
+  "pool_size": 15930,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ411",
+   "ABZ411",
+   "ABZ579",
+   "ABZ112"
+  ],
+  "qid": "Q034"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ411",
+   "ABZ354",
+   "ABZ532",
+   "ABZ55"
+  ],
+  "selection_count": 14,
+  "pool_size": 15930,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ411",
+   "ABZ354",
+   "ABZ532",
+   "ABZ55"
+  ],
+  "qid": "Q035"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ94",
+   "ABZ145",
+   "ABZ139",
+   "ABZ449"
+  ],
+  "selection_count": 1,
+  "pool_size": 640503,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ94",
+   "ABZ145",
+   "ABZ139",
+   "ABZ449"
+  ],
+  "qid": "Q036"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ597",
+   "ABZ209",
+   "ABZ295",
+   "ABZ6"
+  ],
+  "selection_count": 1,
+  "pool_size": 640503,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ597",
+   "ABZ209",
+   "ABZ295",
+   "ABZ6"
+  ],
+  "qid": "Q037"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ318",
+   "ABZ411",
+   "ABZ68",
+   "ABZ58"
+  ],
+  "selection_count": 1,
+  "pool_size": 640503,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ318",
+   "ABZ411",
+   "ABZ68",
+   "ABZ58"
+  ],
+  "qid": "Q038"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ139",
+   "ABZ307",
+   "ABZ73",
+   "ABZ449",
+   "ABZ139"
+  ],
+  "selection_count": 240,
+  "pool_size": 72,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ139",
+   "ABZ307",
+   "ABZ73",
+   "ABZ449",
+   "ABZ139"
+  ],
+  "qid": "Q039"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ13",
+   "ABZ399",
+   "ABZ15",
+   "ABZ545",
+   "ABZ68"
+  ],
+  "selection_count": 265,
+  "pool_size": 72,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ13",
+   "ABZ399",
+   "ABZ15",
+   "ABZ545",
+   "ABZ68"
+  ],
+  "qid": "Q040"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ579",
+   "ABZ461",
+   "ABZ322",
+   "ABZ324",
+   "ABZ343"
+  ],
+  "selection_count": 250,
+  "pool_size": 72,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ579",
+   "ABZ461",
+   "ABZ322",
+   "ABZ324",
+   "ABZ343"
+  ],
+  "qid": "Q041"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ206",
+   "ABZ533",
+   "ABZ342",
+   "ABZ60",
+   "ABZ579"
+  ],
+  "selection_count": 11,
+  "pool_size": 9008,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ206",
+   "ABZ533",
+   "ABZ342",
+   "ABZ60",
+   "ABZ579"
+  ],
+  "qid": "Q042"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ133",
+   "ABZ13",
+   "ABZ1",
+   "ABZ579",
+   "ABZ13"
+  ],
+  "selection_count": 33,
+  "pool_size": 9008,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ133",
+   "ABZ13",
+   "ABZ1",
+   "ABZ579",
+   "ABZ13"
+  ],
+  "qid": "Q043"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ61",
+   "ABZ367",
+   "ABZ395",
+   "ABZ13",
+   "ABZ99"
+  ],
+  "selection_count": 15,
+  "pool_size": 9008,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ61",
+   "ABZ367",
+   "ABZ395",
+   "ABZ13",
+   "ABZ99"
+  ],
+  "qid": "Q044"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ15",
+   "ABZ597",
+   "ABZ597",
+   "ABZ537",
+   "ABZ461"
+  ],
+  "selection_count": 1,
+  "pool_size": 717772,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ15",
+   "ABZ597",
+   "ABZ597",
+   "ABZ537",
+   "ABZ461"
+  ],
+  "qid": "Q045"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ55",
+   "ABZ579",
+   "ABZ59",
+   "ABZ557",
+   "ABZ427"
+  ],
+  "selection_count": 1,
+  "pool_size": 717772,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ55",
+   "ABZ579",
+   "ABZ59",
+   "ABZ557",
+   "ABZ427"
+  ],
+  "qid": "Q046"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ78",
+   "ABZ401",
+   "ABZ38",
+   "ABZ354",
+   "ABZ367"
+  ],
+  "selection_count": 1,
+  "pool_size": 717772,
+  "field": "signs",
+  "kind": "exact",
+  "pattern": [
+   "ABZ78",
+   "ABZ401",
+   "ABZ38",
+   "ABZ354",
+   "ABZ367"
+  ],
+  "qid": "Q047"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ366",
+   "ABZ396"
+  ],
+  "selection_count": 600,
+  "pool_size": 467,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ366",
+   "?",
+   "ABZ396"
+  ],
+  "qid": "Q048"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ461",
+   "ABZ55"
+  ],
+  "selection_count": 587,
+  "pool_size": 467,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ461",
+   "?",
+   "ABZ55"
+  ],
+  "qid": "Q049"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ1",
+   "ABZ366"
+  ],
+  "selection_count": 657,
+  "pool_size": 467,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ1",
+   "?",
+   "ABZ366"
+  ],
+  "qid": "Q050"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ411",
+   "ABZ142"
+  ],
+  "selection_count": 1117,
+  "pool_size": 467,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ411",
+   "?",
+   "ABZ142"
+  ],
+  "qid": "Q051"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ61",
+   "ABZ70"
+  ],
+  "selection_count": 906,
+  "pool_size": 467,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ61",
+   "?",
+   "ABZ70"
+  ],
+  "qid": "Q052"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ411",
+   "ABZ70"
+  ],
+  "selection_count": 662,
+  "pool_size": 467,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ411",
+   "?",
+   "ABZ70"
+  ],
+  "qid": "Q053"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ468",
+   "ABZ295"
+  ],
+  "selection_count": 22,
+  "pool_size": 20304,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ468",
+   "?",
+   "ABZ295"
+  ],
+  "qid": "Q054"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ312",
+   "ABZ429"
+  ],
+  "selection_count": 16,
+  "pool_size": 20304,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ312",
+   "?",
+   "ABZ429"
+  ],
+  "qid": "Q055"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ128",
+   "ABZ12"
+  ],
+  "selection_count": 14,
+  "pool_size": 20304,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ128",
+   "?",
+   "ABZ12"
+  ],
+  "qid": "Q056"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ334",
+   "ABZ383"
+  ],
+  "selection_count": 10,
+  "pool_size": 20304,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ334",
+   "?",
+   "ABZ383"
+  ],
+  "qid": "Q057"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ555",
+   "ABZ366"
+  ],
+  "selection_count": 25,
+  "pool_size": 20304,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ555",
+   "?",
+   "ABZ366"
+  ],
+  "qid": "Q058"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ60",
+   "ABZ545"
+  ],
+  "selection_count": 82,
+  "pool_size": 20304,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ60",
+   "?",
+   "ABZ545"
+  ],
+  "qid": "Q059"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ545",
+   "ABZ63a"
+  ],
+  "selection_count": 1,
+  "pool_size": 22163,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ545",
+   "?",
+   "ABZ63a"
+  ],
+  "qid": "Q060"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ173",
+   "ABZ307"
+  ],
+  "selection_count": 1,
+  "pool_size": 22163,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ173",
+   "?",
+   "ABZ307"
+  ],
+  "qid": "Q061"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ75",
+   "ABZ170a"
+  ],
+  "selection_count": 3,
+  "pool_size": 22163,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ75",
+   "?",
+   "ABZ170a"
+  ],
+  "qid": "Q062"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ABZ86",
+   "ABZ271"
+  ],
+  "selection_count": 1,
+  "pool_size": 22163,
+  "field": "signs",
+  "kind": "frame",
+  "pattern": [
+   "ABZ86",
+   "?",
+   "ABZ271"
+  ],
+  "qid": "Q063"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ366",
+   "ABZ1",
+   "ABZ101"
+  ],
+  "selection_count": 542,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "bounded_gap",
+  "pattern": [
+   "ABZ366",
+   "ABZ1",
+   "ABZ101"
+  ],
+  "max_skip": 2,
+  "qid": "Q064"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ545",
+   "ABZ1",
+   "ABZ366"
+  ],
+  "selection_count": 207,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "bounded_gap",
+  "pattern": [
+   "ABZ545",
+   "ABZ1",
+   "ABZ366"
+  ],
+  "max_skip": 2,
+  "qid": "Q065"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ABZ381",
+   "ABZ206",
+   "ABZ342"
+  ],
+  "selection_count": 240,
+  "pool_size": 483,
+  "field": "signs",
+  "kind": "bounded_gap",
+  "pattern": [
+   "ABZ381",
+   "ABZ206",
+   "ABZ342"
+  ],
+  "max_skip": 2,
+  "qid": "Q066"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ296",
+   "ABZ589",
+   "ABZ537"
+  ],
+  "selection_count": 40,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "bounded_gap",
+  "pattern": [
+   "ABZ296",
+   "ABZ589",
+   "ABZ537"
+  ],
+  "max_skip": 2,
+  "qid": "Q067"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ93",
+   "ABZ72",
+   "ABZ318"
+  ],
+  "selection_count": 12,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "bounded_gap",
+  "pattern": [
+   "ABZ93",
+   "ABZ72",
+   "ABZ318"
+  ],
+  "max_skip": 2,
+  "qid": "Q068"
+ },
+ {
+  "stratum": "mid",
+  "labels": [
+   "ABZ75",
+   "ABZ13",
+   "ABZ533"
+  ],
+  "selection_count": 19,
+  "pool_size": 30233,
+  "field": "signs",
+  "kind": "bounded_gap",
+  "pattern": [
+   "ABZ75",
+   "ABZ13",
+   "ABZ533"
+  ],
+  "max_skip": 2,
+  "qid": "Q069"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "E₂",
+   "BI"
+  ],
+  "selection_count": 1375,
+  "pool_size": 9,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "E₂",
+   "BI"
+  ],
+  "qid": "Q070"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ina",
+   "E₂"
+  ],
+  "selection_count": 1371,
+  "pool_size": 9,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "ina",
+   "E₂"
+  ],
+  "qid": "Q071"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ana",
+   "IGI"
+  ],
+  "selection_count": 1037,
+  "pool_size": 9,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "ana",
+   "IGI"
+  ],
+  "qid": "Q072"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ina",
+   "ŠA₃"
+  ],
+  "selection_count": 1066,
+  "pool_size": 9,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "ina",
+   "ŠA₃"
+  ],
+  "qid": "Q073"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "DA",
+   "AŠ"
+  ],
+  "selection_count": 1,
+  "pool_size": 24205,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "DA",
+   "AŠ"
+  ],
+  "qid": "Q074"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "šim",
+   "bi"
+  ],
+  "selection_count": 1,
+  "pool_size": 24205,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "šim",
+   "bi"
+  ],
+  "qid": "Q075"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "ti",
+   "pi"
+  ],
+  "selection_count": 1,
+  "pool_size": 24205,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "ti",
+   "pi"
+  ],
+  "qid": "Q076"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "KA",
+   "GIR₂"
+  ],
+  "selection_count": 1,
+  "pool_size": 24205,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "KA",
+   "GIR₂"
+  ],
+  "qid": "Q077"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "ina",
+   "KUR",
+   "GAL₂"
+  ],
+  "selection_count": 436,
+  "pool_size": 8,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "ina",
+   "KUR",
+   "GAL₂"
+  ],
+  "qid": "Q078"
+ },
+ {
+  "stratum": "common",
+  "labels": [
+   "LUGAL",
+   "ŠU₂",
+   "LUGAL"
+  ],
+  "selection_count": 264,
+  "pool_size": 8,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "LUGAL",
+   "ŠU₂",
+   "LUGAL"
+  ],
+  "qid": "Q079"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "bit",
+   "gidim",
+   "sal"
+  ],
+  "selection_count": 1,
+  "pool_size": 22101,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "bit",
+   "gidim",
+   "sal"
+  ],
+  "qid": "Q080"
+ },
+ {
+  "stratum": "rare",
+  "labels": [
+   "mu",
+   "tag",
+   "tu"
+  ],
+  "selection_count": 1,
+  "pool_size": 22101,
+  "field": "atf",
+  "kind": "exact",
+  "pattern": [
+   "mu",
+   "tag",
+   "tu"
+  ],
+  "qid": "Q081"
+ }
+]

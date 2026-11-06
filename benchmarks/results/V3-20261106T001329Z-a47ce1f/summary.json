@@ -1,0 +1,1049 @@
+{
+ "protocol": "cb-value-1",
+ "value_config_sha256": "b69a4392fd1038162f870df4cd2466c7f6a573f9e06d57a91e4d62a478e087bc",
+ "gold_files_sha256": {
+  "L-1-2_SB_I": "90b4280e57716fc22fff75b563a2a0adb8dc4db2dd6c9b4aae9e4adcc550a504",
+  "L-1-2_SB_II": "a362fa0482492338a220d4b2912a5679170088a4dce550ccc3e47f719367009d",
+  "L-1-2_SB_III": "9ee15fc93be004345b09643183cb6bdd6e6d8073732a8503443a8ef31abd88c6",
+  "L-1-2_SB_IV": "8a70b03f809ba59633bb81de0fc5d4159424ca1529f26cd7aa6c31486f2a8f5a",
+  "L-1-2_SB_V": "3832229d5b23758b0e53beec1aae2e0e9d36103f4cd97aaa2a212d30be8a5c46",
+  "L-1-2_SB_VI": "c3ec97488beb849e17ca1e5bc87ef0152b5c56dfe6e9f29ef13fe351d6b82c08",
+  "L-1-2_SB_VII": "afcd6b06bcc039fec9dfcc9b2d2dba73a051c910007489c39325da933d338d0d",
+  "L-1-5_SB_I": "f5535f3dc264323f129b80b6eca94ebdbab9d10566e6a513fdcc25be7bbf1231",
+  "L-1-5_SB_II": "b75433e174446338c7053ef9cd058fe9179dfe9842313da6a78e0d7360c6c3d5",
+  "L-1-5_SB_III": "45790a6563d69a7bde94a0ddc7a3c561f570a78ad7b37c00301ba14c58bb647f",
+  "L-1-5_SB_IV": "9c2c1992564d763a148502014e2ea918ce5f1018f48366d67f5cc5d3a673c76e",
+  "L-1-5_SB_V": "b0634099449a7379ebeb007518cc1667470d94f07bcd85b2f76eb7b223b1a4e1",
+  "L-2-1_SB_-": "55bfa283f79373c83e9ef1fc6abda002f54b7e29dab6bf1f5578437cae296b60",
+  "L-2-2_SB_I": "75a4cccf09c43a342d41dc5fe14b1b0dd3e0da0da3b2fef9f898ff534f91f700",
+  "L-2-2_SB_II": "a2b52a315011fd812e080e3c0f6f701610040a0cc4ee6890daf03dd6f99c1137",
+  "L-2-2_SB_III": "fa02023b72929e39e9262b907486dff55e54c523591457afd436a97fb7a3aac9",
+  "L-2-2_SB_IV": "da9fe7250f964170e494a48c3e5b484001bdc28ed7b379bef6a50c63070e1d8b",
+  "L-2-2_SB_V": "c17dc20fc0abb6d9ab9d7d93fd883ffbe6cb3a0766a90eaae3f01a28ad37f53f",
+  "Mag-1-1_SB_I": "baee5d888b07a3312374d6ffcfbea5efd0eeaf75ead6339bc17d50d61a04ec59",
+  "Mag-1-1_SB_II": "f85a6a44cec72af1b532e562d047163f10b46e47d475aa8bb971e29d74a4d262"
+ },
+ "gold": {
+  "chapters": 20,
+  "listed_manuscripts": 580,
+  "in_corpus_non_commentary_quotation": 76,
+  "per_chapter": {
+   "L-1-2_SB_I": {
+    "listed": 75,
+    "in_corpus": [
+     2466,
+     3765,
+     6438,
+     8097,
+     9189,
+     11406,
+     11779,
+     12823,
+     13459,
+     15000,
+     15798,
+     17729,
+     17936,
+     19636
+    ],
+    "types_in_corpus": {
+     "School": 13,
+     "Commentary": 1,
+     "Quotation": 1,
+     "Library": 1
+    }
+   },
+   "L-1-2_SB_II": {
+    "listed": 37,
+    "in_corpus": [
+     2983,
+     3933,
+     7693,
+     8105,
+     15397,
+     20524
+    ],
+    "types_in_corpus": {
+     "School": 4,
+     "Library": 2
+    }
+   },
+   "L-1-2_SB_III": {
+    "listed": 23,
+    "in_corpus": [
+     8770
+    ],
+    "types_in_corpus": {
+     "School": 1
+    }
+   },
+   "L-1-2_SB_IV": {
+    "listed": 40,
+    "in_corpus": [
+     474,
+     7732,
+     16691,
+     17141,
+     19259
+    ],
+    "types_in_corpus": {
+     "School": 4,
+     "Library": 1
+    }
+   },
+   "L-1-2_SB_V": {
+    "listed": 35,
+    "in_corpus": [
+     5210,
+     7583,
+     8263,
+     10143,
+     15605,
+     18612,
+     19319
+    ],
+    "types_in_corpus": {
+     "School": 7,
+     "Quotation": 5
+    }
+   },
+   "L-1-2_SB_VI": {
+    "listed": 37,
+    "in_corpus": [
+     6932,
+     15704,
+     16395,
+     18686
+    ],
+    "types_in_corpus": {
+     "School": 4,
+     "Quotation": 2
+    }
+   },
+   "L-1-2_SB_VII": {
+    "listed": 54,
+    "in_corpus": [
+     337,
+     7561,
+     11883,
+     20731
+    ],
+    "types_in_corpus": {
+     "Library": 2,
+     "School": 2,
+     "Quotation": 5
+    }
+   },
+   "L-1-5_SB_I": {
+    "listed": 22,
+    "in_corpus": [
+     822
+    ],
+    "types_in_corpus": {
+     "Library": 1
+    }
+   },
+   "L-1-5_SB_II": {
+    "listed": 13,
+    "in_corpus": [
+     17727
+    ],
+    "types_in_corpus": {
+     "Library": 1
+    }
+   },
+   "L-1-5_SB_III": {
+    "listed": 14,
+    "in_corpus": [
+     1726,
+     3454,
+     13609
+    ],
+    "types_in_corpus": {
+     "Library": 3
+    }
+   },
+   "L-1-5_SB_IV": {
+    "listed": 13,
+    "in_corpus": [],
+    "types_in_corpus": {}
+   },
+   "L-1-5_SB_V": {
+    "listed": 20,
+    "in_corpus": [
+     5397,
+     6406,
+     9362,
+     15779,
+     16021,
+     18780
+    ],
+    "types_in_corpus": {
+     "Amulet": 3,
+     "Library": 3
+    }
+   },
+   "L-2-1_SB_-": {
+    "listed": 24,
+    "in_corpus": [
+     16194,
+     17321
+    ],
+    "types_in_corpus": {
+     "Quotation": 4,
+     "School": 1,
+     "Library": 1
+    }
+   },
+   "L-2-2_SB_I": {
+    "listed": 40,
+    "in_corpus": [
+     6970,
+     7541,
+     13459,
+     18620
+    ],
+    "types_in_corpus": {
+     "School": 1,
+     "Quotation": 2,
+     "Library": 3
+    }
+   },
+   "L-2-2_SB_II": {
+    "listed": 26,
+    "in_corpus": [],
+    "types_in_corpus": {}
+   },
+   "L-2-2_SB_III": {
+    "listed": 25,
+    "in_corpus": [
+     4796,
+     18410
+    ],
+    "types_in_corpus": {
+     "School": 1,
+     "Library": 1
+    }
+   },
+   "L-2-2_SB_IV": {
+    "listed": 7,
+    "in_corpus": [
+     4922
+    ],
+    "types_in_corpus": {
+     "School": 1
+    }
+   },
+   "L-2-2_SB_V": {
+    "listed": 14,
+    "in_corpus": [
+     18659
+    ],
+    "types_in_corpus": {
+     "School": 1
+    }
+   },
+   "Mag-1-1_SB_I": {
+    "listed": 27,
+    "in_corpus": [
+     731,
+     6499,
+     11025,
+     12529,
+     16066,
+     17544,
+     18665
+    ],
+    "types_in_corpus": {
+     "Library": 7
+    }
+   },
+   "Mag-1-1_SB_II": {
+    "listed": 34,
+    "in_corpus": [
+     2344,
+     4124,
+     4304,
+     6499,
+     15242,
+     18761,
+     19363
+    ],
+    "types_in_corpus": {
+     "Library": 6,
+     "School": 1
+    }
+   }
+  },
+  "queries_primary": 69,
+  "queries_with_quotation": 86,
+  "query_genre_known": 34,
+  "query_genres": {
+   "null": 35,
+   "CANONICAL>Literature": 21,
+   "CANONICAL>Magic": 7,
+   "CANONICAL>Lexicography": 6
+  }
+ },
+ "primary": {
+  "queries": 69,
+  "chapters": 13,
+  "methods": {
+   "ovl": {
+    "hit10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0725,
+     "ci95": [
+      0.0,
+      0.1364
+     ]
+    },
+    "recall10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0082,
+     "ci95": [
+      0.0,
+      0.0137
+     ]
+    },
+    "recall100": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0204,
+     "ci95": [
+      0.006,
+      0.03
+     ]
+    },
+    "rr": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0297,
+     "ci95": [
+      0.0021,
+      0.0616
+     ]
+    }
+   },
+   "ovl_len_tfidf": {
+    "hit10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.1159,
+     "ci95": [
+      0.0,
+      0.2222
+     ]
+    },
+    "recall10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0128,
+     "ci95": [
+      0.0,
+      0.0232
+     ]
+    },
+    "recall100": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0489,
+     "ci95": [
+      0.0173,
+      0.0778
+     ]
+    },
+    "rr": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0622,
+     "ci95": [
+      0.0062,
+      0.1208
+     ]
+    }
+   },
+   "tfidf_cosine": {
+    "hit10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.2899,
+     "ci95": [
+      0.0923,
+      0.4353
+     ]
+    },
+    "recall10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0566,
+     "ci95": [
+      0.0205,
+      0.0983
+     ]
+    },
+    "recall100": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.1295,
+     "ci95": [
+      0.0639,
+      0.1923
+     ]
+    },
+    "rr": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.2402,
+     "ci95": [
+      0.0823,
+      0.3714
+     ]
+    }
+   },
+   "bm25": {
+    "hit10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.4203,
+     "ci95": [
+      0.1538,
+      0.6047
+     ]
+    },
+    "recall10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0821,
+     "ci95": [
+      0.0362,
+      0.1269
+     ]
+    },
+    "recall100": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.1532,
+     "ci95": [
+      0.073,
+      0.2229
+     ]
+    },
+    "rr": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.269,
+     "ci95": [
+      0.0989,
+      0.4153
+     ]
+    }
+   },
+   "seed_align": {
+    "hit10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.2899,
+     "ci95": [
+      0.0526,
+      0.4776
+     ]
+    },
+    "recall10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0493,
+     "ci95": [
+      0.0086,
+      0.0896
+     ]
+    },
+    "recall100": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.1353,
+     "ci95": [
+      0.0732,
+      0.1879
+     ]
+    },
+    "rr": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.2426,
+     "ci95": [
+      0.0573,
+      0.3995
+     ]
+    }
+   },
+   "bm25+genre": {
+    "hit10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.3188,
+     "ci95": [
+      0.0976,
+      0.4906
+     ]
+    },
+    "recall10": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.0568,
+     "ci95": [
+      0.0208,
+      0.0912
+     ]
+    },
+    "recall100": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.1507,
+     "ci95": [
+      0.0696,
+      0.2218
+     ]
+    },
+    "rr": {
+     "n": 69,
+     "clusters": 13,
+     "point": 0.2212,
+     "ci95": [
+      0.0668,
+      0.3503
+     ]
+    }
+   }
+  }
+ },
+ "C4": {
+  "n": 69,
+  "clusters": 13,
+  "point": -0.0253,
+  "ci95": [
+   -0.0493,
+   -0.003
+  ],
+  "verdict": "refuted",
+  "best_baseline": "bm25"
+ },
+ "vs_published_ovl": {
+  "ovl_len_tfidf_minus_ovl": {
+   "n": 69,
+   "clusters": 13,
+   "point": 0.0046,
+   "ci95": [
+    0.0,
+    0.0098
+   ]
+  },
+  "tfidf_cosine_minus_ovl": {
+   "n": 69,
+   "clusters": 13,
+   "point": 0.0484,
+   "ci95": [
+    0.0157,
+    0.0929
+   ]
+  },
+  "bm25_minus_ovl": {
+   "n": 69,
+   "clusters": 13,
+   "point": 0.0739,
+   "ci95": [
+    0.0333,
+    0.1128
+   ]
+  },
+  "seed_align_minus_ovl": {
+   "n": 69,
+   "clusters": 13,
+   "point": 0.0411,
+   "ci95": [
+    0.0067,
+    0.0751
+   ]
+  },
+  "bm25+genre_minus_ovl": {
+   "n": 69,
+   "clusters": 13,
+   "point": 0.0486,
+   "ci95": [
+    0.0182,
+    0.0845
+   ]
+  }
+ },
+ "sensitivity_with_quotation": {
+  "queries": 86,
+  "chapters": 13,
+  "methods": {
+   "ovl": {
+    "hit10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0814,
+     "ci95": [
+      0.0213,
+      0.1279
+     ]
+    },
+    "recall10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0116,
+     "ci95": [
+      0.0036,
+      0.0221
+     ]
+    },
+    "recall100": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0226,
+     "ci95": [
+      0.0089,
+      0.0344
+     ]
+    },
+    "rr": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0297,
+     "ci95": [
+      0.0058,
+      0.0545
+     ]
+    }
+   },
+   "ovl_len_tfidf": {
+    "hit10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.1163,
+     "ci95": [
+      0.0227,
+      0.2087
+     ]
+    },
+    "recall10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0152,
+     "ci95": [
+      0.0034,
+      0.0272
+     ]
+    },
+    "recall100": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0552,
+     "ci95": [
+      0.0293,
+      0.0894
+     ]
+    },
+    "rr": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0582,
+     "ci95": [
+      0.0129,
+      0.1069
+     ]
+    }
+   },
+   "tfidf_cosine": {
+    "hit10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.3023,
+     "ci95": [
+      0.1731,
+      0.4261
+     ]
+    },
+    "recall10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0598,
+     "ci95": [
+      0.0281,
+      0.1022
+     ]
+    },
+    "recall100": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.1309,
+     "ci95": [
+      0.079,
+      0.1937
+     ]
+    },
+    "rr": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.2307,
+     "ci95": [
+      0.1158,
+      0.33
+     ]
+    }
+   },
+   "bm25": {
+    "hit10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.4419,
+     "ci95": [
+      0.2658,
+      0.614
+     ]
+    },
+    "recall10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0841,
+     "ci95": [
+      0.0473,
+      0.1284
+     ]
+    },
+    "recall100": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.151,
+     "ci95": [
+      0.0915,
+      0.2125
+     ]
+    },
+    "rr": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.2829,
+     "ci95": [
+      0.1495,
+      0.403
+     ]
+    }
+   },
+   "seed_align": {
+    "hit10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.2907,
+     "ci95": [
+      0.1224,
+      0.4553
+     ]
+    },
+    "recall10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0515,
+     "ci95": [
+      0.021,
+      0.087
+     ]
+    },
+    "recall100": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.1325,
+     "ci95": [
+      0.083,
+      0.1864
+     ]
+    },
+    "rr": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.2188,
+     "ci95": [
+      0.0779,
+      0.3505
+     ]
+    }
+   },
+   "bm25+genre": {
+    "hit10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.3488,
+     "ci95": [
+      0.2037,
+      0.4889
+     ]
+    },
+    "recall10": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.0637,
+     "ci95": [
+      0.0321,
+      0.1022
+     ]
+    },
+    "recall100": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.1489,
+     "ci95": [
+      0.0827,
+      0.2167
+     ]
+    },
+    "rr": {
+     "n": 86,
+     "clusters": 13,
+     "point": 0.2348,
+     "ci95": [
+      0.1214,
+      0.344
+     ]
+    }
+   }
+  }
+ },
+ "sensitivity_atf_unrestored": {
+  "queries": 58,
+  "chapters": 13,
+  "methods": {
+   "ovl": {
+    "hit10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0172,
+     "ci95": [
+      0.0,
+      0.0417
+     ]
+    },
+    "recall10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0013,
+     "ci95": [
+      0.0,
+      0.0033
+     ]
+    },
+    "recall100": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0088,
+     "ci95": [
+      0.0,
+      0.0204
+     ]
+    },
+    "rr": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0071,
+     "ci95": [
+      0.0003,
+      0.0172
+     ]
+    }
+   },
+   "ovl_len_tfidf": {
+    "hit10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0172,
+     "ci95": [
+      0.0,
+      0.0435
+     ]
+    },
+    "recall10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0013,
+     "ci95": [
+      0.0,
+      0.0033
+     ]
+    },
+    "recall100": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0145,
+     "ci95": [
+      0.0,
+      0.0303
+     ]
+    },
+    "rr": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0072,
+     "ci95": [
+      0.0004,
+      0.0163
+     ]
+    }
+   },
+   "tfidf_cosine": {
+    "hit10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0345,
+     "ci95": [
+      0.0,
+      0.0698
+     ]
+    },
+    "recall10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0028,
+     "ci95": [
+      0.0,
+      0.0058
+     ]
+    },
+    "recall100": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0237,
+     "ci95": [
+      0.0048,
+      0.04
+     ]
+    },
+    "rr": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0132,
+     "ci95": [
+      0.001,
+      0.0224
+     ]
+    }
+   },
+   "bm25": {
+    "hit10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.069,
+     "ci95": [
+      0.0,
+      0.1613
+     ]
+    },
+    "recall10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0101,
+     "ci95": [
+      0.0,
+      0.0233
+     ]
+    },
+    "recall100": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.025,
+     "ci95": [
+      0.0,
+      0.0424
+     ]
+    },
+    "rr": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0344,
+     "ci95": [
+      0.0014,
+      0.0845
+     ]
+    }
+   },
+   "seed_align": {
+    "hit10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.069,
+     "ci95": [
+      0.0,
+      0.1587
+     ]
+    },
+    "recall10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0101,
+     "ci95": [
+      0.0,
+      0.0233
+     ]
+    },
+    "recall100": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.025,
+     "ci95": [
+      0.0048,
+      0.0439
+     ]
+    },
+    "rr": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0344,
+     "ci95": [
+      0.0013,
+      0.0803
+     ]
+    }
+   },
+   "bm25+genre": {
+    "hit10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0517,
+     "ci95": [
+      0.0,
+      0.1268
+     ]
+    },
+    "recall10": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0072,
+     "ci95": [
+      0.0,
+      0.0187
+     ]
+    },
+    "recall100": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0279,
+     "ci95": [
+      0.0045,
+      0.0506
+     ]
+    },
+    "rr": {
+     "n": 58,
+     "clusters": 13,
+     "point": 0.0334,
+     "ci95": [
+      0.001,
+      0.079
+     ]
+    }
+   }
+  }
+ },
+ "ties_note": "ties broken by artifact id (as Stage D)"
+}

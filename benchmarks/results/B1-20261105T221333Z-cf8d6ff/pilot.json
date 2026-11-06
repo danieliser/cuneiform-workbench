@@ -1,0 +1,20 @@
+{
+ "pilot": {
+  "10": {
+   "trigram_types_O>=T": 17645,
+   "frame_types_O>=T": 15896
+  },
+  "20": {
+   "trigram_types_O>=T": 7127,
+   "frame_types_O>=T": 10281
+  },
+  "40": {
+   "trigram_types_O>=T": 2663,
+   "frame_types_O>=T": 6000
+  }
+ },
+ "count_pass_s": 0.79,
+ "chosen_min_count": 10,
+ "rule": "smallest value such that eligible types per test family <= 100000 and discovery pass < 10 CPU-minutes in the train-only resource pilot",
+ "note": "resource pilot on train only; no effect sizes inspected"
+}

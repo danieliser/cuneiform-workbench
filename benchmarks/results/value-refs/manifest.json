@@ -1,0 +1,153 @@
+{
+ "note": "Public reference downloads for cb-value-1 (contents kept in ignored out/value-refs; not redistributed). 29 HTTP requests incl. one 404 and 2 WebFetch; 2 web-search queries.",
+ "receipts": [
+  "2026-11-05T23:50:37Z GET https://www.ebl.lmu.de/api/corpus/texts",
+  "2026-11-05T23:50:46Z GET https://www.ebl.lmu.de/api/texts",
+  "2026-11-05T23:51:09Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/I/manuscripts",
+  "2026-11-05T23:51:33Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/II/manuscripts -> 200 47796",
+  "2026-11-05T23:51:35Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/III/manuscripts -> 200 33299",
+  "2026-11-05T23:51:39Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/IV/manuscripts -> 200 54203",
+  "2026-11-05T23:51:42Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/V/manuscripts -> 200 46778",
+  "2026-11-05T23:51:48Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/VI/manuscripts -> 200 47524",
+  "2026-11-05T23:51:52Z GET https://www.ebl.lmu.de/api/texts/L/1/2/chapters/Standard%20Babylonian/VII/manuscripts -> 200 72151",
+  "2026-11-05T23:51:55Z GET https://www.ebl.lmu.de/api/texts/L/2/2/chapters/Standard%20Babylonian/I/manuscripts -> 200 69607",
+  "2026-11-05T23:51:58Z GET https://www.ebl.lmu.de/api/texts/L/2/2/chapters/Standard%20Babylonian/II/manuscripts -> 200 53030",
+  "2026-11-05T23:52:01Z GET https://www.ebl.lmu.de/api/texts/L/2/2/chapters/Standard%20Babylonian/III/manuscripts -> 200 35399",
+  "2026-11-05T23:52:03Z GET https://www.ebl.lmu.de/api/texts/L/2/2/chapters/Standard%20Babylonian/IV/manuscripts -> 200 9790",
+  "2026-11-05T23:52:05Z GET https://www.ebl.lmu.de/api/texts/L/2/2/chapters/Standard%20Babylonian/V/manuscripts -> 200 23998",
+  "2026-11-05T23:52:08Z GET https://www.ebl.lmu.de/api/texts/L/1/5/chapters/Standard%20Babylonian/I/manuscripts -> 200 64861",
+  "2026-11-05T23:52:11Z GET https://www.ebl.lmu.de/api/texts/L/1/5/chapters/Standard%20Babylonian/II/manuscripts -> 200 33077",
+  "2026-11-05T23:52:13Z GET https://www.ebl.lmu.de/api/texts/L/1/5/chapters/Standard%20Babylonian/III/manuscripts -> 200 31139",
+  "2026-11-05T23:52:16Z GET https://www.ebl.lmu.de/api/texts/L/1/5/chapters/Standard%20Babylonian/IV/manuscripts -> 200 32253",
+  "2026-11-05T23:52:18Z GET https://www.ebl.lmu.de/api/texts/L/1/5/chapters/Standard%20Babylonian/V/manuscripts -> 200 42387",
+  "2026-11-05T23:52:22Z GET https://www.ebl.lmu.de/api/texts/L/2/1/chapters/Standard%20Babylonian/-/manuscripts -> 200 78790",
+  "2026-11-05T23:52:25Z GET https://www.ebl.lmu.de/api/texts/Mag/1/1/chapters/Standard%20Babylonian/I/manuscripts -> 200 74547",
+  "2026-11-05T23:52:29Z GET https://www.ebl.lmu.de/api/texts/Mag/1/1/chapters/Standard%20Babylonian/II/manuscripts -> 200 104372",
+  "2026-11-05T23:54:04Z GET https://api.github.com/repos/ElectronicBabylonianLiterature/ebl-api/git/trees/master?recursive=1",
+  "2026-11-05T23:54:04Z GET https://raw.githubusercontent.com/ElectronicBabylonianLiterature/ngram-matcher/main/README.md",
+  "2026-11-05T23:54:15Z GET https://raw.githubusercontent.com/ElectronicBabylonianLiterature/ebl-api/36c41664a3cde0c0ed227fa1755eaeaa74a0f817/ebl/fragmentarium/web/fragment_search.py",
+  "2026-11-05T23:54:16Z GET https://raw.githubusercontent.com/ElectronicBabylonianLiterature/ebl-api/36c41664a3cde0c0ed227fa1755eaeaa74a0f817/ebl/alignment/application/align.py",
+  "2026-11-05T23:54:35Z GET https://www.ebl.lmu.de/api/fragments/query?transliteration=e-nu-ma%20e-li%C5%A1&limit=5",
+  "2026-11-05T23:55:31Z GET https://kielipankki.fi/wp-content/uploads/OraccInKorpUserGuide_2024.pdf (WebFetch)",
+  "2026-11-05T23:55:31Z GET https://cdli.earth/postings/150 (WebFetch)"
+ ],
+ "files": {
+  "docs/OraccInKorpUserGuide_2024.pdf": {
+   "bytes": 4533400,
+   "sha256": "efd91b7bda6f09244297d552b7b3a2244773613728a31fe9d6892626ce603393"
+  },
+  "docs/OraccInKorpUserGuide_2024.txt": {
+   "bytes": 30511,
+   "sha256": "03a708498e8f6c620b164ef0a107143d95a52b66b44c43faa92e4c88cd8f30bc"
+  },
+  "docs/ebl-api-tree.json": {
+   "bytes": 339995,
+   "sha256": "ee8afcaacaa99e8013e11829cadaffc3fab5762467d559e7e96b5e65af69c538"
+  },
+  "docs/ebl-live-query.json": {
+   "bytes": 58167,
+   "sha256": "4f90f6180a98801ad0a7882b96b48e3961e8db12a32e15bc3dc838e5468a3c9b"
+  },
+  "docs/ebl_alignment_application_align.py": {
+   "bytes": 1042,
+   "sha256": "8feae9b1f4fbddb04cd8f178687bb924cab947327c60fd70f11051af07b5f743"
+  },
+  "docs/ebl_fragmentarium_web_fragment_search.py": {
+   "bytes": 2633,
+   "sha256": "23960198d2b847e52e66de5f370feda5a7bf7c851b97d3036ec51f53c601e9f0"
+  },
+  "docs/ngram-matcher-README.md": {
+   "bytes": 14325,
+   "sha256": "64450233278ea28d7162d79874211fa180aa72b86827a5fea6e43c51892a1601"
+  },
+  "ebl/corpus_texts.json": {
+   "bytes": 26,
+   "sha256": "086650f1f98acc74306206f2f32fe38f6101711b9ffbaa8664559ed92931418d"
+  },
+  "ebl/ms_L-1-2_SB_I.json": {
+   "bytes": 159470,
+   "sha256": "90b4280e57716fc22fff75b563a2a0adb8dc4db2dd6c9b4aae9e4adcc550a504"
+  },
+  "ebl/ms_L-1-2_SB_II.json": {
+   "bytes": 47796,
+   "sha256": "a362fa0482492338a220d4b2912a5679170088a4dce550ccc3e47f719367009d"
+  },
+  "ebl/ms_L-1-2_SB_III.json": {
+   "bytes": 33299,
+   "sha256": "9ee15fc93be004345b09643183cb6bdd6e6d8073732a8503443a8ef31abd88c6"
+  },
+  "ebl/ms_L-1-2_SB_IV.json": {
+   "bytes": 54203,
+   "sha256": "8a70b03f809ba59633bb81de0fc5d4159424ca1529f26cd7aa6c31486f2a8f5a"
+  },
+  "ebl/ms_L-1-2_SB_V.json": {
+   "bytes": 46778,
+   "sha256": "3832229d5b23758b0e53beec1aae2e0e9d36103f4cd97aaa2a212d30be8a5c46"
+  },
+  "ebl/ms_L-1-2_SB_VI.json": {
+   "bytes": 47524,
+   "sha256": "c3ec97488beb849e17ca1e5bc87ef0152b5c56dfe6e9f29ef13fe351d6b82c08"
+  },
+  "ebl/ms_L-1-2_SB_VII.json": {
+   "bytes": 72151,
+   "sha256": "afcd6b06bcc039fec9dfcc9b2d2dba73a051c910007489c39325da933d338d0d"
+  },
+  "ebl/ms_L-1-5_SB_I.json": {
+   "bytes": 64861,
+   "sha256": "f5535f3dc264323f129b80b6eca94ebdbab9d10566e6a513fdcc25be7bbf1231"
+  },
+  "ebl/ms_L-1-5_SB_II.json": {
+   "bytes": 33077,
+   "sha256": "b75433e174446338c7053ef9cd058fe9179dfe9842313da6a78e0d7360c6c3d5"
+  },
+  "ebl/ms_L-1-5_SB_III.json": {
+   "bytes": 31139,
+   "sha256": "45790a6563d69a7bde94a0ddc7a3c561f570a78ad7b37c00301ba14c58bb647f"
+  },
+  "ebl/ms_L-1-5_SB_IV.json": {
+   "bytes": 32253,
+   "sha256": "9c2c1992564d763a148502014e2ea918ce5f1018f48366d67f5cc5d3a673c76e"
+  },
+  "ebl/ms_L-1-5_SB_V.json": {
+   "bytes": 42387,
+   "sha256": "b0634099449a7379ebeb007518cc1667470d94f07bcd85b2f76eb7b223b1a4e1"
+  },
+  "ebl/ms_L-2-1_SB_-.json": {
+   "bytes": 78790,
+   "sha256": "55bfa283f79373c83e9ef1fc6abda002f54b7e29dab6bf1f5578437cae296b60"
+  },
+  "ebl/ms_L-2-2_SB_I.json": {
+   "bytes": 69607,
+   "sha256": "75a4cccf09c43a342d41dc5fe14b1b0dd3e0da0da3b2fef9f898ff534f91f700"
+  },
+  "ebl/ms_L-2-2_SB_II.json": {
+   "bytes": 53030,
+   "sha256": "a2b52a315011fd812e080e3c0f6f701610040a0cc4ee6890daf03dd6f99c1137"
+  },
+  "ebl/ms_L-2-2_SB_III.json": {
+   "bytes": 35399,
+   "sha256": "fa02023b72929e39e9262b907486dff55e54c523591457afd436a97fb7a3aac9"
+  },
+  "ebl/ms_L-2-2_SB_IV.json": {
+   "bytes": 9790,
+   "sha256": "da9fe7250f964170e494a48c3e5b484001bdc28ed7b379bef6a50c63070e1d8b"
+  },
+  "ebl/ms_L-2-2_SB_V.json": {
+   "bytes": 23998,
+   "sha256": "c17dc20fc0abb6d9ab9d7d93fd883ffbe6cb3a0766a90eaae3f01a28ad37f53f"
+  },
+  "ebl/ms_Mag-1-1_SB_I.json": {
+   "bytes": 74547,
+   "sha256": "baee5d888b07a3312374d6ffcfbea5efd0eeaf75ead6339bc17d50d61a04ec59"
+  },
+  "ebl/ms_Mag-1-1_SB_II.json": {
+   "bytes": 104372,
+   "sha256": "f85a6a44cec72af1b532e562d047163f10b46e47d475aa8bb971e29d74a4d262"
+  },
+  "ebl/texts.json": {
+   "bytes": 505865,
+   "sha256": "0a8aa91c34b3547e757ad46b7cefe33dfda87391be10a462742596b34ab1ff46"
+  }
+ },
+ "total_bytes": 6600435
+}

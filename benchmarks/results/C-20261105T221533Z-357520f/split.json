@@ -1,0 +1,23 @@
+{
+ "sha256": "df420d3eec28686092e988f25f18ebeb4f25245102b2cd2aa84849254439c79b",
+ "counts": {
+  "test": {
+   "families": 6274,
+   "artifacts": 6293,
+   "sign_positions": 807432,
+   "derived_signs": 721445
+  },
+  "train": {
+   "families": 12520,
+   "artifacts": 12573,
+   "sign_positions": 1641907,
+   "derived_signs": 1470494
+  },
+  "dev": {
+   "families": 2026,
+   "artifacts": 2030,
+   "sign_positions": 265290,
+   "derived_signs": 237818
+  }
+ }
+}

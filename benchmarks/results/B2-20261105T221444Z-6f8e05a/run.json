@@ -1,0 +1,132 @@
+{
+ "run_id": "B2-20261105T221444Z-6f8e05a",
+ "stage": "B2",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "6f8e05adfeda6bb247a4fdf2aafe8d8c8d946625",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-05T22:14:44.342564+00:00",
+ "wall_s": 20.68,
+ "cpu_s": 27.11,
+ "peak_rss_bytes": 1585332224,
+ "disk_bytes": {
+  "results": 1098801,
+  "raw": 18481967
+ },
+ "free_gib": {
+  "before": 176.9,
+  "after": 176.8
+ },
+ "loadavg": {
+  "before": [
+   12.18603515625,
+   9.982421875,
+   10.3662109375
+  ],
+  "after": [
+   10.82666015625,
+   9.80615234375,
+   10.29345703125
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "load": {
+   "wall_s": 9.45,
+   "cpu_s": 9.98,
+   "peak_rss_bytes": 1585332224
+  },
+  "confirmation_counts": {
+   "wall_s": 9.92,
+   "cpu_s": 10.45,
+   "peak_rss_bytes": 1585332224
+  },
+  "bootstrap": {
+   "wall_s": 20.34,
+   "cpu_s": 26.77,
+   "peak_rss_bytes": 1585332224
+  }
+ },
+ "partial": [],
+ "raw_outputs": {
+  "boot_entries.csv": "770014a2ec91a61154ffa50f162fa84bc9e1324be340adb0627085718c4b1129"
+ },
+ "summary": {
+  "frozen_file": "results/B1-20261105T221333Z-cf8d6ff/frozen.json",
+  "frozen_sha256": "186734abfbf72a5faa04666463fdc5edaef6fc7fda7c5768a5ab0f7dd9a16979",
+  "denominators": {
+   "test_trigram_windows": 535221,
+   "test_families": 6274,
+   "test_lines": 92477,
+   "test_families_with_near_dup_partner_in_train": 614,
+   "bootstrap_reps": 1000,
+   "bootstrap_weights": "Poisson(1) by inverse CDF of duckdb hash(seed, rep, family) (duckdb 1.4.3)"
+  },
+  "hypotheses": {
+   "all_test_families": {
+    "trigram": {
+     "pairs": 200,
+     "mean_d_conf_candidates": 4.5124,
+     "mean_d_conf_controls": -0.0472,
+     "difference": 4.5596,
+     "ci95": [
+      4.3949,
+      4.6587
+     ],
+     "H_B1_supported": true
+    },
+    "frame": {
+     "pairs": 100,
+     "mean_d_conf_candidates": 3.6998,
+     "mean_d_conf_controls": -0.1519,
+     "difference": 3.8517,
+     "ci95": [
+      3.6148,
+      3.9779
+     ],
+     "H_B1_supported": true
+    }
+   },
+   "test_families_without_near_dup_partner_in_train": {
+    "trigram": {
+     "pairs": 200,
+     "mean_d_conf_candidates": 3.8691,
+     "mean_d_conf_controls": -0.0768,
+     "difference": 3.9459,
+     "ci95": [
+      3.7816,
+      4.057
+     ],
+     "H_B1_supported": true
+    },
+    "frame": {
+     "pairs": 100,
+     "mean_d_conf_candidates": 3.2299,
+     "mean_d_conf_controls": -0.2281,
+     "difference": 3.4581,
+     "ci95": [
+      3.2303,
+      3.6114
+     ],
+     "H_B1_supported": true
+    }
+   }
+  },
+  "replication_rate_exploratory": {
+   "trigram": {
+    "candidate": 0.925,
+    "control": 0.065
+   },
+   "frame": {
+    "candidate": 0.83,
+    "control": 0.03
+   }
+  }
+ }
+}

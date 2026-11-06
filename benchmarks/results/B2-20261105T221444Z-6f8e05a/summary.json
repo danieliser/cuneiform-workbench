@@ -1,0 +1,72 @@
+{
+ "frozen_file": "results/B1-20261105T221333Z-cf8d6ff/frozen.json",
+ "frozen_sha256": "186734abfbf72a5faa04666463fdc5edaef6fc7fda7c5768a5ab0f7dd9a16979",
+ "denominators": {
+  "test_trigram_windows": 535221,
+  "test_families": 6274,
+  "test_lines": 92477,
+  "test_families_with_near_dup_partner_in_train": 614,
+  "bootstrap_reps": 1000,
+  "bootstrap_weights": "Poisson(1) by inverse CDF of duckdb hash(seed, rep, family) (duckdb 1.4.3)"
+ },
+ "hypotheses": {
+  "all_test_families": {
+   "trigram": {
+    "pairs": 200,
+    "mean_d_conf_candidates": 4.5124,
+    "mean_d_conf_controls": -0.0472,
+    "difference": 4.5596,
+    "ci95": [
+     4.3949,
+     4.6587
+    ],
+    "H_B1_supported": true
+   },
+   "frame": {
+    "pairs": 100,
+    "mean_d_conf_candidates": 3.6998,
+    "mean_d_conf_controls": -0.1519,
+    "difference": 3.8517,
+    "ci95": [
+     3.6148,
+     3.9779
+    ],
+    "H_B1_supported": true
+   }
+  },
+  "test_families_without_near_dup_partner_in_train": {
+   "trigram": {
+    "pairs": 200,
+    "mean_d_conf_candidates": 3.8691,
+    "mean_d_conf_controls": -0.0768,
+    "difference": 3.9459,
+    "ci95": [
+     3.7816,
+     4.057
+    ],
+    "H_B1_supported": true
+   },
+   "frame": {
+    "pairs": 100,
+    "mean_d_conf_candidates": 3.2299,
+    "mean_d_conf_controls": -0.2281,
+    "difference": 3.4581,
+    "ci95": [
+     3.2303,
+     3.6114
+    ],
+    "H_B1_supported": true
+   }
+  }
+ },
+ "replication_rate_exploratory": {
+  "trigram": {
+   "candidate": 0.925,
+   "control": 0.065
+  },
+  "frame": {
+   "candidate": 0.83,
+   "control": 0.03
+  }
+ }
+}

@@ -1,0 +1,46 @@
+{
+ "queries": 82,
+ "agree_all_checks": 82,
+ "failures": [],
+ "graph_subset": {
+  "queries": 14,
+  "agree": 14
+ },
+ "index_cold_ms": {
+  "p50": 374.75,
+  "p95": 1105.11,
+  "n": 82
+ },
+ "index_warm_ms": {
+  "p50": 371.3,
+  "p95": 1095.26,
+  "n": 328
+ },
+ "oracle_ms": {
+  "p50": 101.6,
+  "p95": 276.31,
+  "n": 82
+ },
+ "universe": {
+  "artifacts": 20896,
+  "signs_lines": 311100,
+  "signs_positions": 2714629,
+  "atf_lines": 314884,
+  "atf_positions": 1827524,
+  "families": {
+   "alias_groups": 43,
+   "alias_artifacts": 100,
+   "dup_groups": {
+    "signs": 13,
+    "atf": 3
+   },
+   "dup_artifacts": {
+    "signs": 30,
+    "atf": 6
+   },
+   "families": 20820,
+   "artifacts": 20896
+  }
+ },
+ "timing_definition": "process-cold = first index call for that query on a fresh read-only connection (OS page cache NOT flushed, state unknown, shared machine); warm = 4 repeats same connection; oracle = verification time, separate"
+}

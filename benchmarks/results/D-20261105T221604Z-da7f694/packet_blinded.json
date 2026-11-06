@@ -1,0 +1,2444 @@
+{
+ "instructions": "Blinded pooled candidates: for each item judge whether the candidate shares text with the query (parallel/duplicate/join/none/unsure). Method, rank and score are hidden. Candidates are unverified; similarity cannot certify a physical join.",
+ "items": [
+  {
+   "item": "0073e72f295dab67",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:2a0e29c778cdade03545b444dcb4dee2",
+   "candidate_catalog_key": "K.18642",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "01bdd294d7c78960",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:6bd113d43f84f16251bede8350755245",
+   "candidate_catalog_key": "1880,0617.2710",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "01e8cdf966a66b1d",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:2e6d24425dc40514d6e63ed70fb0b714",
+   "candidate_catalog_key": "F.174",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "023077ce6bc3d82c",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:5b611966b1d4e80b6a68f6e4d6fb3920",
+   "candidate_catalog_key": "K.20250",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "025bafa183e0815d",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:bc48b1c891f79107f6c4e5e43ff4ca89",
+   "candidate_catalog_key": "K.14151",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "02ada098295cba0f",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:696e7e4c8beab67e2b1927a2b7c224ce",
+   "candidate_catalog_key": "Sm.1869",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "03cd51f09e542db0",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:d9565ce5a08538bcf5d583f4724c607a",
+   "candidate_catalog_key": "K.13713",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "043f6bc7a9e405c0",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:d5c12f55f63b3c624fc22a3628659cb9",
+   "candidate_catalog_key": "K.13544",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "04bfc78408e97894",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:6f5107c5f54047685b93f1769235b251",
+   "candidate_catalog_key": "K.12491",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "04d8eb7d2b6ebc3d",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:3e94f05106cb83584f352636447796f0",
+   "candidate_catalog_key": "K.19501",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "053d101ff00957ed",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:ede0ab7249403c04a604cb0a0fb86a6e",
+   "candidate_catalog_key": "K.18859",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "068b0ef4bfe52f5b",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:befcad7123ecd3605e8f305fba8d1c6a",
+   "candidate_catalog_key": "1880,1112.2206",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "06c4030283720e09",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:c00428025379b426bb1ec906e32e9310",
+   "candidate_catalog_key": "K.23092",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "0a7408ea16978325",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:5c18d909057e511f3c1f4b41b21069ab",
+   "candidate_catalog_key": "K.11443",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "0b1f23f7bb1d3f40",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:00b6e3aab19d5435ff61232f1fa9e3a0",
+   "candidate_catalog_key": "K.21302",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "0b5b8c5a47798771",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:56dac045e1115d2cfd72d148c4304f53",
+   "candidate_catalog_key": "K.13460",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "0c7f195f5199e5a4",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:47ef3a85456d94a6be7243141b62f27c",
+   "candidate_catalog_key": "K.15664",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "10ff1966157ad790",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:18d3adaaed6bd602041ed5a71f32cb6a",
+   "candidate_catalog_key": "K.20558",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "111a662bb207a288",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:6923c6a98dd0ef220fe0ddb254adc15e",
+   "candidate_catalog_key": "K.3599",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "1228bba9b8f51a73",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:dc0c7e8c8e1d28e613b8120c36c8cab6",
+   "candidate_catalog_key": "K.18528",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "13defab98a7c2600",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:4af2cae2d7074bdaeb54341e9f92bc51",
+   "candidate_catalog_key": "K.21293",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "13eb2bddd5dbffb2",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:61e77294be0980aa79d016a003be965f",
+   "candidate_catalog_key": "K.19450",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "14b2782f8a2f5951",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:9135c27a9f2f484963c5be6abaadeabd",
+   "candidate_catalog_key": "Sm.839",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "1512021ec268996d",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:26bd4eff3f5b159e352dcf788587e615",
+   "candidate_catalog_key": "K.21758",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "16294e787f351b08",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:4fc0a6b5d79adaafd562f8e62851ddc0",
+   "candidate_catalog_key": "K.18303",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "1688565ed5c2e852",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:decabca1f3f45ad533498c97378f7c8a",
+   "candidate_catalog_key": "K.9637",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "16954410518de233",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:2fff39ff5124c97fbd36a32a6404257b",
+   "candidate_catalog_key": "K.15680",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "17ede6316cc571f8",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:2fe39caf6f25e6074be0640c6cb13bed",
+   "candidate_catalog_key": "K.19075",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "1a104ddd7f84af1f",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:fb0b00ec021c8cc9294e6070a8eea7d3",
+   "candidate_catalog_key": "Sm.225",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "1db6d9a386fb091b",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:b11c6829080f61862320da6e0393e04b",
+   "candidate_catalog_key": "YBC.3414",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "1e512496b40a7088",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:0c3e6a7b0c5e681cb0fc1ae2c2de21a2",
+   "candidate_catalog_key": "K.14390",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2050f85a3d02cbf0",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:af8acfe37f803e1fd7c0c2a99cbe9106",
+   "candidate_catalog_key": "K.14259",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "21680667d449e393",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:5fa06a23bb527ce1d68ac54562cb8a3d",
+   "candidate_catalog_key": "K.18405",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "222e4883b4da8a15",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:473950432476cb4edd254432d0fb48a1",
+   "candidate_catalog_key": "K.22039",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "24c780b97052a604",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:e37d0df245c3b26678068bbdcf81cd05",
+   "candidate_catalog_key": "K.15351",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "25ba421309529060",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:8d77743bae8a4f335a9fa3f9253f0f00",
+   "candidate_catalog_key": "K.22215",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "25f6182b9fa79a31",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:58601dc956e0c54022c7c65126496989",
+   "candidate_catalog_key": "BM.32909",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2717e94a96d27a98",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:d1dc253916b13e43ce3266b45dbf8738",
+   "candidate_catalog_key": "K.19521",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "272bb2fe57d0fdee",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:624b9ea6e1c4ff852470e5e68eed817d",
+   "candidate_catalog_key": "K.18063",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2798cc295266ec8b",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:b8d3f372a3da45d7cc41041ddbef625e",
+   "candidate_catalog_key": "K.18232",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "27dbd61825bd92e6",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:c00428025379b426bb1ec906e32e9310",
+   "candidate_catalog_key": "K.23092",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "29f432b12f7f68b8",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:051b283761ec1dc76fdba087ed2190d7",
+   "candidate_catalog_key": "K.23094",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2afc0e338554effd",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:f28d803ea3e11538fc4434811b548210",
+   "candidate_catalog_key": "K.20438",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2afee625708e83d3",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:67de48e078e6c43fe9fba09531eac9f8",
+   "candidate_catalog_key": "IM.49302",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2b730d1ebc9297de",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:0c3e6a7b0c5e681cb0fc1ae2c2de21a2",
+   "candidate_catalog_key": "K.14390",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2b8104d8e549d75d",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:2c25b1f6a7dc0d48a327ee8e9e6f96c8",
+   "candidate_catalog_key": "K.2573",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2c1e56d5b29ef711",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:5fa06a23bb527ce1d68ac54562cb8a3d",
+   "candidate_catalog_key": "K.18405",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2c31bfa8ad342fca",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:d912c26d1b98ae4ddea7fd6fbdc8b837",
+   "candidate_catalog_key": "BM.36169",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2c4dc58a59e8efc5",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:f7d0cef5a812912a69a089e180eb00a6",
+   "candidate_catalog_key": "K.22088",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2d9af24a24c51cc5",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:e6e88c8b591b0de971dfc9ca4efd0d45",
+   "candidate_catalog_key": "1889,0426.56",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2e46f827b4881cb8",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:6f974c5de33b1031cef1ad2c86c896b0",
+   "candidate_catalog_key": "K.19436",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2f355c6e3493e966",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:25ae0fd92fcacdd775cc28f624aa3477",
+   "candidate_catalog_key": "K.8425",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "2fd3d2d57a070314",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:e5f4a3359198f2c2a0685132862c6d9c",
+   "candidate_catalog_key": "K.8803",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "302d485ddeb64d41",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:3ab1490d9826c0d90509f974228b8a54",
+   "candidate_catalog_key": "Sm.153",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3065cdd9180c464d",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:3f075a9cad8b3a79a8c178f60e8f8cb0",
+   "candidate_catalog_key": "BM.51419",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "329e83144d8f048f",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:56e2e9168bfa67be5aed048319e2f715",
+   "candidate_catalog_key": "BM.39699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3408647eaa0abef3",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:a82a09449b70b7a0353a60189c0c1815",
+   "candidate_catalog_key": "K.15466",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "346ec3c3a53cc04b",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:4bb78b929edd7c3380b2dfd49150b0aa",
+   "candidate_catalog_key": "K.18304",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "35a6a22a47541ba2",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:42ab6422275925179921166d316d8fb1",
+   "candidate_catalog_key": "BM.70088",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "35b988294286cfe3",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:767504a4acddc91aa74ced841613d53e",
+   "candidate_catalog_key": "K.9370",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "35de6a43c1876e6a",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:8f9073a4ee3741bcee0b8b46130c5d85",
+   "candidate_catalog_key": "K.10243",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "36138d91ce7b07e4",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:3035c3f11f2c150a96bb5b931e75906f",
+   "candidate_catalog_key": "Rm.454",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "365e6d6eee389754",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:a8c6b478b73be77e1d41424ed8f3c6ac",
+   "candidate_catalog_key": "K.18170",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "366b148efe44bf6a",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:79955818e2f3074754a5f3fbc009c6b0",
+   "candidate_catalog_key": "K.17675",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3715674d29874a47",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:dd329f393384cd392af15c305dd8d813",
+   "candidate_catalog_key": "K.2170",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "37544ea04559f7a7",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:7c2337d6db529b17813be0a75c98ba66",
+   "candidate_catalog_key": "K.16313",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3add868167a1e1a1",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:27fb84f6790f1d81e334b1d52ee8436c",
+   "candidate_catalog_key": "BM.98699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3bef8b5642eb392a",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:7dade240c0dc939c93b0f2b08a9ad53c",
+   "candidate_catalog_key": "K.5805",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3cf7dc7ea2507e2f",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:895f67b580ba3cb9ef9090b67b1f3f6e",
+   "candidate_catalog_key": "K.14545",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3d76a737c0ecda11",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:84905fecbc27792550ef836cd4a6b59b",
+   "candidate_catalog_key": "BM.33768.B",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3dc04a66cd6397b1",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:af81df5cddfb59347f2ca162f7e96314",
+   "candidate_catalog_key": "1881,0727.281",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3df1916641c4e9c5",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:b71dabc5d8b9510d23a89d6f608e7c35",
+   "candidate_catalog_key": "BM.37426",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3fb9f1adb9784692",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:2b9bb2d18bf83d5aae48909e5125333d",
+   "candidate_catalog_key": "BM.108874",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "3feef6d766e36a5c",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:af7a758fc79a2909830f327be2e02620",
+   "candidate_catalog_key": "BM.38511",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "400db93ce67a3ce8",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:70f24179420be8fa0a5a000ceb1db9cc",
+   "candidate_catalog_key": "BM.99217",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "41916bf2ca3d7e92",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:083a2fee5a43e856cb3e3ea953a1f671",
+   "candidate_catalog_key": "K.3765",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "438439a3dba3443b",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:795084f151c16b781de2e402a1a0465e",
+   "candidate_catalog_key": "1884,0211.644",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "43c0b042995a3736",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:169a7a4e596fc21ed07c784f4eb5bce6",
+   "candidate_catalog_key": "K.19606",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "4434a85c5d4a35e8",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:0dea36718e25e58b6f29515d5e2f1f99",
+   "candidate_catalog_key": "K.6158",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "448629ac0775bcc1",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:04f4b8f540b8d37ea84315a92f0c6e8b",
+   "candidate_catalog_key": "K.7130",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "46a96afc204e772d",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:3cca66f0e20b9f515f4650b84e4a9d52",
+   "candidate_catalog_key": "K.22131",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "47b8094cd4015820",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:5bd8a099f73b68b9077ef593c13ebd71",
+   "candidate_catalog_key": "K.21613",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "4935494f4a512a01",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:df12278777ed954730b647a636ba7c7a",
+   "candidate_catalog_key": "K.21699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "4987f90fb60a01ea",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:c54d8b03c005c1177dc6ac410824a3e0",
+   "candidate_catalog_key": "SU-1952.356",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "4badedea174bf2b1",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:2aa2b8f45a1c4cc0bf7ac8874a835c8a",
+   "candidate_catalog_key": "CBS.1701",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "4ce76b343de5a27b",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:20c0dbb4ddd544889f3ca143cde7aeab",
+   "candidate_catalog_key": "SU-1951.198",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "4f78d527962f6c87",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:7845529b63409cac5c23a574327a5e90",
+   "candidate_catalog_key": "K.19083",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "500a8cfbddb66193",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:4674e88e6afa05a0524ad1829ff4fe8c",
+   "candidate_catalog_key": "K.14080",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "50ac63cb6bcb1e85",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:914f82a08a34397f1b057da092a98f0e",
+   "candidate_catalog_key": "IM.77024",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "518dd1793558638c",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:cc54b4c06a5bff7e9c57029f5f52f9d0",
+   "candidate_catalog_key": "BM.39517",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "522e0a453e2719e5",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:4d9038cf50d78b6e6840b5e3ab75debc",
+   "candidate_catalog_key": "K.17603",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "53212ce3465a5243",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:c8247b15fab71d670df3e334451472ff",
+   "candidate_catalog_key": "BM.99298",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5365ce7b80a69be6",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:19be810bcb2a08d61d9112022b8b9dc2",
+   "candidate_catalog_key": "Sm.1998",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "54b7fb080a74c9a9",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:e31e0a97190193bdbea6240bf78bf9a6",
+   "candidate_catalog_key": "K.21750",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5634be9ddedc2736",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:05cf3aad7e35c009bf429bc382584416",
+   "candidate_catalog_key": "K.10250",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "56e88cb4238a077c",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:4470fcee6c5825604b347c66f9cee47b",
+   "candidate_catalog_key": "K.14377",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "577081b0b16904ef",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:0233425e35f6521cd67436e153884d9f",
+   "candidate_catalog_key": "K.2133",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "57b627629f9be458",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:7cb16289b70b81845bdcd67d3ee2161c",
+   "candidate_catalog_key": "K.21601",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "57dd65969fc7f5f8",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:36b68edafd72a202f71a3c79f8d3b3d3",
+   "candidate_catalog_key": "K.18424",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5816c476de559ce8",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:99f0dc0af3f3c245ac9f83249559ba92",
+   "candidate_catalog_key": "BM.33449",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "58fa86b480c2e58c",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:4e88181c4bcfbbdd346849270d6ae469",
+   "candidate_catalog_key": "K.20041",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "59001145a679397b",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:393bbe8bc1363ac88fbd5db908547a0b",
+   "candidate_catalog_key": "BM.32215",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "59266c00ccf9eee7",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:880424afadba9ad74e0b254682eb07fd",
+   "candidate_catalog_key": "K.17657",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5accb381cb4917d7",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:55fda6788c6fa3a17423d0c95073d866",
+   "candidate_catalog_key": "Rm-IV.625",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5b8f95cfdcbef7dd",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:6b9ca5f6b6c7a94d5f1fae0b190bfd33",
+   "candidate_catalog_key": "K.4347.A",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5bda0ee84b7054ee",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:f28d803ea3e11538fc4434811b548210",
+   "candidate_catalog_key": "K.20438",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5bfe080ddd5afefc",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:df12278777ed954730b647a636ba7c7a",
+   "candidate_catalog_key": "K.21699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "5d296637eed65fe4",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:fd54a5dbc5a945b08375d996e4d90b5e",
+   "candidate_catalog_key": "BM.99312",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "6032c388ce6cb1bc",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:54844d77f41133399d7e60d341c27609",
+   "candidate_catalog_key": "BM.39854",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "625fc1b4b0cd102e",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:37caf7088f9c12a2c831f66ed95d21b1",
+   "candidate_catalog_key": "BM.134804",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "636c3eaab40814e1",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:7ab7cbf804466541c40bffc790a8da20",
+   "candidate_catalog_key": "K.16134",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "63a52a3776bc07e1",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:272b2e42fc29d37370b462a2b5c475f2",
+   "candidate_catalog_key": "K.19351",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "63d87b76cdd1b1e9",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:f5c23f0da1cc0dba18ec9c0abdeefe4c",
+   "candidate_catalog_key": "K.18324",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "6544185298b49772",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:5fa06a23bb527ce1d68ac54562cb8a3d",
+   "candidate_catalog_key": "K.18405",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "664da53ec41e0289",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:a5c117e35baf19beeef8ebde068e2c36",
+   "candidate_catalog_key": "BM.39293",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "66f0120c2fef5f33",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:232860762e19e6522971c650cff3605d",
+   "candidate_catalog_key": "BM.50677",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "6760374543c9255d",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:4be2f195900c275a71766359cca374b1",
+   "candidate_catalog_key": "K.21878",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "684a5b284212b024",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:c1159cfa25f6ac4674c410e540678153",
+   "candidate_catalog_key": "K.21103",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "68f6f2ece16762c7",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:8f94bc0abedf886e8b323d53b8caf406",
+   "candidate_catalog_key": "K.10950",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "6e56d37982fa512e",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:29bbcb83e78806fe7290d4705de3d562",
+   "candidate_catalog_key": "K.21087",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "6f2324456775f904",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:54b29c1d3f51a88e810a1721cbd0d252",
+   "candidate_catalog_key": "BM.123482",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "70c6dd56b2840d10",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:6bd113d43f84f16251bede8350755245",
+   "candidate_catalog_key": "1880,0617.2710",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7135af8594b4cc1e",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:56e2e9168bfa67be5aed048319e2f715",
+   "candidate_catalog_key": "BM.39699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "71756411914a4b3d",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:d5278f5d0aa366d31859875913a02e9e",
+   "candidate_catalog_key": "K.16355",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "740491c3642a0ca6",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:d5278f5d0aa366d31859875913a02e9e",
+   "candidate_catalog_key": "K.16355",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "744dd551dc6bb626",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:2e41a9e06235cc9e6275fd1e984cdb14",
+   "candidate_catalog_key": "Sm.2156",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7565687b35858044",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:4a3dcd647153dcb3674475449b598974",
+   "candidate_catalog_key": "SU-1952.301",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "767de269a8ba6943",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:ab05772de335f6f66958efea1b2981a4",
+   "candidate_catalog_key": "K.18302",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "769ba6ae07757508",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:c00428025379b426bb1ec906e32e9310",
+   "candidate_catalog_key": "K.23092",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "77d4abf6df1843ee",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:461105e2abded26aa00cd5fcfa1f16b1",
+   "candidate_catalog_key": "Sm.767",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "78b6ab4c75f3abf0",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:a5d2b63a973279f6eca8ae84adef35df",
+   "candidate_catalog_key": "BM.44035",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "78de660a9304a0f4",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:ab8b5a88da981a6e94ef553933c4bdef",
+   "candidate_catalog_key": "BM.38365",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "790e929933157dcc",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:2e41a9e06235cc9e6275fd1e984cdb14",
+   "candidate_catalog_key": "Sm.2156",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "79a339b023ab252a",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:bf04e07caeb77f277037bb54c7deb839",
+   "candidate_catalog_key": "K.20870",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "79fd787a5a9d648e",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:e2584f0916aa1c73d749562826406567",
+   "candidate_catalog_key": "K.2987.B",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7a77d63886db9794",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:5b28bfa785c95130aabe704465c0ccb8",
+   "candidate_catalog_key": "BM.43916",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7c51ecf881d805f8",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:06a6ab296af9b305672d8c7489bf9709",
+   "candidate_catalog_key": "Sm.130",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7d9da77e6f51d39f",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:c78c3c74ae2bc72f6cb868d26bc3698c",
+   "candidate_catalog_key": "K.14248",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7e18ed5c51c0f5db",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:84905fecbc27792550ef836cd4a6b59b",
+   "candidate_catalog_key": "BM.33768.B",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "7fad5b6c798d9592",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:25848fd5198a71ab1a9a13128e82d264",
+   "candidate_catalog_key": "K.16881",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "8096b5f59d1865c5",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:795af1c95b79d1bcecb15470d38a3dad",
+   "candidate_catalog_key": "K.6334",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "80e29d62f6cdd39a",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:be1c6ad5d9d8ef07611cfe38ad6be12c",
+   "candidate_catalog_key": "IM.135200",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "80f7ea22a4f5c014",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:abf1d24f6581c0dc8efc7cc9a8bb0dfe",
+   "candidate_catalog_key": "K.13811",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "80f9cab9f1bbe4b4",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:252c9bb66230c93b24183dd33bdbba17",
+   "candidate_catalog_key": "K.12287",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "81c43c8c88f7c9a5",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:f9040789877296ddb1cad6023c2e0a58",
+   "candidate_catalog_key": "K.7648",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "84d878b063e7b97f",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:5674138a86732f0068f2e7bd985ad826",
+   "candidate_catalog_key": "K.16042",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "852eb3561c7f03c8",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:47f3b5d6e01cf2f858b44c10bd682b38",
+   "candidate_catalog_key": "BM.39035",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "86aeb29e778e965f",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:d946818fc6d1ecb8a806668b9c580403",
+   "candidate_catalog_key": "K.18557",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "871e5b1355c2bf21",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:20c0dbb4ddd544889f3ca143cde7aeab",
+   "candidate_catalog_key": "SU-1951.198",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "885924074feb9ed2",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:bdf66b17df7e366f0a6705da27a5e333",
+   "candidate_catalog_key": "K.8278",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "89326a069021de96",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:392243924708943518aa94f48ad777bc",
+   "candidate_catalog_key": "K.12560",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "899c21174d2db613",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:dcc6ba4ccc8615310fd8bf9f3acc123e",
+   "candidate_catalog_key": "K.16211",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "89a1db6261547f1a",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:98b828e7a13541a3c1b46dc9e39e7eea",
+   "candidate_catalog_key": "K.17929",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "8bb07b54b7b88bbb",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:4a60800c5200cee195b88c36c099db7f",
+   "candidate_catalog_key": "K.12887",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "90f8c7707b538763",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:5773e6f09bff26910d28889c9bf471a7",
+   "candidate_catalog_key": "K.17803",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "91fd0ff324e3690c",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:19be810bcb2a08d61d9112022b8b9dc2",
+   "candidate_catalog_key": "Sm.1998",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "92e984380cea9e1c",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:685e89c2b5913ba1b7df0a43dd05926f",
+   "candidate_catalog_key": "K.17567",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "94d6e1f7311e585a",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:0fd2de88cc1dc904b7efdf6d1d44b69a",
+   "candidate_catalog_key": "K.14355",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9578a2bbfece5ff1",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:a847b9e31b587263832da5289f530ebb",
+   "candidate_catalog_key": "K.5780.A",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "97f4916a0f2c728f",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:b1ff5690b0fa8979227f2b650d7c8da3",
+   "candidate_catalog_key": "K.9307",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "98360b44220cd16a",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:605e88baf81c7cd97644cbbcefc4cddc",
+   "candidate_catalog_key": "BM.30431",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "98f16ecb75bdfbba",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:ea184c81f07e4c5d12f17df5f41b61e2",
+   "candidate_catalog_key": "K.20189",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9b95ee3866cf688d",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:9eeceefb4a8200277bebee017dfe92dc",
+   "candidate_catalog_key": "BM.72121",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9c400f0240e98f58",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:2dd42c7b87c83dc35769a156ea559d8e",
+   "candidate_catalog_key": "K.12000.T",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9c59530c88004522",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:67cd8b5200d62bc6f2e77bea1ffce451",
+   "candidate_catalog_key": "1881,0727.253",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9cba7ec70de43e66",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:d96362ec826ba823acd8ccb8819f7958",
+   "candidate_catalog_key": "K.14475",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9eb4134a74bbe7a6",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:d3ddc54f639b248cad5f90b94e374bb3",
+   "candidate_catalog_key": "BM.32206",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9f00e20bb79d4a07",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:27fb84f6790f1d81e334b1d52ee8436c",
+   "candidate_catalog_key": "BM.98699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "9f7f9f4f38881861",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:2d8ad46b554edde52949e34596be3123",
+   "candidate_catalog_key": "Sm.237",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a18e39ef98c59303",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:ffcf4fe2d296f3545205727e6f4b5b98",
+   "candidate_catalog_key": "BM.52232",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a2c47032fa30a0d5",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:4f93afb439508816b7a75912e7c04771",
+   "candidate_catalog_key": "K.19533",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a4fea410c2c3c2b1",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:6b6b06dc053015aaa7da9efbda4051e5",
+   "candidate_catalog_key": "K.2083",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a7e449b19bd09a9d",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:68c9181b36ae8688a362fc3588bc58a9",
+   "candidate_catalog_key": "K.18745",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a840760578b337d4",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:bc48b1c891f79107f6c4e5e43ff4ca89",
+   "candidate_catalog_key": "K.14151",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a86ddd8008d80263",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:fe3ea988c478dcc0b5d6361bbf734d1e",
+   "candidate_catalog_key": "K.12543",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a93cd3697aacdc3a",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:4e9f2c9337ac5c2be7186148c3e499ce",
+   "candidate_catalog_key": "BM.37397",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "a93d87e85e575368",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:39944274ae34e678aa130df1a424b043",
+   "candidate_catalog_key": "K.18249",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "aa1a7e20549b5537",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:508f254205c21bb9834dac7487177aca",
+   "candidate_catalog_key": "BM.34369",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "ab0e972a11f3fd04",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:bb9bed3f45a2c3ee1d6fde23cc39288e",
+   "candidate_catalog_key": "Sm.558",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "af241cc887d8abe3",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:4be2f195900c275a71766359cca374b1",
+   "candidate_catalog_key": "K.21878",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b01a8ba481ba3668",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:2c64e8d553caf8791c8c2089d9a45315",
+   "candidate_catalog_key": "BM.46268",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b03296bc997e7a3a",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:300f7c27e46659242bbb7d02782c60f9",
+   "candidate_catalog_key": "K.17559",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b0be501f0d3810e9",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:36432860e897c3fcd38d7f76dea7d58b",
+   "candidate_catalog_key": "Sm.200",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b0edb0db3d664524",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:ffc4a79e5b9d7b3b46d02879a2f19dd7",
+   "candidate_catalog_key": "K.17581",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b31c57cfc2b378b7",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:03d55649295bb06fef0f49d71acac1e4",
+   "candidate_catalog_key": "Sm.1253",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b3578bef35cffe0b",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:53387d352be6b4ff6508d848af9bb825",
+   "candidate_catalog_key": "Tobias.Test.Fragment",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b44bf149e661a639",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:3c8b626aaf5e75888fb424cb39ffa7dc",
+   "candidate_catalog_key": "BM.45642",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b46bd1a1c3aacfe5",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:fc24c6cf878e44788e544b4ae9c2e358",
+   "candidate_catalog_key": "K.6174",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b56d4e5c3052d267",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:a9e31ef986d881496f39e27df0c6b9a0",
+   "candidate_catalog_key": "K.21296",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b5e19feeef6936b2",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:ea92f8d8373d99b4573e18e830b02ee8",
+   "candidate_catalog_key": "BM.52672",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b6766b4259a09a28",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:00d8c951baf3a397960bc590bd80ba70",
+   "candidate_catalog_key": "Sm.114",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b75f873431c3a3ff",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:da1589277560f91dcd7f6b925be8bf52",
+   "candidate_catalog_key": "Rm-II.138",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b7b535671e4f4ddb",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:eaed9848b5757c80114d7cc7cb3be7b2",
+   "candidate_catalog_key": "K.2558",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b7e216a5a1751893",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:7db14cdf502968de00a6bdda226af48a",
+   "candidate_catalog_key": "BM.42123",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b8a7f557fd9ba297",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:3f2af0f8cf385eacf95e0fa4cecb3fc8",
+   "candidate_catalog_key": "K.21119",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "b9c233571019f1e5",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:7806a6588f0e7b8ff5c36795c9940359",
+   "candidate_catalog_key": "K.17600",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "bc465511028187a0",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:a9aa9ac2299af53cbd08be7e5c90a060",
+   "candidate_catalog_key": "K.16860",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "be4c3ff995f3335f",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:16a940cc0bb5d1ceb2d8bfd4f901e541",
+   "candidate_catalog_key": "K.2329",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "bee751a83f2994e3",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:523ba8addc6c2d78977269c8ce561821",
+   "candidate_catalog_key": "K.2276",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "bfb265201804f354",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:4c1c52980f21d17b264b4d76b542cc7d",
+   "candidate_catalog_key": "K.14239",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c02a94ec654a972d",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:5675c575c0c3da86700e88ee3a4355f3",
+   "candidate_catalog_key": "K.18926",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c156389afcbe0f17",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:03276deda1ef0ffa4d344188eda35d2b",
+   "candidate_catalog_key": "Rm-II.534",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c1f2f45e0f182b94",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:25848fd5198a71ab1a9a13128e82d264",
+   "candidate_catalog_key": "K.16881",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c348716a893c1c3e",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:b56bacfbc886ff89f14966f859999c42",
+   "candidate_catalog_key": "K.3739",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c34957743aff1108",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:70f24179420be8fa0a5a000ceb1db9cc",
+   "candidate_catalog_key": "BM.99217",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c3d8758903cf9e2d",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:5b0a7012fdc43b4346324c1fda3b745a",
+   "candidate_catalog_key": "K.19335",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c519a138de2f5161",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:b3673362603655744ee4cbe57c55009f",
+   "candidate_catalog_key": "K.20004",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c734d5c900b59ea9",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:25b80831e8935ff1ffe04930291f7eed",
+   "candidate_catalog_key": "BM.33654",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c77ef0d8d5f9717a",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:6f14c72f76842c6ce0496ef656f0bb1a",
+   "candidate_catalog_key": "Rm-II.548",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c8cd26df42866347",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:5ce6def12653f569d2760360610717e7",
+   "candidate_catalog_key": "K.19435",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "c922cb699cf9560a",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:b0d529c72aba3efeaf393b1f4d9f7cf8",
+   "candidate_catalog_key": "K.8985",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "cafc88c85bba2796",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:099fcb4da935ecc738db2196c532231b",
+   "candidate_catalog_key": "K.7639",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "cb846a0ccbdaec3a",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:a814e2ab9db0b14a64319bb34a472356",
+   "candidate_catalog_key": "K.11594",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "cda90bebd69b3254",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:591e707646053af0aeed489edbafb081",
+   "candidate_catalog_key": "BM.39810",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "cdda057593f2b2ae",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:5d3eb7cf3ff9224acf2f8391194d2f1d",
+   "candidate_catalog_key": "BM.51518",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "ce95633341c3cfcd",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:eec7e74ab2017ce07aba26cbe1920001",
+   "candidate_catalog_key": "BM.51829",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "cf6d7d12b174899a",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:b7208feab939423604c260b9681024ec",
+   "candidate_catalog_key": "K.20344",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d0175717f0b9fbab",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:6e59c8a2ad43d31c40dd64e093b63465",
+   "candidate_catalog_key": "K.12175",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d0a084f600cc0269",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:7a3bc83721722d56b0ac370141c89f3b",
+   "candidate_catalog_key": "K.17740",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d14ff7b7156d1f42",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:4f3712bc8d031f65fa30bc5ce2157b85",
+   "candidate_catalog_key": "BM.42203",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d2f86b902b5289c0",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:aaa4a8c2e6a64f4fcfe22abc19fe2e59",
+   "candidate_catalog_key": "K.9518",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d4e2f7d4e756cef4",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:6d1315f5db1329133827895a8dfcd1fc",
+   "candidate_catalog_key": "K.140",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d5c60dc243b49290",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:7be45f4293e36e9b2ced35a3c51068ae",
+   "candidate_catalog_key": "IM.135202",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d5d715e243b2d42c",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:0f86184ed16629a2c83a3bb491090a9a",
+   "candidate_catalog_key": "Sm.1607",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d6351fa7fdee7830",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:1b94180d853e4b6aee2575b686c01982",
+   "candidate_catalog_key": "K.17001",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d700f009f00e68a8",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:bd575178c71d0d0ecee90960eed57289",
+   "candidate_catalog_key": "K.19482",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d7b1ea9eaebd98c9",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:91cb9217bc233edf65ae5e7ff3be6501",
+   "candidate_catalog_key": "K.21467",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d85870d2dedadceb",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:a2c477cf84302769f54a4bb5394d4f59",
+   "candidate_catalog_key": "K.14368",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d8753e96fdc4e388",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:149ef6351569800a9f390383ba7a7553",
+   "candidate_catalog_key": "1880,0617.2398",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "d91dedb89e91d2ab",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:e83059bc2ea292a8a27d0d858a0590b7",
+   "candidate_catalog_key": "K.21132",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "da5c81b27abdbc19",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:0d57b32357b969208e57c69ae666a188",
+   "candidate_catalog_key": "K.3908",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "dad6475bf0b4f12d",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:e19f7d33c043fb71703f9d37d1d06a18",
+   "candidate_catalog_key": "K.16192",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "de40d0044a2c3bed",
+   "query_artifact": "artifact:4a0cb72a76a4b126a8f735a6be07ac0a",
+   "query_catalog_key": "BM.52056",
+   "candidate_artifact": "artifact:4be2f195900c275a71766359cca374b1",
+   "candidate_catalog_key": "K.21878",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "df431dcd0503b00f",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:53387d352be6b4ff6508d848af9bb825",
+   "candidate_catalog_key": "Tobias.Test.Fragment",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "dff592cf915c5e7e",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:a1e28934d5566a06376fc352c944ff33",
+   "candidate_catalog_key": "BM.44440",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e0c8a4a463e9d022",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:9f35882bc476d985a98c18c2708b4ea8",
+   "candidate_catalog_key": "BM.43026",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e13bb89e924b3a3f",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:c4ca5798055820f42ee1d812a8bc24be",
+   "candidate_catalog_key": "BM.44769",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e18267f29e5a0597",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:54de0f0a599bbc4cb87189235845723b",
+   "candidate_catalog_key": "BM.134569",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e29823dc27534198",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:54de0f0a599bbc4cb87189235845723b",
+   "candidate_catalog_key": "BM.134569",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e3ae71059b96794c",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:a9aa9ac2299af53cbd08be7e5c90a060",
+   "candidate_catalog_key": "K.16860",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e49c71362a22adc0",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:9628c6fafdc91afce7f2c972361bd41c",
+   "candidate_catalog_key": "K.8932",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e5ecd401b64e613f",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:e58ea193bc20edc6157df81f1945e318",
+   "candidate_catalog_key": "BM.128097",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e64d3398ce886015",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:cb1894b6024be4c5bdd159aa7dd62f4e",
+   "candidate_catalog_key": "K.19904",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e6be95fb7ef9f2c1",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:dd53cc1f5e49da6b0fe4e181c2f3a7a2",
+   "candidate_catalog_key": "Sm.789",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e7c4ab0156f66e78",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:befcad7123ecd3605e8f305fba8d1c6a",
+   "candidate_catalog_key": "1880,1112.2206",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e8224e3b0c229c26",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:16400f4f1348bee82864da3e36d9ffb0",
+   "candidate_catalog_key": "BM.33506",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e86260636f4395a8",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:0b03eacff595e9cb3c97d54871e50957",
+   "candidate_catalog_key": "BM.41475",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "e8a665f454024811",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:969806e47f24d55c802039ef7336065f",
+   "candidate_catalog_key": "K.17075",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "eca0b45ac993cd34",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:df12278777ed954730b647a636ba7c7a",
+   "candidate_catalog_key": "K.21699",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "edccda91f3181a88",
+   "query_artifact": "artifact:d044e90a4302f0970c0c702656622738",
+   "query_catalog_key": "BM.35097",
+   "candidate_artifact": "artifact:d1dc253916b13e43ce3266b45dbf8738",
+   "candidate_catalog_key": "K.19521",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "eeb6357bf951213a",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:04ac1319ce3525fba1fd886603e01b87",
+   "candidate_catalog_key": "K.13947",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "ef361bfc15ddc6f4",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:dedbe11d4255c2ed92913868d82b2057",
+   "candidate_catalog_key": "K.6278",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "ef96e5d9d9d427db",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:2ae768fc0f29a974105a2e7905a328a1",
+   "candidate_catalog_key": "Rm.261",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "efc83459d73d5b4b",
+   "query_artifact": "artifact:92cdc7fa1ffcc316cbfba05d730a3571",
+   "query_catalog_key": "K.6853",
+   "candidate_artifact": "artifact:cc6fb256d6c2433d51d80809d6ad7d7b",
+   "candidate_catalog_key": "Sm.512",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "eff1b3d2098a1b43",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:00d4580fb0d818dbbd5d55a857e02c15",
+   "candidate_catalog_key": "K.7147",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f14e135993e0c7b0",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:5cd851878871ba09521c50aa658fe3d5",
+   "candidate_catalog_key": "Sm.720",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f257b16284e89197",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:a1dd8cf5f6125ae5e25cc5aa4eff1287",
+   "candidate_catalog_key": "K.16665",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f2cb99255e35b1bd",
+   "query_artifact": "artifact:953f86367ab151404bdb81eb1208b069",
+   "query_catalog_key": "K.12473",
+   "candidate_artifact": "artifact:f9e72458e169b57c51350afc1e842037",
+   "candidate_catalog_key": "BM.35697",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f3f919468a414061",
+   "query_artifact": "artifact:ea7080efcd279931f6d535c232a1c580",
+   "query_catalog_key": "K.6801",
+   "candidate_artifact": "artifact:28182d2e104dc03777c975a5a8f44eda",
+   "candidate_catalog_key": "Rm-II.33",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f5ca056c5cbfe0f7",
+   "query_artifact": "artifact:cdec146e20789c7bf46d3e65eecd1740",
+   "query_catalog_key": "K.10953",
+   "candidate_artifact": "artifact:5fa06a23bb527ce1d68ac54562cb8a3d",
+   "candidate_catalog_key": "K.18405",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f607bc877da55aa3",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:dfe2279b631d66fe5f4711007f50c437",
+   "candidate_catalog_key": "K.2270",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f6366a9347ed605a",
+   "query_artifact": "artifact:92d30dca73c060e08657711d0aa5da36",
+   "query_catalog_key": "K.7889",
+   "candidate_artifact": "artifact:2eb3a0d4d19d7a3aa3fe15d37b810616",
+   "candidate_catalog_key": "K.22097",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f6e6687cbbef5af7",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:0aa47411423ad0535177b79b2e9b2e10",
+   "candidate_catalog_key": "BM.98850",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f72d3642b81e30a6",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:60ca44e5cbc94f208fe37ff71d73c07c",
+   "candidate_catalog_key": "K.20347",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f7a7ba730245f4af",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:2371d0aab01c0124288718eb9c5fe60b",
+   "candidate_catalog_key": "K.18464",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f815742241e46218",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:7d0a6695ace1cd1196f9bd7515ba6038",
+   "candidate_catalog_key": "K.8107",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f89ac5504983bca9",
+   "query_artifact": "artifact:321d85b92829b4b2b86855697cd62c81",
+   "query_catalog_key": "K.7201",
+   "candidate_artifact": "artifact:9a990baef76a592744c6462815ff5827",
+   "candidate_catalog_key": "K.10217",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "f92a47cbb1166a97",
+   "query_artifact": "artifact:0db3120b15c35ba7ef4bdc26a2bfecf2",
+   "query_catalog_key": "UM.29-16-660",
+   "candidate_artifact": "artifact:8d77743bae8a4f335a9fa3f9253f0f00",
+   "candidate_catalog_key": "K.22215",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "fbd95320f604b98e",
+   "query_artifact": "artifact:b0ad7c69589d7ea818821f07c7141ab8",
+   "query_catalog_key": "K.12782",
+   "candidate_artifact": "artifact:97160e516b80fb7fb85f475ed292fa3d",
+   "candidate_catalog_key": "K.14914",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "ff1f1ebd577a109d",
+   "query_artifact": "artifact:48cf2e6973f82603631e77cf1afc9c6c",
+   "query_catalog_key": "K.16666",
+   "candidate_artifact": "artifact:07aa18758211ca061f365701f7ec6c6f",
+   "candidate_catalog_key": "DT.18",
+   "expert_label": null,
+   "expert_notes": null
+  },
+  {
+   "item": "ff3f954f41986573",
+   "query_artifact": "artifact:95e57bc7b76955141e78a4ddba4e1568",
+   "query_catalog_key": "K.17023",
+   "candidate_artifact": "artifact:c57dbbfac70c741da8c65d807b43e7ac",
+   "candidate_catalog_key": "Sm.1746",
+   "expert_label": null,
+   "expert_notes": null
+  }
+ ]
+}

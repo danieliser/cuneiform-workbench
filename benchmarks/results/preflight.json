@@ -1,0 +1,239 @@
+{
+ "snapshot_id": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "publication": {
+  "status": "ledgered",
+  "ledger_checked": true,
+  "ledger": "/Users/danieliser/.local/share/cuneiform-research/snapshots/.publication-ledger.jsonl",
+  "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+  "manifest_file_bytes_bound": true,
+  "published_at": "2026-11-05T10:19:55.937009+00:00",
+  "binding": "served manifest_sha256 (which covers every payload file hash) equals the ledger record; manifest.json bytes equal the reserved file"
+ },
+ "verify_wall_s": 5.86,
+ "verify_cpu_s": 5.71,
+ "payload_bytes": 9544585737,
+ "counts": {
+  "artifact": 20896,
+  "claim": 16735,
+  "composition": 0,
+  "edge": 12167645,
+  "exclusion": 1051657,
+  "lemma": 0,
+  "line": 629335,
+  "ngram": 12292380,
+  "occurrence": 4542153,
+  "passage": 0,
+  "posting": 2883814,
+  "projection_registry": 1,
+  "registry": 1,
+  "rejection": 0,
+  "sense": 0,
+  "sequence_version": 41792,
+  "sign_type": 649,
+  "source_binding": 20896,
+  "source_record": 20896,
+  "translation_segment": 23984,
+  "witness": 20896,
+  "word_token": 0
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "code": {
+  "commit": "HEAD",
+  "dirty": true
+ },
+ "free_gib": 177.1,
+ "verified_at": "2026-11-05T22:00:54Z",
+ "stat_fingerprint": {
+  "cohort.json": [
+   27275528,
+   1793872743505517001,
+   1793873995929733605,
+   740435251,
+   33060
+  ],
+  "graph.duckdb": [
+   6687567872,
+   1793873825423398435,
+   1793873995929621062,
+   740435252,
+   33060
+  ],
+  "manifest.json": [
+   8182,
+   1793873995624243719,
+   1793873995929560395,
+   740712623,
+   33060
+  ],
+  "parquet": [
+   768,
+   1793873987323248174,
+   1793873995929873981,
+   740696423,
+   16749
+  ],
+  "parquet/artifact.parquet": [
+   25930828,
+   1793873960680312977,
+   1793873995929484186,
+   740696424,
+   33060
+  ],
+  "parquet/claim.parquet": [
+   1879060,
+   1793873960693345073,
+   1793873995929417353,
+   740696465,
+   33060
+  ],
+  "parquet/composition.parquet": [
+   138,
+   1793873960694036203,
+   1793873995929333227,
+   740696479,
+   33060
+  ],
+  "parquet/edge.parquet": [
+   820277385,
+   1793873966739180152,
+   1793873995929196018,
+   740696480,
+   33060
+  ],
+  "parquet/exclusion.parquet": [
+   43672945,
+   1793873967121071422,
+   1793873995929127392,
+   740699558,
+   33060
+  ],
+  "parquet/lemma.parquet": [
+   205,
+   1793873967121856010,
+   1793873995929045183,
+   740699698,
+   33060
+  ],
+  "parquet/line.parquet": [
+   25405525,
+   1793873967390489448,
+   1793873995928873098,
+   740699699,
+   33060
+  ],
+  "parquet/ngram.parquet": [
+   1389075120,
+   1793873983169796626,
+   1793873995928805931,
+   740699787,
+   33060
+  ],
+  "parquet/occurrence.parquet": [
+   219926163,
+   1793873985632154083,
+   1793873995928742264,
+   740708691,
+   33060
+  ],
+  "parquet/passage.parquet": [
+   161,
+   1793873985635629775,
+   1793873995928678847,
+   740710018,
+   33060
+  ],
+  "parquet/posting.parquet": [
+   199731759,
+   1793873987119682585,
+   1793873995928621138,
+   740710019,
+   33060
+  ],
+  "parquet/projection_registry.parquet": [
+   2414,
+   1793873987120783051,
+   1793873995928534721,
+   740710502,
+   33060
+  ],
+  "parquet/registry.parquet": [
+   363,
+   1793873987121160929,
+   1793873995928475387,
+   740710503,
+   33060
+  ],
+  "parquet/rejection.parquet": [
+   146,
+   1793873987121460889,
+   1793873995928392720,
+   740710504,
+   33060
+  ],
+  "parquet/sense.parquet": [
+   166,
+   1793873987121758517,
+   1793873995928326053,
+   740710505,
+   33060
+  ],
+  "parquet/sequence_version.parquet": [
+   2910912,
+   1793873987139385980,
+   1793873995928253177,
+   740710506,
+   33060
+  ],
+  "parquet/sign_type.parquet": [
+   25710,
+   1793873987140743365,
+   1793873995928202510,
+   740710510,
+   33060
+  ],
+  "parquet/source_binding.parquet": [
+   686346,
+   1793873987145296566,
+   1793873995928136551,
+   740710511,
+   33060
+  ],
+  "parquet/source_record.parquet": [
+   25340470,
+   1793873987292408404,
+   1793873995928072384,
+   740710518,
+   33060
+  ],
+  "parquet/translation_segment.parquet": [
+   1988874,
+   1793873987311057417,
+   1793873995927997050,
+   740710560,
+   33060
+  ],
+  "parquet/witness.parquet": [
+   2064260,
+   1793873987322630169,
+   1793873995927927883,
+   740710568,
+   33060
+  ],
+  "parquet/word_token.parquet": [
+   171,
+   1793873987323350758,
+   1793873995927795799,
+   740710570,
+   33060
+  ],
+  "raw": [
+   70823216,
+   1793872743502085058,
+   1793873995927604256,
+   740435249,
+   33060
+  ],
+  "@ledger_sha256": "0db6a15df7a278a4e81c28596d78079114c83af24333791b537bac36315f6ba8"
+ }
+}
