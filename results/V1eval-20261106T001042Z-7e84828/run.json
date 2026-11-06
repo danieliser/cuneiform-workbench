@@ -1,0 +1,71 @@
+{
+ "run_id": "V1eval-20261106T001042Z-7e84828",
+ "stage": "V1eval",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "7e848289138f7a2c75fd28ef41f272f975f0482c",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-06T00:10:42.116364+00:00",
+ "wall_s": 30.19,
+ "cpu_s": 30.64,
+ "peak_rss_bytes": 1672052736,
+ "disk_bytes": {
+  "results": 14065,
+  "raw": 5195415
+ },
+ "free_gib": {
+  "before": 161.8,
+  "after": 160.9
+ },
+ "loadavg": {
+  "before": [
+   8.57958984375,
+   8.77197265625,
+   9.66162109375
+  ],
+  "after": [
+   8.34765625,
+   8.70849609375,
+   9.60791015625
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "stats_all_train": {
+   "wall_s": 10.94,
+   "cpu_s": 11.51,
+   "peak_rss_bytes": 1672052736
+  },
+  "scan_dev": {
+   "wall_s": 13.9,
+   "cpu_s": 14.46,
+   "peak_rss_bytes": 1672052736
+  },
+  "predict": {
+   "wall_s": 14.25,
+   "cpu_s": 14.81,
+   "peak_rss_bytes": 1672052736
+  }
+ },
+ "partial": [],
+ "raw_outputs": {
+  "predictions.json": "2b8bd1388367d8720e517d3b1e1cad7e0484995f7e724102ed53519523bd9c7b"
+ },
+ "value_protocol": "cb-value-1",
+ "claims": {
+  "C1_rerank_meta_minus_best": "inconclusive",
+  "C2_rerank_meta_minus_rerank_raw": "refuted"
+ },
+ "n": {
+  "S1_no_shared_8run": 1500,
+  "S2_no_exact_frame": 1500,
+  "S3_no_restoration": 477,
+  "ALL": 1500
+ }
+}

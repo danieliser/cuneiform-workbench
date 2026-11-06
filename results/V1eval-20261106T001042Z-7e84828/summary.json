@@ -1,0 +1,901 @@
+{
+ "protocol": "cb-value-1",
+ "frozen_sha256": "7cf8e4df9ce3a6d49121d1fea81dfb4c98ce97a59184daf3e53d73d3962e6617",
+ "lm_K": 6,
+ "best_baseline": {
+  "S1_no_shared_8run": "longest_match",
+  "S2_no_exact_frame": "longest_match",
+  "S3_no_restoration": "longest_match",
+  "ALL": "longest_match"
+ },
+ "strata": {
+  "S1_no_shared_8run": {
+   "n": 1500,
+   "artifacts": 662,
+   "clusters": 662,
+   "best_baseline": "longest_match",
+   "genre_known_rate": 0.472,
+   "methods": {
+    "unigram": {
+     "top1": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.0307,
+      "ci95": [
+       0.0213,
+       0.0404
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.1453,
+      "ci95": [
+       0.1274,
+       0.1638
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.1077,
+      "ci95": [
+       0.098,
+       0.1182
+      ]
+     }
+    },
+    "markov1_bidir": {
+     "top1": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.1867,
+      "ci95": [
+       0.1643,
+       0.2101
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.4107,
+      "ci95": [
+       0.385,
+       0.4383
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.3015,
+      "ci95": [
+       0.2808,
+       0.3221
+      ]
+     }
+    },
+    "cascade": {
+     "top1": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.3347,
+      "ci95": [
+       0.3069,
+       0.3625
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.5347,
+      "ci95": [
+       0.5077,
+       0.5598
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.4348,
+      "ci95": [
+       0.41,
+       0.4595
+      ]
+     }
+    },
+    "longest_match": {
+     "top1": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.3907,
+      "ci95": [
+       0.3616,
+       0.4179
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.5633,
+      "ci95": [
+       0.5369,
+       0.5911
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.4775,
+      "ci95": [
+       0.4539,
+       0.5051
+      ]
+     }
+    },
+    "rerank_raw": {
+     "top1": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.398,
+      "ci95": [
+       0.3698,
+       0.4254
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.5673,
+      "ci95": [
+       0.5394,
+       0.5946
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.4844,
+      "ci95": [
+       0.4612,
+       0.5078
+      ]
+     }
+    },
+    "rerank_meta": {
+     "top1": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.4073,
+      "ci95": [
+       0.383,
+       0.436
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.568,
+      "ci95": [
+       0.5399,
+       0.5954
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 662,
+      "point": 0.4905,
+      "ci95": [
+       0.4665,
+       0.5161
+      ]
+     }
+    }
+   },
+   "C1_rerank_meta_minus_best": {
+    "n": 1500,
+    "clusters": 662,
+    "point": 0.0167,
+    "ci95": [
+     0.0054,
+     0.0278
+    ],
+    "verdict": "refuted"
+   },
+   "C2_rerank_meta_minus_rerank_raw": {
+    "n": 1500,
+    "clusters": 662,
+    "point": 0.0093,
+    "ci95": [
+     0.0014,
+     0.0174
+    ],
+    "verdict": "refuted"
+   },
+   "rerank_raw_minus_best": {
+    "n": 1500,
+    "clusters": 662,
+    "point": 0.0073,
+    "ci95": [
+     -0.0031,
+     0.0169
+    ]
+   },
+   "lm_minus_cascade": {
+    "n": 1500,
+    "clusters": 662,
+    "point": 0.056,
+    "ci95": [
+     0.0379,
+     0.0738
+    ]
+   }
+  },
+  "S2_no_exact_frame": {
+   "n": 1500,
+   "artifacts": 669,
+   "clusters": 634,
+   "best_baseline": "longest_match",
+   "genre_known_rate": 0.619,
+   "methods": {
+    "unigram": {
+     "top1": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.0287,
+      "ci95": [
+       0.0209,
+       0.0372
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.1293,
+      "ci95": [
+       0.1106,
+       0.1497
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.1015,
+      "ci95": [
+       0.0921,
+       0.1114
+      ]
+     }
+    },
+    "markov1_bidir": {
+     "top1": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.1447,
+      "ci95": [
+       0.1257,
+       0.1626
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.3633,
+      "ci95": [
+       0.3403,
+       0.3892
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.2578,
+      "ci95": [
+       0.2408,
+       0.2757
+      ]
+     }
+    },
+    "cascade": {
+     "top1": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.224,
+      "ci95": [
+       0.2024,
+       0.2463
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.4367,
+      "ci95": [
+       0.41,
+       0.4651
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.331,
+      "ci95": [
+       0.309,
+       0.3525
+      ]
+     }
+    },
+    "longest_match": {
+     "top1": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.324,
+      "ci95": [
+       0.2956,
+       0.3512
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.4913,
+      "ci95": [
+       0.4637,
+       0.5189
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.4118,
+      "ci95": [
+       0.3876,
+       0.4359
+      ]
+     }
+    },
+    "rerank_raw": {
+     "top1": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.328,
+      "ci95": [
+       0.3018,
+       0.353
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.5013,
+      "ci95": [
+       0.4729,
+       0.5284
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.4167,
+      "ci95": [
+       0.3924,
+       0.4388
+      ]
+     }
+    },
+    "rerank_meta": {
+     "top1": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.3293,
+      "ci95": [
+       0.3054,
+       0.3563
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.5053,
+      "ci95": [
+       0.4778,
+       0.5331
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 634,
+      "point": 0.419,
+      "ci95": [
+       0.3949,
+       0.4417
+      ]
+     }
+    }
+   },
+   "C1_rerank_meta_minus_best": {
+    "n": 1500,
+    "clusters": 634,
+    "point": 0.0053,
+    "ci95": [
+     -0.0077,
+     0.0179
+    ],
+    "verdict": "refuted"
+   },
+   "C2_rerank_meta_minus_rerank_raw": {
+    "n": 1500,
+    "clusters": 634,
+    "point": 0.0013,
+    "ci95": [
+     -0.0081,
+     0.0102
+    ],
+    "verdict": "refuted"
+   },
+   "rerank_raw_minus_best": {
+    "n": 1500,
+    "clusters": 634,
+    "point": 0.004,
+    "ci95": [
+     -0.0056,
+     0.0126
+    ]
+   },
+   "lm_minus_cascade": {
+    "n": 1500,
+    "clusters": 634,
+    "point": 0.1,
+    "ci95": [
+     0.0789,
+     0.1212
+    ]
+   }
+  },
+  "S3_no_restoration": {
+   "n": 477,
+   "artifacts": 61,
+   "clusters": 60,
+   "best_baseline": "longest_match",
+   "genre_known_rate": 0.572,
+   "methods": {
+    "unigram": {
+     "top1": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.0797,
+      "ci95": [
+       0.0553,
+       0.1042
+      ]
+     },
+     "top5": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.2055,
+      "ci95": [
+       0.167,
+       0.2477
+      ]
+     },
+     "rr": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.1474,
+      "ci95": [
+       0.1202,
+       0.1748
+      ]
+     }
+    },
+    "markov1_bidir": {
+     "top1": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.2243,
+      "ci95": [
+       0.1814,
+       0.2643
+      ]
+     },
+     "top5": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.4864,
+      "ci95": [
+       0.4389,
+       0.5336
+      ]
+     },
+     "rr": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.3477,
+      "ci95": [
+       0.3112,
+       0.3882
+      ]
+     }
+    },
+    "cascade": {
+     "top1": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.587,
+      "ci95": [
+       0.5226,
+       0.6498
+      ]
+     },
+     "top5": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.6876,
+      "ci95": [
+       0.6242,
+       0.7516
+      ]
+     },
+     "rr": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.6427,
+      "ci95": [
+       0.5815,
+       0.6985
+      ]
+     }
+    },
+    "longest_match": {
+     "top1": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.5849,
+      "ci95": [
+       0.5172,
+       0.6564
+      ]
+     },
+     "top5": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.7107,
+      "ci95": [
+       0.6459,
+       0.7722
+      ]
+     },
+     "rr": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.6481,
+      "ci95": [
+       0.5852,
+       0.706
+      ]
+     }
+    },
+    "rerank_raw": {
+     "top1": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.5996,
+      "ci95": [
+       0.5346,
+       0.6643
+      ]
+     },
+     "top5": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.7212,
+      "ci95": [
+       0.6597,
+       0.7755
+      ]
+     },
+     "rr": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.6585,
+      "ci95": [
+       0.597,
+       0.7139
+      ]
+     }
+    },
+    "rerank_meta": {
+     "top1": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.6101,
+      "ci95": [
+       0.5425,
+       0.6772
+      ]
+     },
+     "top5": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.7233,
+      "ci95": [
+       0.6532,
+       0.7865
+      ]
+     },
+     "rr": {
+      "n": 477,
+      "clusters": 60,
+      "point": 0.6667,
+      "ci95": [
+       0.6026,
+       0.7265
+      ]
+     }
+    }
+   },
+   "C1_rerank_meta_minus_best": {
+    "n": 477,
+    "clusters": 60,
+    "point": 0.0252,
+    "ci95": [
+     0.002,
+     0.049
+    ],
+    "verdict": "inconclusive"
+   },
+   "C2_rerank_meta_minus_rerank_raw": {
+    "n": 477,
+    "clusters": 60,
+    "point": 0.0105,
+    "ci95": [
+     -0.002,
+     0.023
+    ],
+    "verdict": "refuted"
+   },
+   "rerank_raw_minus_best": {
+    "n": 477,
+    "clusters": 60,
+    "point": 0.0147,
+    "ci95": [
+     -0.0043,
+     0.0347
+    ]
+   },
+   "lm_minus_cascade": {
+    "n": 477,
+    "clusters": 60,
+    "point": -0.0021,
+    "ci95": [
+     -0.0252,
+     0.0203
+    ]
+   }
+  },
+  "ALL": {
+   "n": 1500,
+   "artifacts": 694,
+   "clusters": 636,
+   "best_baseline": "longest_match",
+   "genre_known_rate": 0.644,
+   "methods": {
+    "unigram": {
+     "top1": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.038,
+      "ci95": [
+       0.029,
+       0.0482
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.162,
+      "ci95": [
+       0.1408,
+       0.1822
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.1148,
+      "ci95": [
+       0.104,
+       0.1259
+      ]
+     }
+    },
+    "markov1_bidir": {
+     "top1": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.2307,
+      "ci95": [
+       0.2075,
+       0.255
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.476,
+      "ci95": [
+       0.4478,
+       0.5044
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.3516,
+      "ci95": [
+       0.3282,
+       0.3746
+      ]
+     }
+    },
+    "cascade": {
+     "top1": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.5113,
+      "ci95": [
+       0.4722,
+       0.55
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.6713,
+      "ci95": [
+       0.6366,
+       0.7056
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.5888,
+      "ci95": [
+       0.5539,
+       0.6216
+      ]
+     }
+    },
+    "longest_match": {
+     "top1": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.5767,
+      "ci95": [
+       0.5412,
+       0.6115
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.7047,
+      "ci95": [
+       0.6707,
+       0.7367
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.6407,
+      "ci95": [
+       0.6048,
+       0.6736
+      ]
+     }
+    },
+    "rerank_raw": {
+     "top1": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.578,
+      "ci95": [
+       0.539,
+       0.6149
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.7047,
+      "ci95": [
+       0.6713,
+       0.7375
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.6424,
+      "ci95": [
+       0.6081,
+       0.6741
+      ]
+     }
+    },
+    "rerank_meta": {
+     "top1": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.5813,
+      "ci95": [
+       0.5411,
+       0.6207
+      ]
+     },
+     "top5": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.712,
+      "ci95": [
+       0.6804,
+       0.7424
+      ]
+     },
+     "rr": {
+      "n": 1500,
+      "clusters": 636,
+      "point": 0.6449,
+      "ci95": [
+       0.6087,
+       0.6787
+      ]
+     }
+    }
+   },
+   "C1_rerank_meta_minus_best": {
+    "n": 1500,
+    "clusters": 636,
+    "point": 0.0047,
+    "ci95": [
+     -0.0059,
+     0.0148
+    ],
+    "verdict": "refuted"
+   },
+   "C2_rerank_meta_minus_rerank_raw": {
+    "n": 1500,
+    "clusters": 636,
+    "point": 0.0033,
+    "ci95": [
+     -0.0053,
+     0.0112
+    ],
+    "verdict": "refuted"
+   },
+   "rerank_raw_minus_best": {
+    "n": 1500,
+    "clusters": 636,
+    "point": 0.0013,
+    "ci95": [
+     -0.0071,
+     0.009
+    ]
+   },
+   "lm_minus_cascade": {
+    "n": 1500,
+    "clusters": 636,
+    "point": 0.0653,
+    "ci95": [
+     0.0483,
+     0.0842
+    ]
+   }
+  }
+ },
+ "claims": {
+  "C1_rerank_meta_minus_best": "inconclusive",
+  "C2_rerank_meta_minus_rerank_raw": "refuted"
+ }
+}
