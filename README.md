@@ -1,6 +1,6 @@
 # Cuneiform Workbench
 
-A local tool for browsing edited cuneiform texts, following their sources, and asking small, reproducible questions about represented sign sequences. It is a useful starting point for Assyriologists, students learning transliteration, and computational researchers inspecting a corpus before designing an experiment. It is experimental software; scholarly usefulness has not been established by a researcher study.
+Browse edited cuneiform texts, follow their sources, and ask reproducible questions about represented sign sequences. This repository includes the local web interface, Python/DuckDB backend, and benchmark code and results.
 
 ## See it in use
 
@@ -62,15 +62,13 @@ Inspect the written form, sign mapping and dictionary senses. Final simplified d
 
 Source passages and editorial translations are from eBL; dictionary aids use ORACC. Source rights remain separate from the UI. See [capture provenance and caveats](docs/GALLERY.md#capture-provenance).
 
-## Try it without a corpus or Docker
+## Install and run
 
-Requires Python **3.11 or newer**, Git, Bash and a modern browser. There is no Node build step. The backend is a separate dependency, pinned to `057a0b757ed3dc05e486893bc344a15dd73c86d8`; it is not bundled here. Clone the backend and UI alongside one another as shown below. The backend repository contains the pinned commit.
+Requires Python **3.11+**, Git, Bash and a browser. No Docker, API key, corpus download or Node build is needed.
 
 ```sh
-git clone https://github.com/danieliser/cuneiform-research.git
-git clone https://github.com/danieliser/cuneiform-ui.git
-cd cuneiform-ui
-export CUNEIFORM_BACKEND_REPO="$(cd ../cuneiform-research && pwd)"
+git clone https://github.com/danieliser/cuneiform-workbench.git
+cd cuneiform-workbench
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 bin/demo start
@@ -78,45 +76,60 @@ bin/demo start
 bin/demo stop
 ```
 
-The demo uses tiny **synthetic engineering fixtures**, not ancient evidence. Open **Change task → Where else does this sequence occur?**, enter `A B C` and run: expect **6 matches**. Try `A ? C`: expect **11**. Strict evidence policy returns zero because the parser does not infer certainty. Any translations in the fixtures are synthetic too; choose a sequence question for the reproducible counts above.
+The demo uses tiny **synthetic fixtures**, including synthetic translations. Choose **Change task → Where else does this sequence occur?** Enter `A B C`: expect **6 matches**. Enter `A ? C`: expect **11**. Strict evidence policy returns zero because the parser does not infer certainty.
 
-`bin/demo` exports the pinned backend read-only into a separate runtime under `~/.local/share/cuneiform-ui-demo`, creates fixture projections in memory, and never uses the canonical corpus store. No corpus download, Docker, API key, model or paid service is needed. Override `CUNEIFORM_DEMO_HOME`, `CUNEIFORM_UI_PORT`, or `CUNEIFORM_PY` if needed. Stop only the demo with `bin/demo stop`.
+The launcher exports backend commit `057a0b757ed3dc05e486893bc344a15dd73c86d8` from this repository's complete history into `~/.local/share/cuneiform-ui-demo`. Use a normal clone: shallow clones and GitHub ZIP downloads may lack that commit. Override `CUNEIFORM_DEMO_HOME`, `CUNEIFORM_UI_PORT` or `CUNEIFORM_PY` as needed. No sibling checkout is used. The demo does not read the canonical corpus store.
 
 ## Read and ask
 
-With an eligible eBL snapshot configured, browse source translations, medical texts, omen openings, letters or literary compositions. Filter for English translations where available. Open a tablet, compare transliteration and available source translation, and select a reading for cited notes and occurrence examples. URLs retain the dataset, task and inputs for returning to a view.
+Four questions are implemented:
 
-Four current questions are implemented:
+- **Where else does this sequence occur?** Exact or wildcard windows with surrounding readings.
+- **What occurs between these signs?** Group represented intervening positions and inspect examples.
+- **How is this reading used?** Occurrences, catalogue groupings and source examples.
+- **What is written on this tablet?** Edited lines and available source translations.
 
-- Where else does this sequence occur? Exact or wildcard windows, with contextual results.
-- What occurs between these signs? Group represented intervening positions.
-- How is this reading used? Occurrences, catalogue groupings and source examples.
-- What is written on this tablet? Edited lines and available translations with source links.
+With a separately supplied eligible snapshot, browse passages and select readings for source notes and occurrence examples. URLs retain the task and inputs. This is a starting point for Assyriologists checking contexts, students learning transliteration, and computational researchers inspecting data before an experiment. Scholarly usefulness has not been established by a researcher study.
 
-Advanced queries and bounded graph neighborhoods remain in the same package. Counts refer to represented positions in the selected dataset, not all historical uses of a word or sign. Matching patterns do not establish shared composition or identity.
+Transliteration is an editor's reading, with uncertainty and restoration marks. Unicode glyphs are standardized characters, not tablet photographs. Source translations may cover multiple lines; attachment to a line does not establish an exact range or word alignment. Dictionary glosses are separate aids. Missing or ambiguous sign assignments stay visible.
 
-## What you are looking at
+## Repository layout
 
-**Transliteration** is an editor's sign reading, including uncertainty and restoration marks. **Glyphs** are standardized Unicode characters drawn by the bundled Noto font, not photographs or this tablet's handwriting. Sign-name → Unicode agreement and reading → sign assignment are checked separately; missing, ambiguous and disagreeing assignments remain visible without a guessed glyph. **Translation** is the source edition's rendering of a line or passage, not a sign-by-sign gloss. A translation attached after line 4 can render lines 1–4: attachment does not prove a range. Dictionary glosses and modern scholarly pronunciation notes are separate aids.
+| Path | Contents |
+| --- | --- |
+| `server/`, `web/`, `bin/` | Local UI, HTTP API and launchers |
+| `backend/` | Python package, fixtures, source terms, model specs and backend tests |
+| `benchmarks/` | Executable protocols, frozen configs, historical runs and reviews |
+| `docs/` | [Gallery](docs/GALLERY.md), [operations](docs/OPERATIONS.md), [future experiments](docs/FUTURE-EXPERIMENTS.md), [consolidation and historical paths](docs/CONSOLIDATION.md) |
+| `reviews/`, `CHECKPOINT.md` | Earlier UI reviews and engineering record |
 
-## Data and known limits
+## What the benchmarks found
 
-The locally qualified full snapshot is `snapshot:965aa26214dc0388dd3af1be367d2acc`: **20,896 eligible records of 23,289** in the fixed eBL Zenodo release **10018951**, with 2,393 recorded exclusions. This is neither all eBL nor all cuneiform, ORACC or CDLI. It contains no tablet photographs. Other local samples have narrower scope.
+The [benchmark results](benchmarks/RESULTS.md) separate query correctness and speed from research value. The final [value audit](benchmarks/VALUE-VERDICT.md) returned **NO-GO for measured construction advantage**: the tested construction did not show a practical advantage over standard retrieval methods or a small raw-source script. Metadata helped completion too little, selected evidence tasks did not save effort, and a genre relation feature reduced retrieval performance. The remaining completion claim was inconclusive overall.
 
-The pinned `conservative-3` parser misfiled **129 comment/translation lines (2,258 positions)** as text in 49 records. ATF sequence counts and reading examples can include them. The signs layer is clean. This UI deliberately preserves the snapshot and counts; a separate backend repair needs a new immutable snapshot and a subsequent compatibility review. Translation ranges, catalogue dating and incomplete genre labels also limit interpretation. A clean engineering check does not certify an editorial reading.
+That verdict concerns the tested research construction; it does not establish that nobody can use the app. These are historical measurements, not results reproduced by installing the demo. The corpus and development environment were removed when the experiment closed. See [benchmark reproduction](benchmarks/README.md) for supplying your own eligible inputs and [research outcome](docs/RESEARCH-OUTCOME.md) for the claim boundary.
 
-The full corpus is **not bundled or automatically downloaded**. Expect roughly **10 GiB for the full snapshot alone**, plus raw sources, environment, exports and working headroom. Download/ingestion is a separate, explicit opt-in workflow in the backend's [source audit](https://github.com/danieliser/cuneiform-research/blob/main/docs/SOURCE-AUDIT.md), [ingestion design](https://github.com/danieliser/cuneiform-research/blob/main/docs/INGESTION-DESIGN.md) and [publication protocol](https://github.com/danieliser/cuneiform-research/blob/main/docs/PUBLICATION-PROTOCOL.md). Review source terms first. Configure `CUNEIFORM_RESEARCH_ROOT` only when deliberately using that store; see [operations](docs/OPERATIONS.md). No download or corpus build is performed by this quickstart.
+[Future experiments](docs/FUTURE-EXPERIMENTS.md) describe individual signs, sign groups, words and phrases as interpretation overlays, reversible propagation through contexts, and agent-assisted hypothesis review. These are proposals. No novel decipherment, restoration accuracy or validated interpretation is claimed.
 
-## Evidence and possibilities
+## Data, rights and limits
 
-Existing tests establish bounded retrieval, source tracing, snapshot version handling and access controls. They do **not** establish scholarly discovery or restoration quality. Read the [research outcome](docs/RESEARCH-OUTCOME.md): the final value audit found no demonstrated practical advantage for the tested construction. Detailed benchmark evidence is retained privately. The [source documentation](https://github.com/danieliser/cuneiform-research/blob/main/docs/READING-AIDS-SOURCES.md) and [UI reviews](reviews/) describe further limits.
+No corpus payloads, downloads, credentials, model weights or runtime stores are bundled. The screenshots show historical full-corpus sessions, not the synthetic quickstart. The historical eligible eBL snapshot covered 20,896 of 23,289 records in fixed Zenodo release 10018951, not all eBL, ORACC, CDLI or cuneiform. It contained no tablet photographs.
 
-The [future experiments](docs/FUTURE-EXPERIMENTS.md) describe testing proposed interpretations for individual signs, groups of signs, words and phrases across their contexts, including reversible propagation and agent-assisted review. These, restoration suggestions, ranked semantic similarity and collaborative annotation are **future possibilities, not implemented or validated capabilities**. No restoration accuracy is claimed. Any future work needs philological evaluation, leakage-resistant comparisons and evidence that it helps researchers.
+The demo pin uses `conservative-3`; in the historical full snapshot that parser misfiled 129 comment/translation lines (2,258 positions) as text in 49 records. ATF counts can include them; the signs layer was clean. A later `conservative-4` rebuild was not independently accepted at closure. No corpus verification is implied by this packaging change. The [parser record](backend/docs/PARSER-REVISIONS.md) gives details.
 
-## Development and publication readiness
+Review [source terms](backend/docs/SOURCE-AUDIT.md) before obtaining data: the eBL license conflict remains unresolved. Source snippets and reference facts retain their attribution; public benchmark publication is not a new source-data rights grant. The bundled Noto font has its own [OFL](web/fonts/OFL.txt); OSL reference facts record CC0 provenance in `server/refdata/sign-map.json`. **No root software license has been selected**; public visibility alone does not grant an open-source license.
 
-Runtime, security contracts, provenance receipts and earlier technical evidence are preserved in [OPERATIONS.md](docs/OPERATIONS.md) and [CHECKPOINT.md](CHECKPOINT.md). Optional FalkorDB is described separately there; it is unnecessary for demo/index queries, and the full snapshot exceeds its configured export cap. The UI binds to loopback and is not a hosted multi-user service.
+The UI binds to loopback and is experimental local software, not a maintained hosted multi-user service. Real-data ingestion is a separate opt-in workflow: [ingestion design](backend/docs/INGESTION-DESIGN.md), [publication protocol](backend/docs/PUBLICATION-PROTOCOL.md), and [operations](docs/OPERATIONS.md).
 
-Run `bin/cuneiform-ui test` in the configured local environment for the existing security and contract suite. The suite uses isolated roots; retained real-source sample checks need those local samples and are not proof of a fixture-only install. See the [verification report](docs/UI-SIMPLIFICATION.md) for the clean boot actually exercised.
+## Development and tests
 
-This is a source-available experimental starting point, not a maintained hosted service. No root software license has been selected; public visibility alone does not grant an open-source license. Code rights and corpus rights are separate. No corpus snapshots, raw downloads, local credentials or model weights are distributed. Small test fixtures and reference facts retain their source notices. Review source terms before downloading real corpora: the eBL license conflict remains unresolved. The bundled Noto font has its own [OFL](web/fonts/OFL.txt); OSL reference facts record CC0 provenance in `server/refdata/sign-map.json`.
+```sh
+# From the repository root, after installing requirements.txt:
+CUNEIFORM_UI_HOME="$PWD/output/dev" bin/cuneiform-ui pin-backend
+CUNEIFORM_SOURCE_REPO="$PWD/output/dev/backend-pin/057a0b757ed3dc05e486893bc344a15dd73c86d8" \
+  CUNEIFORM_UI_REAL_HOME="$PWD/output/tests" .venv/bin/python -B -m unittest discover -s tests -v
+(cd backend && ../.venv/bin/python -B -m unittest discover -s tests -v)
+(cd benchmarks && ../.venv/bin/python -B -m unittest discover -s tests -t . -v)
+```
+
+Tests use synthetic fixtures; absent retained samples, optional FalkorDB and opt-in disk/corpus checks skip with reasons. These skips are not full-corpus evidence. Disk tests require explicit storage admission; do not enable them against an existing corpus casually. The current backend lives under `backend/`; the demo stays pinned for compatibility. The original atlas and queues are historical references, as explained in [consolidation](docs/CONSOLIDATION.md).

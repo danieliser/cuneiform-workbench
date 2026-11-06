@@ -4,17 +4,20 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
+from pathlib import Path
 import random
 from collections import defaultdict
 
-from .core import ROOT, SEED as SPLIT_SEED, UF, h
+from .core import SOURCE_ROOT, ROOT, SEED as SPLIT_SEED, UF, h
 
-VCONFIG = json.loads((ROOT / 'runconfig-value.json').read_text())
+VCONFIG_PATH = Path(os.environ.get('CUNEIFORM_BENCH_VALUE_CONFIG', str(SOURCE_ROOT / 'runconfig-value.json'))).expanduser()
+VCONFIG = json.loads(VCONFIG_PATH.read_text())
 VSEED = VCONFIG['seed']
 
 
 def vconfig_sha() -> str:
-    return hashlib.sha256((ROOT / 'runconfig-value.json').read_bytes()).hexdigest()
+    return hashlib.sha256(VCONFIG_PATH.read_bytes()).hexdigest()
 
 
 def bucket(family_key: str) -> int:

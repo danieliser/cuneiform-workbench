@@ -1,6 +1,8 @@
+> Backend in the unified [Cuneiform Workbench](../README.md). Snapshot inventories below are historical; the corpus and runtime are no longer installed. See [historical paths](../docs/CONSOLIDATION.md).
+
 # Cuneiform graph and text-corpus pilot
 
-**Project status:** experimental source archive. Start with the [Workbench demo](https://github.com/danieliser/cuneiform-ui#try-it-without-a-corpus-or-docker). The final value audit did not demonstrate a practical advantage for the tested construction. Corpus data is not included. No root software license has been selected. Historic runtime paths and snapshot inventories below describe the development environment, not an installation prerequisite. The conservative-4 full rebuild was produced but its verification was interrupted at closure; it is not independently accepted.
+**Project status:** experimental source archive. Start with the [Workbench demo](../../README.md#install-and-run). The final value audit did not demonstrate a practical advantage for the tested construction. Corpus data is not included. No root software license has been selected. Historic runtime paths and snapshot inventories below describe the development environment, not an installation prerequisite. The conservative-4 full rebuild was produced but its verification was interrupted at closure; it is not independently accepted.
 
 A local Python/DuckDB implementation of the authoritative [SPEC-v0.2](SPEC-v0.2.md). It preserves source readings, uncertainty and provenance; exposes typed graph edges, gap-safe motifs and portable graph exports; and now runs on **real persisted text data** from three sources. It is a pilot, not the full research workbench.
 
@@ -29,8 +31,8 @@ Counts are **within the selected scope**. For cohorts and selections they are ne
 ## Run
 
 ```sh
-cd /Users/danieliser/Projects/Fun/cuneiform-research
-PY=/Users/danieliser/.local/share/cuneiform-research/venv/bin/python   # Python 3.13, duckdb==1.4.3 only
+cd backend  # from the unified repository root
+PY=../.venv/bin/python   # Python 3.11+, duckdb==1.4.3
 c() { "$PY" -B -m cuneiform "$@"; }   # works in bash and zsh
 S300=snapshot:84971360d212834e0b7acbeac1e56abe; ORACC=snapshot:edaab55c1a39cc65ad7c76e6d12547a7
 EBL51=snapshot:c316e7cbbaf8a7fca7705f0efa5c4a07; CDLI=snapshot:fc7c350439f9edfee61b5f35bdd4d65a

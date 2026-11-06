@@ -40,4 +40,4 @@ Final simplified design (`2a43151`), mobile. The inspector distinguishes the wri
 
 ## Capture provenance
 
-Recovered unchanged from the private verified development archive. Question captures originated in `output/q-ui-redesign`, the glyph/tablet capture in `output/q025/after`, and final-design captures in `output/simplify`. No screenshot was recoloured or reconstructed to imply that an earlier screen used the final design. UI source data derives from eBL and ORACC; screenshots do not grant a separate licence to that data. See [reading-aid sources](https://github.com/danieliser/cuneiform-research/blob/main/docs/READING-AIDS-SOURCES.md).
+Recovered unchanged from the private verified development archive. Question captures originated in `output/q-ui-redesign`, the glyph/tablet capture in `output/q025/after`, and final-design captures in `output/simplify`. No screenshot was recoloured or reconstructed to imply that an earlier screen used the final design. UI source data derives from eBL and ORACC; screenshots do not grant a separate licence to that data. See [reading-aid sources](../backend/docs/READING-AIDS-SOURCES.md).

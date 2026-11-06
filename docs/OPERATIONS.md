@@ -4,15 +4,15 @@ This preserves the former root README. Historical runtime paths and dated review
 
 # Cuneiform Workbench (local query UI)
 
-A local, read-only browser UI for exploring the [cuneiform-research](../../cuneiform-research) backend. You can run motif queries, read occurrence evidence back to the original source bytes, walk the graph, look up ORACC words, and run allowlisted read-only templates against an isolated, disposable FalkorDB projection.
+A local, read-only browser UI for exploring the [cuneiform-research](../backend) backend. You can run motif queries, read occurrence evidence back to the original source bytes, walk the graph, look up ORACC words, and run allowlisted read-only templates against an isolated, disposable FalkorDB projection.
 
 Open **http://127.0.0.1:8740/** after starting it.
 
 ## Start / stop
 
 ```sh
-cd /Users/danieliser/Projects/Fun/cuneiform-ui
-bin/cuneiform-ui pin-backend    # once: read-only git-archive export of the tested backend commit (63f4221)
+cd cuneiform-workbench
+bin/cuneiform-ui pin-backend    # once: read-only git-archive export of the tested backend commit (057a0b7)
 bin/cuneiform-ui start          # isolated FalkorDB (+ relay), then the UI
 bin/cuneiform-ui status         # PIDs, containers, backend source, runtime storage
 bin/cuneiform-ui logs 100
@@ -54,7 +54,7 @@ How it is counted: every aggregate runs over **all** matches in the bound datase
 
 **Translations** are the source edition's own `#tr` lines, placed beside the transliteration lines they cover by eBL's own rule (the text line before, or through the line named in an extent such as `(r 3)`); see `server/translations.py`. This is line placement, not word alignment. Extents that name a line not in the edition are shown at their first line with the extent quoted. Rendering keeps eBL markup (`@i{…}`, `@akk{…}`, `@sux{…}`) as italics and ancient-language words.
 
-**Glyphs**: the tablet and passage views pair each reading with a standard Unicode cuneiform glyph (toggle *Reading only*). Readings are mapped through sign values in the eBL sign list, cross-checked against ORACC OSL (CC0); the signs layer maps ABZ numbers the same way. Ambiguous numbers (one ABZ number for several signs, e.g. GAR/LIMMU) and values listed by several signs get no glyph, only the alternatives. The font is Noto Sans Cuneiform (OFL, `web/fonts/`). A glyph is not the tablet's handwriting; the dataset has no photographs. Sources, hashes and coverage: `../cuneiform-research/docs/READING-AIDS-SOURCES.md`; table: `server/refdata/sign-map.json` (rebuild with `tools/fetch_ebl_signs.py` and `tools/build_sign_map.py`; check with `tools/check_sign_map.py`, `tools/glyph_coverage.py`, `tools/check_translation_placement.py`).
+**Glyphs**: the tablet and passage views pair each reading with a standard Unicode cuneiform glyph (toggle *Reading only*). Readings are mapped through sign values in the eBL sign list, cross-checked against ORACC OSL (CC0); the signs layer maps ABZ numbers the same way. Ambiguous numbers (one ABZ number for several signs, e.g. GAR/LIMMU) and values listed by several signs get no glyph, only the alternatives. The font is Noto Sans Cuneiform (OFL, `web/fonts/`). A glyph is not the tablet's handwriting; the dataset has no photographs. Sources, hashes and coverage: `../backend/docs/READING-AIDS-SOURCES.md`; table: `server/refdata/sign-map.json` (rebuild with `tools/fetch_ebl_signs.py` and `tools/build_sign_map.py`; check with `tools/check_sign_map.py`, `tools/glyph_coverage.py`, `tools/check_translation_placement.py`).
 
 **Reading explanations**: select one reading in a tablet (or any reading in a passage) and choose *Explain this reading*. The panel shows what is written (convention, sign, glyph, code point, ABZ number, eBL sign page), cited contextual uses where a sign's use depends on context (currently DIŠ, from Borger's MZL as shown by eBL), how ORACC ccpo editors lemmatized the exact form (glosses, labelled as such), counts by genre, up to three lines with the reading that a source English translation covers (the open tablet first), and *Reading & pronunciation*: the ORACC citation form where one exists, cited caveats, and links to SOAS BAPLAR recordings (only composition-matched recordings are offered per tablet; nothing plays in the page). Endpoint: `GET /api/reading`.
 
@@ -99,4 +99,4 @@ Advanced query, Graph and Data & system (coverage, exclusions, verification, bac
 
 ## Reading-aids review correction (2026-11-05)
 
-Earlier statements below/above about an “independent re-scan” of translation placement mean a same-semantics re-scan, not independent validation against eBL's exact surface/column rule. The review found 52 tolerant matches among 1,457 located extents. That distinction remains unresolved; see [reading-aids review](../../cuneiform-research/reviews/reading-aids-review-v0.1.md) and [UI change notes](UI-SIMPLIFICATION.md). Range-less attachment is now hedged. Glyph sign-name/code-point checks do not independently verify reading/sign assignments; the latter now has a separate conservative value check. Existing receipts and measured counts are retained as historical evidence.
+Earlier statements below/above about an “independent re-scan” of translation placement mean a same-semantics re-scan, not independent validation against eBL's exact surface/column rule. The review found 52 tolerant matches among 1,457 located extents. That distinction remains unresolved; see [reading-aids review](../backend/reviews/reading-aids-review-v0.1.md) and [UI change notes](UI-SIMPLIFICATION.md). Range-less attachment is now hedged. Glyph sign-name/code-point checks do not independently verify reading/sign assignments; the latter now has a separate conservative value check. Existing receipts and measured counts are retained as historical evidence.

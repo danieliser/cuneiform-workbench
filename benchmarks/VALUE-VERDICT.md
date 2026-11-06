@@ -26,7 +26,7 @@ NO-GO is a statement about these tests. It does not prove that nobody could ever
 - this repository: protocols, harness, results and this verdict, about 1.3 MB of git;
 - the backend and UI git histories as an archive.
 
-The rights caveat still applies. The eBL rights conflict is unresolved, and `results/` contains catalogue keys and sign-label examples. So: keep it private, or strip the examples from `results/` before any public release. No dataset needs keeping. The raw input is re-downloadable from Zenodo 10018951 (sha256 `4e970d87…`), and the 9.5 GB snapshot rebuilds from it plus commit `057a0b7` in about 22 minutes.
+The rights caveat still applies. The eBL rights conflict is unresolved, and `results/` contains catalogue keys and sign-label examples. The owner authorized public publication of the benchmark code and retained examples during consolidation; this does not resolve the source-license conflict. See [publication context](../docs/CONSOLIDATION.md). No dataset needs keeping. The raw input is re-downloadable from Zenodo 10018951 (sha256 `4e970d87…`), and the 9.5 GB snapshot rebuilds from it plus commit `057a0b7` in about 22 minutes.
 
 **Research novelty versus personal exploration.** Nothing here is new research. The pipeline, audits and negative results are a worked personal exploration. They show which ideas already exist (eBL, ORACC-in-Korp, CDLI) and how strongly simple retrieval explains the apparent signal. That has learning value, not research or product value.
 

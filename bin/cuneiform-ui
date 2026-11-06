@@ -15,13 +15,13 @@ umask 077
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UI_HOME="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}"
-BACKEND_REPO="${CUNEIFORM_BACKEND_REPO:-$APP_DIR/../cuneiform-research}"  # read only (git archive / git status)
+BACKEND_REPO="${CUNEIFORM_BACKEND_REPO:-$APP_DIR}"  # read only (git archive / git status)
 PIN_COMMIT="057a0b757ed3dc05e486893bc344a15dd73c86d8"  # Q-023 full eBL import backend (writer-tested; independent review pending). Rollback pin: 63f42216243141f4b10cdfd3d7ddd514c85b63d7 (accepted in corpus-pilot-review-v0.3)
 PIN_DIR="${CUNEIFORM_UI_HOME:-$HOME/.local/share/cuneiform-ui}/backend-pin/$PIN_COMMIT"
 # Default: run against the read-only pinned export when it exists, so concurrent backend edits cannot change the UI.
-if [[ -z "${CUNEIFORM_SOURCE_REPO:-}" && -f "$PIN_DIR/.cuneiform-ui-pin.json" ]]; then SOURCE_REPO="$PIN_DIR"; else SOURCE_REPO="${CUNEIFORM_SOURCE_REPO:-$BACKEND_REPO}"; fi
+if [[ -z "${CUNEIFORM_SOURCE_REPO:-}" && -f "$PIN_DIR/.cuneiform-ui-pin.json" ]]; then SOURCE_REPO="$PIN_DIR"; else SOURCE_REPO="${CUNEIFORM_SOURCE_REPO:-$APP_DIR/backend}"; fi
 RESEARCH_ROOT="${CUNEIFORM_RESEARCH_ROOT:-$HOME/.local/share/cuneiform-research}"
-PY="${CUNEIFORM_PY:-$RESEARCH_ROOT/venv/bin/python}"
+PY="${CUNEIFORM_PY:-$APP_DIR/.venv/bin/python}"
 UI_PORT="${CUNEIFORM_UI_PORT:-8740}"
 FALKOR_PORT="${CUNEIFORM_FALKORDB_PORT:-26380}"
 OLD_BROWSER_PORT=23001  # published by the pre-review build; must stay closed

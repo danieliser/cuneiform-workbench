@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REAL_HOME = Path(os.environ.get('CUNEIFORM_UI_REAL_HOME', str(Path.home() / '.local/share/cuneiform-ui'))).expanduser()
 REAL_RESEARCH = Path.home() / '.local/share/cuneiform-research'
-REPO = Path(os.environ.get('CUNEIFORM_SOURCE_REPO', str(Path.home() / 'Projects/Fun/cuneiform-research')))
+REPO = Path(os.environ.get('CUNEIFORM_SOURCE_REPO', str(ROOT / 'backend')))
 SAMPLES = ['ebl-frozen-example.json', 'ebl-one', 'cdli-three.csv', 'source-receipts.json']
 
 

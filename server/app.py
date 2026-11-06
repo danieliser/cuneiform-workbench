@@ -58,7 +58,7 @@ class App:
         self.port = port
         self.started = time.time()
         home = Path(os.environ.get('CUNEIFORM_UI_HOME', str(Path.home() / '.local/share/cuneiform-ui'))).expanduser()
-        self.backend = Backend(Path(os.environ.get('CUNEIFORM_SOURCE_REPO', str(Path(__file__).resolve().parents[2] / 'cuneiform-research'))),
+        self.backend = Backend(Path(os.environ.get('CUNEIFORM_SOURCE_REPO', str(Path(__file__).resolve().parents[1] / 'backend'))),
                                Path(os.environ.get('CUNEIFORM_RESEARCH_ROOT', str(Path.home() / '.local/share/cuneiform-research'))),
                                os.environ.get('CUNEIFORM_UI_SHOW_DEMOS', 'auto'), home=home)
         self.explorer = Explorer(self.backend)

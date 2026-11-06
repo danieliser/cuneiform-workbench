@@ -1,3 +1,5 @@
+> **Archival atlas:** this records the original backend checkout and commit bindings. It has not been requalified for the unified multi-root repository or the removed corpus. See [consolidation](../../docs/CONSOLIDATION.md).
+
 # Model atlas
 
 This is the agent-readable map of the cuneiform evidence model. For every part of the model it gives the documents, artifacts and witnesses; the signs, readings and occurrences; the sequences, n-grams and patterns; the words, lemmas, senses and translations; claims; time; media; and interfaces. It also records how much of each part is modeled, implemented, populated and verified. The visual version is [model-atlas.html](model-atlas.html), a standalone file that needs no server. Active work is in [QUEUE.md](../QUEUE.md).

@@ -19,7 +19,7 @@ from .core import ROOT, SNAPSHOT, Run, h, peak_rss
 from .value_common import VCONFIG, VSEED, vconfig_sha
 
 E = VCONFIG['e2']
-RAW = Path(os.path.expanduser('~/.local/share/cuneiform-research/raw/sha256')) / VCONFIG['raw_fragments_sha256']
+RAW = Path(os.environ.get('CUNEIFORM_BENCH_RAW', str(ROOT / 'raw' / 'sha256' / VCONFIG['raw_fragments_sha256']))).expanduser()
 A_RUN = ROOT / 'results' / 'A-20261105T220825Z-da32a56'
 
 

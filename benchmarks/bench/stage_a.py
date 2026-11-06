@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import statistics
 import time
 from collections import Counter
 
-from .core import CONFIG, GAP, SEED, UNS, Corpus, Run, backend, connect, connect_backend, load_universe, split_manifest, check_rss, expand
+from .core import ROOT, CONFIG, GAP, SEED, UNS, Corpus, Run, backend, connect, connect_backend, load_universe, split_manifest, check_rss, expand
 
 A = CONFIG['stage_a']
 
@@ -277,7 +278,7 @@ def main():
 
     # optional existing read-only stage snapshots (timing scaling only)
     stages = []
-    root = expand(CONFIG['input']['optional_stage_root'])
+    root = expand(os.environ.get('CUNEIFORM_BENCH_STAGE_STORE', str(ROOT / 'stage-snapshots')))
     if not args.skip_stages and root.exists():
         sub = [r for r in rows if r['field'] == 'signs' and ((r['kind'] == 'exact' and r['length'] == 2) or r['kind'] == 'frame') and r['stratum'] in ('common', 'mid')]
         for snap in sorted(root.glob('snapshot:*')):

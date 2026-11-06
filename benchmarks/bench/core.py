@@ -15,8 +15,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-CONFIG = json.loads((ROOT / 'runconfig.json').read_text())
+SOURCE_ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get('CUNEIFORM_BENCH_RUNTIME', str(SOURCE_ROOT.parent / 'output' / 'benchmarks'))).expanduser().resolve()
+ROOT.mkdir(parents=True, exist_ok=True)
+CONFIG_PATH = Path(os.environ.get('CUNEIFORM_BENCH_CONFIG', str(SOURCE_ROOT / 'runconfig.json'))).expanduser()
+CONFIG = json.loads(CONFIG_PATH.read_text())
 SEED = CONFIG['seed']
 GAP, UNS, BOS, EOS = -1, -2, -3, -4
 SPECIAL = {GAP: 'GAP', UNS: 'UNS', BOS: 'BOS', EOS: 'EOS'}
@@ -27,8 +30,8 @@ def expand(p: str) -> Path:
 
 
 SNAPSHOT_ID = CONFIG['input']['snapshot_id']
-SNAPSHOT = expand(CONFIG['input']['store_root']) / SNAPSHOT_ID
-PIN = expand(CONFIG['input']['backend_pin'])
+SNAPSHOT = expand(os.environ.get('CUNEIFORM_BENCH_STORE', str(ROOT / 'snapshots'))) / SNAPSHOT_ID
+PIN = expand(os.environ.get('CUNEIFORM_BENCH_BACKEND', str(ROOT / 'backend-pin' / CONFIG['input']['backend_commit'])))
 
 
 def backend():
@@ -169,12 +172,13 @@ class Run:
             'code': self.git, 'backend_pin': CONFIG['input']['backend_commit'],
             'snapshot': SNAPSHOT_ID if self.snapshot == SNAPSHOT else str(self.snapshot),
             'manifest_sha256': (self.preflight or {}).get('manifest_sha256'),
-            'runconfig_sha256': hashlib.sha256((ROOT / 'runconfig.json').read_bytes()).hexdigest(),
+            'runconfig_sha256': hashlib.sha256(CONFIG_PATH.read_bytes()).hexdigest(),
             'started': self.started.isoformat(), 'wall_s': round(time.monotonic() - self.t0, 2),
             'cpu_s': round(self.cpu_used(), 2), 'peak_rss_bytes': peak_rss(),
             'disk_bytes': {'results': du(self.results), 'raw': du(self.raw)},
             'free_gib': {'before': round(self.free_before, 1), 'after': round(free_gib(), 1)},
             'loadavg': {'before': self.load_before, 'after': os.getloadavg()},
+            'runtime_paths': {'snapshot': str(self.snapshot), 'backend': str(PIN), 'runtime': str(ROOT), 'config': str(CONFIG_PATH)},
             'snapshot_stat_unchanged': unchanged, 'marks': self.marks, 'partial': self.partial,
             'raw_outputs': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(self.raw.glob('*')) if p.is_file()},
         }
