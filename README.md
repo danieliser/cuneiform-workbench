@@ -2,6 +2,23 @@
 
 A local tool for browsing edited cuneiform texts, following their sources, and asking small, reproducible questions about represented sign sequences. It is a useful starting point for Assyriologists, students learning transliteration, and computational researchers inspecting a corpus before designing an experiment. It is experimental software; scholarly usefulness has not been established by a researcher study.
 
+## Screenshots
+
+Browse the corpus and choose a question without leaving the workbench.
+
+![Desktop passage browser](docs/screenshots/after-desktop.png)
+
+<details>
+<summary>Mobile view</summary>
+
+<img src="docs/screenshots/after-mobile.png" alt="Passage browser on mobile" width="390">
+
+</details>
+
+These are actual captures of the final simplified UI, taken during local full-corpus testing on 5 November 2026. They show the historical corpus and parser warning; the downloadable demo uses synthetic fixtures, and the development corpus has since been removed. Screenshots are not a hosted service.
+
+Start with **Change task**, choose a sequence or tablet question, then open a result for context. Source and system details remain available on demand.
+
 ## Try it without a corpus or Docker
 
 Requires Python **3.11 or newer**, Git, Bash and a modern browser. There is no Node build step. The backend is a separate dependency, pinned to `057a0b757ed3dc05e486893bc344a15dd73c86d8`; it is not bundled here. Clone the backend and UI alongside one another as shown below. The backend repository contains the pinned commit.
