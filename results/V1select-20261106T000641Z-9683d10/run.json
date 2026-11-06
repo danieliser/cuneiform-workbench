@@ -1,0 +1,121 @@
+{
+ "run_id": "V1select-20261106T000641Z-9683d10",
+ "stage": "V1select",
+ "protocol": "cb-protocol-1",
+ "seed": "cb-v1-2026-11-05",
+ "code": {
+  "commit": "9683d106251e03be838830b2e7532f77181f3dde",
+  "dirty": false
+ },
+ "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8",
+ "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+ "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+ "runconfig_sha256": "549fa3cff60262d3fe560fc5685ccf5704ac57c3f21f2319f5706d6c83b201c1",
+ "started": "2026-11-06T00:06:41.727043+00:00",
+ "wall_s": 16.93,
+ "cpu_s": 17.4,
+ "peak_rss_bytes": 1792983040,
+ "disk_bytes": {
+  "results": 668438,
+  "raw": 0
+ },
+ "free_gib": {
+  "before": 163.9,
+  "after": 162.9
+ },
+ "loadavg": {
+  "before": [
+   7.1103515625,
+   9.1640625,
+   10.10693359375
+  ],
+  "after": [
+   6.7041015625,
+   8.97509765625,
+   10.0224609375
+  ]
+ },
+ "snapshot_stat_unchanged": true,
+ "marks": {
+  "load": {
+   "wall_s": 10.14,
+   "cpu_s": 10.73,
+   "peak_rss_bytes": 1656324096
+  },
+  "select_B": {
+   "wall_s": 11.8,
+   "cpu_s": 12.33,
+   "peak_rss_bytes": 1728331776
+  },
+  "select_dev": {
+   "wall_s": 13.83,
+   "cpu_s": 14.35,
+   "peak_rss_bytes": 1789362176
+  },
+  "parity": {
+   "wall_s": 16.91,
+   "cpu_s": 17.38,
+   "peak_rss_bytes": 1792983040
+  }
+ },
+ "partial": [],
+ "raw_outputs": {},
+ "value_protocol": "cb-value-1",
+ "parity": {
+  "hits": 1013,
+  "n": 2000,
+  "expected_hits": 1013
+ },
+ "n": {
+  "train_B": {
+   "S1_no_shared_8run": 1500,
+   "S2_no_exact_frame": 1500,
+   "S3_no_restoration": 513,
+   "ALL": 1500
+  },
+  "dev": {
+   "S1_no_shared_8run": 1500,
+   "S2_no_exact_frame": 1500,
+   "S3_no_restoration": 477,
+   "ALL": 1500
+  }
+ },
+ "available": {
+  "train_B": {
+   "S1_no_shared_8run": {
+    "eligible_positions": 40813,
+    "artifacts": 1290
+   },
+   "S2_no_exact_frame": {
+    "eligible_positions": 96502,
+    "artifacts": 1879
+   },
+   "S3_no_restoration": {
+    "eligible_positions": 5150,
+    "artifacts": 64
+   },
+   "ALL": {
+    "eligible_positions": 180534,
+    "artifacts": 1997
+   }
+  },
+  "dev": {
+   "S1_no_shared_8run": {
+    "eligible_positions": 35783,
+    "artifacts": 1234
+   },
+   "S2_no_exact_frame": {
+    "eligible_positions": 88809,
+    "artifacts": 1853
+   },
+   "S3_no_restoration": {
+    "eligible_positions": 3760,
+    "artifacts": 61
+   },
+   "ALL": {
+    "eligible_positions": 173954,
+    "artifacts": 1968
+   }
+  }
+ }
+}
