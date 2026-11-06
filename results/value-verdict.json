@@ -1,0 +1,404 @@
+{
+ "protocol": "cb-value-1",
+ "date": "2026-11-06",
+ "recommendation": "NO-GO",
+ "reason": "no preregistered claim supported; only construction-unique property (verified byte-offset provenance, ledgered snapshots) showed no measured task value over raw sha256 + deterministic script",
+ "claims": {
+  "C1": {
+   "claim": "feature reranker (rerank_meta) beats best baseline on masked-sign top-1",
+   "baseline": "longest_match K=6 (best on train-B in every stratum)",
+   "endpoint": "top-1 paired difference",
+   "threshold": 0.03,
+   "strata": {
+    "S1_no_shared_8run": {
+     "n": 1500,
+     "clusters": 662,
+     "point": 0.0167,
+     "ci95": [
+      0.0054,
+      0.0278
+     ],
+     "verdict": "refuted"
+    },
+    "S2_no_exact_frame": {
+     "n": 1500,
+     "clusters": 634,
+     "point": 0.0053,
+     "ci95": [
+      -0.0077,
+      0.0179
+     ],
+     "verdict": "refuted"
+    },
+    "S3_no_restoration": {
+     "n": 477,
+     "clusters": 60,
+     "point": 0.0252,
+     "ci95": [
+      0.002,
+      0.049
+     ],
+     "verdict": "inconclusive"
+    },
+    "ALL": {
+     "n": 1500,
+     "clusters": 636,
+     "point": 0.0047,
+     "ci95": [
+      -0.0059,
+      0.0148
+     ],
+     "verdict": "refuted"
+    }
+   },
+   "verdict": "inconclusive",
+   "attribution": "all features raw-computable; cannot be a construction advantage",
+   "artifact": "results/V1eval-20261106T001042Z-7e84828"
+  },
+  "C2": {
+   "claim": "metadata (genre, period) increment",
+   "baseline": "rerank_raw",
+   "endpoint": "top-1 paired difference",
+   "threshold": 0.03,
+   "strata": {
+    "S1_no_shared_8run": {
+     "n": 1500,
+     "clusters": 662,
+     "point": 0.0093,
+     "ci95": [
+      0.0014,
+      0.0174
+     ],
+     "verdict": "refuted"
+    },
+    "S2_no_exact_frame": {
+     "n": 1500,
+     "clusters": 634,
+     "point": 0.0013,
+     "ci95": [
+      -0.0081,
+      0.0102
+     ],
+     "verdict": "refuted"
+    },
+    "S3_no_restoration": {
+     "n": 477,
+     "clusters": 60,
+     "point": 0.0105,
+     "ci95": [
+      -0.002,
+      0.023
+     ],
+     "verdict": "refuted"
+    },
+    "ALL": {
+     "n": 1500,
+     "clusters": 636,
+     "point": 0.0033,
+     "ci95": [
+      -0.0053,
+      0.0112
+     ],
+     "verdict": "refuted"
+    }
+   },
+   "verdict": "refuted",
+   "artifact": "results/V1eval-20261106T001042Z-7e84828"
+  },
+  "C3": {
+   "claim": "construction gives interactive/setup advantage on evidence tasks with identical answers",
+   "baseline": "raw-JSON in-memory implementation",
+   "endpoint": "p95 latency < 1 s, setup margin 60 s",
+   "tasks": {
+    "T1": {
+     "identical_answers": true,
+     "first_differences": [],
+     "ours_variant": "sql",
+     "latency_s": {
+      "raw": {
+       "first_p50_s": 0.0,
+       "first_p95_s": 0.0001,
+       "warm_p50_s": 0.0,
+       "warm_p95_s": 0.0
+      },
+      "ours": {
+       "first_p50_s": 0.2855,
+       "first_p95_s": 3.1586,
+       "warm_p50_s": 0.2862,
+       "warm_p95_s": 3.3988
+      }
+     },
+     "code_lines": {
+      "raw": 3,
+      "ours": 9
+     },
+     "ours_interactive_raw_not": false,
+     "raw_interactive": true,
+     "ours_setup_advantage": false
+    },
+    "T2": {
+     "identical_answers": true,
+     "first_differences": [],
+     "ours_variant": "sql",
+     "latency_s": {
+      "raw": {
+       "first_p50_s": 0.0,
+       "first_p95_s": 0.0,
+       "warm_p50_s": 0.0,
+       "warm_p95_s": 0.0
+      },
+      "ours": {
+       "first_p50_s": 0.003,
+       "first_p95_s": 0.0125,
+       "warm_p50_s": 0.0026,
+       "warm_p95_s": 0.0033
+      }
+     },
+     "code_lines": {
+      "raw": 7,
+      "ours": 11
+     },
+     "ours_interactive_raw_not": false,
+     "raw_interactive": true,
+     "ours_setup_advantage": false
+    },
+    "T3": {
+     "identical_answers": true,
+     "first_differences": [],
+     "ours_variant": "posting",
+     "latency_s": {
+      "raw": {
+       "first_p50_s": 0.0784,
+       "first_p95_s": 0.2845,
+       "warm_p50_s": 0.079,
+       "warm_p95_s": 0.344
+      },
+      "ours": {
+       "first_p50_s": 0.2018,
+       "first_p95_s": 0.3308,
+       "warm_p50_s": 0.1995,
+       "warm_p95_s": 0.3202
+      }
+     },
+     "code_lines": {
+      "raw": 9,
+      "ours": 10
+     },
+     "ours_interactive_raw_not": false,
+     "raw_interactive": true,
+     "ours_setup_advantage": false,
+     "ours_alt": {
+      "identical_to_ngram_variant": true,
+      "warm_p95_s": 0.3202,
+      "first_p95_s": 0.3308
+     }
+    }
+   },
+   "setup_s": {
+    "raw": 5.145,
+    "ours": 0.045
+   },
+   "peak_rss_bytes": {
+    "raw": 944439296,
+    "ours": 1103544320
+   },
+   "disk": {
+    "ours_snapshot_bytes": 9544593919,
+    "raw_input_bytes": 73854507,
+    "ours_one_time_build": "about 22 min and 6.25 GB RSS for the full build (Q-023 record; not re-run here)"
+   },
+   "verdict": "refuted",
+   "artifact": "results/V2-20261106T001124Z-86cd0ea"
+  },
+  "C4": {
+   "claim": "relation feature (same genre) improves retrieval of published co-witnesses",
+   "baseline": "bm25",
+   "endpoint": "recall@10 paired difference, chapter clusters",
+   "threshold": 0.05,
+   "result": {
+    "n": 69,
+    "clusters": 13,
+    "point": -0.0253,
+    "ci95": [
+     -0.0493,
+     -0.003
+    ],
+    "verdict": "refuted",
+    "best_baseline": "bm25"
+   },
+   "gold": {
+    "chapters": 20,
+    "listed_manuscripts": 580,
+    "in_corpus_non_commentary_quotation": 76,
+    "queries_primary": 69,
+    "queries_with_quotation": 86,
+    "query_genre_known": 34,
+    "query_genres": {
+     "null": 35,
+     "CANONICAL>Literature": 21,
+     "CANONICAL>Magic": 7,
+     "CANONICAL>Lexicography": 6
+    }
+   },
+   "verdict": "refuted",
+   "artifact": "results/V3-20261106T001329Z-a47ce1f"
+  }
+ },
+ "incidental": {
+  "lm_minus_cascade": {
+   "S1_no_shared_8run": {
+    "n": 1500,
+    "clusters": 662,
+    "point": 0.056,
+    "ci95": [
+     0.0379,
+     0.0738
+    ]
+   },
+   "S2_no_exact_frame": {
+    "n": 1500,
+    "clusters": 634,
+    "point": 0.1,
+    "ci95": [
+     0.0789,
+     0.1212
+    ]
+   },
+   "S3_no_restoration": {
+    "n": 477,
+    "clusters": 60,
+    "point": -0.0021,
+    "ci95": [
+     -0.0252,
+     0.0203
+    ]
+   },
+   "ALL": {
+    "n": 1500,
+    "clusters": 636,
+    "point": 0.0653,
+    "ci95": [
+     0.0483,
+     0.0842
+    ]
+   }
+  },
+  "bm25_minus_published_ovl_recall10": {
+   "n": 69,
+   "clusters": 13,
+   "point": 0.0739,
+   "ci95": [
+    0.0333,
+    0.1128
+   ]
+  }
+ },
+ "protocol_commits": {
+  "protocol_and_code": "9683d10",
+  "line_search_fix": "13b5820",
+  "selection_sealed": "b005b33",
+  "tuning_sealed": "7e84828",
+  "e1_results": "86cd0ea",
+  "e2_results": "a47ce1f",
+  "e3_results": "f72dbb2"
+ },
+ "frozen_sha256": "7cf8e4df9ce3a6d49121d1fea81dfb4c98ce97a59184daf3e53d73d3962e6617",
+ "protocol_value_sha256": "4f5ac72db38fb310a45f5a560af2c5d55a4f7d5c3dd00cb64d83550a88d60708",
+ "runconfig_value_sha256": "b69a4392fd1038162f870df4cd2466c7f6a573f9e06d57a91e4d62a478e087bc",
+ "inputs": {
+  "snapshot": "snapshot:965aa26214dc0388dd3af1be367d2acc",
+  "manifest_sha256": "44a20685b069802c46a2b9c158239ccf369c5f5f566f7267ad8a86dc298e3c84",
+  "raw_fragments_sha256_verified_after_runs": "4e970d8713315ca9559fb9dfd79956d5b19b1debb9941c22f8bed0339745d753",
+  "backend_pin": "057a0b757ed3dc05e486893bc344a15dd73c86d8"
+ },
+ "runs": [
+  {
+   "run_id": "V1eval-20261106T001042Z-7e84828",
+   "code_commit": "7e848289138f7a2c75fd28ef41f272f975f0482c",
+   "dirty": false,
+   "cpu_s": 30.64,
+   "wall_s": 30.19,
+   "peak_rss_bytes": 1672052736,
+   "snapshot_stat_unchanged": true,
+   "files_sha256": {
+    "run.json": "6d5038cdde98425c8698418aa95168cc0f7836b49c8d59f186ed462d597d89ad",
+    "summary.json": "b7247f3a477495c56970eb63c315afb06a1e60da297caccd0e66d1a67940385f"
+   }
+  },
+  {
+   "run_id": "V1select-20261106T000641Z-9683d10",
+   "code_commit": "9683d106251e03be838830b2e7532f77181f3dde",
+   "dirty": false,
+   "cpu_s": 17.4,
+   "wall_s": 16.93,
+   "peak_rss_bytes": 1792983040,
+   "snapshot_stat_unchanged": true,
+   "files_sha256": {
+    "run.json": "1f1cbf1cca894c7b80993d8eb78005844a88fd2da41e93cc64c0e1b9960a1c96",
+    "selection.json": "fbadadf3476187ca4ea4b72712cae65867cbc16846b72cb74ba6a37f5e18756a"
+   }
+  },
+  {
+   "run_id": "V1tune-20261106T001003Z-13b5820",
+   "code_commit": "13b582021ba874e9ede44b7bcb5f30d0cfbc7dcc",
+   "dirty": false,
+   "cpu_s": 24.29,
+   "wall_s": 22.08,
+   "peak_rss_bytes": 1685258240,
+   "snapshot_stat_unchanged": true,
+   "files_sha256": {
+    "frozen.json": "7cf8e4df9ce3a6d49121d1fea81dfb4c98ce97a59184daf3e53d73d3962e6617",
+    "run.json": "ac369da452fceda65e3d21f7a49a216c7c834cc094447b7abf791a5e639a507f"
+   }
+  },
+  {
+   "run_id": "V2-20261106T001124Z-86cd0ea",
+   "code_commit": "86cd0ea07648f83fc80537389320a9aaf15a9398",
+   "dirty": false,
+   "cpu_s": 0.21,
+   "wall_s": 113.8,
+   "peak_rss_bytes": {
+    "raw": 944439296,
+    "ours": 1103544320
+   },
+   "snapshot_stat_unchanged": true,
+   "files_sha256": {
+    "run.json": "d3e68e8559a9a66be189e487b526aa7786c2f6e8541da01c7cc5709acadaddeb",
+    "summary.json": "b915994b58218aafe055ab67bc9d3ace162fd8e18b6a23282d7d768db09058e5"
+   }
+  },
+  {
+   "run_id": "V3-20261106T001329Z-a47ce1f",
+   "code_commit": "a47ce1f84d7fb0ba23c9a75f3d36cca14ae31b69",
+   "dirty": false,
+   "cpu_s": 100.03,
+   "wall_s": 100.85,
+   "peak_rss_bytes": 2107916288,
+   "snapshot_stat_unchanged": true,
+   "files_sha256": {
+    "run.json": "47807b5682acbb72e292f128fd63ebdb0aba1a8b1718e30b74adc0938dc3e7cc",
+    "summary.json": "6d0072d86fcc8575b52bd73091830c5dd154759757a854c4c64f0b36e7a37b1f"
+   }
+  }
+ ],
+ "failed_runs": [
+  "failed run: results/B2-20261105T221403Z-a829440 (no results written; crashed at summary path bug after bootstrap; nothing printed)",
+  "2026-11-06T00:09:57Z V1tune-20261106T000719Z-b005b33 (code b005b33): reranker Newton diverged on a train-B CV fold (CV top-1 ~0.01); train-only data, no dev score; moved here; fixed with step-halving line search"
+ ],
+ "budget": {
+  "cpu_minutes_used_approx": 7,
+  "cpu_minutes_budget": 120,
+  "peak_rss_gib": 2.11,
+  "network_requests": 29,
+  "network_bytes": 6600435,
+  "web_search_queries": 2
+ },
+ "commands": [
+  "$PY -B -m unittest discover -s tests -t .",
+  "$PY -B -m bench.value_e1 select",
+  "$PY -B -m bench.value_e1 tune --selection results/V1select-20261106T000641Z-9683d10/selection.json",
+  "$PY -B -m bench.value_e1 evaluate --selection results/V1select-20261106T000641Z-9683d10/selection.json --frozen results/V1tune-20261106T001003Z-13b5820/frozen.json",
+  "$PY -B -m bench.value_e2",
+  "$PY -B -m bench.value_e3"
+ ]
+}

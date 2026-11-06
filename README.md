@@ -4,6 +4,7 @@ These are the executable research protocol and measured results for the local eB
 
 - [protocol.md](protocol.md) and [runconfig.json](runconfig.json): hypotheses, splits, metrics, thresholds, budgets and stop rules, frozen before the main runs.
 - [RESULTS.md](RESULTS.md): measured results and the claim boundary.
+- [VALUE-VERDICT.md](VALUE-VERDICT.md): final value audit `cb-value-1` ([protocol](protocol-value.md), [machine-readable](results/value-verdict.json)): **NO-GO**. [SHUTDOWN-INVENTORY.md](SHUTDOWN-INVENTORY.md): read-only inventory for cleanup.
 - `bench/`: the harness. `preflight` verifies the snapshot once. Stage A is query correctness and performance, B is motif discovery with sealed confirmation, C is the masked-sign diagnostic and D is the retrieval packet.
 - `results/<run_id>/`: committed aggregates (JSON/CSV) plus `run.json` (input hash, code commit, seeds, timings, resources).
 - `out/<run_id>/`: ignored raw outputs, linked by sha256 from `run.json`. The raw outputs contain no full source redistribution.
@@ -19,6 +20,10 @@ $PY -B -m bench.stage_b discover   # commit results/B1-*/frozen.json before:
 $PY -B -m bench.stage_b confirm --frozen results/B1-…/frozen.json
 $PY -B -m bench.stage_c
 $PY -B -m bench.stage_d
+# value audit cb-value-1 (see VALUE-VERDICT.md for the exact sealed sequence)
+$PY -B -m bench.value_e1 select | tune --selection … | evaluate --selection … --frozen …
+$PY -B -m bench.value_e2
+$PY -B -m bench.value_e3
 ```
 
 Rights: the eBL rights conflict is unresolved, so this is private local research only. Do not push or redistribute this repository, its packets or its source examples.
