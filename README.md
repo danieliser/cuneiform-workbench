@@ -4,11 +4,13 @@ A local tool for browsing edited cuneiform texts, following their sources, and a
 
 ## Try it without a corpus or Docker
 
-Requires Python **3.11 or newer**, Git, Bash and a modern browser. There is no Node build step. The backend is a separate dependency, pinned to `057a0b757ed3dc05e486893bc344a15dd73c86d8`; it is not bundled here. Obtain the existing `cuneiform-research` repository alongside this checkout, or set `CUNEIFORM_BACKEND_REPO` to its location. That repository must contain the pinned commit. No public clone URL is configured, so none is supplied here.
-
-From this repository:
+Requires Python **3.11 or newer**, Git, Bash and a modern browser. There is no Node build step. The backend is a separate dependency, pinned to `057a0b757ed3dc05e486893bc344a15dd73c86d8`; it is not bundled here. Clone the backend and UI alongside one another as shown below. The backend repository contains the pinned commit.
 
 ```sh
+git clone https://github.com/danieliser/cuneiform-research.git
+git clone https://github.com/danieliser/cuneiform-ui.git
+cd cuneiform-ui
+export CUNEIFORM_BACKEND_REPO="$(cd ../cuneiform-research && pwd)"
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 bin/demo start
@@ -43,11 +45,11 @@ The locally qualified full snapshot is `snapshot:965aa26214dc0388dd3af1be367d2ac
 
 The pinned `conservative-3` parser misfiled **129 comment/translation lines (2,258 positions)** as text in 49 records. ATF sequence counts and reading examples can include them. The signs layer is clean. This UI deliberately preserves the snapshot and counts; a separate backend repair needs a new immutable snapshot and a subsequent compatibility review. Translation ranges, catalogue dating and incomplete genre labels also limit interpretation. A clean engineering check does not certify an editorial reading.
 
-The full corpus is **not bundled or automatically downloaded**. Expect roughly **10 GiB for the full snapshot alone**, plus raw sources, environment, exports and working headroom. Download/ingestion is a separate, explicit opt-in workflow in the backend's [source audit](../cuneiform-research/docs/SOURCE-AUDIT.md), [ingestion design](../cuneiform-research/docs/INGESTION-DESIGN.md) and [publication protocol](../cuneiform-research/docs/PUBLICATION-PROTOCOL.md). Review source terms first. Configure `CUNEIFORM_RESEARCH_ROOT` only when deliberately using that store; see [operations](docs/OPERATIONS.md). No download or corpus build is performed by this quickstart.
+The full corpus is **not bundled or automatically downloaded**. Expect roughly **10 GiB for the full snapshot alone**, plus raw sources, environment, exports and working headroom. Download/ingestion is a separate, explicit opt-in workflow in the backend's [source audit](https://github.com/danieliser/cuneiform-research/blob/main/docs/SOURCE-AUDIT.md), [ingestion design](https://github.com/danieliser/cuneiform-research/blob/main/docs/INGESTION-DESIGN.md) and [publication protocol](https://github.com/danieliser/cuneiform-research/blob/main/docs/PUBLICATION-PROTOCOL.md). Review source terms first. Configure `CUNEIFORM_RESEARCH_ROOT` only when deliberately using that store; see [operations](docs/OPERATIONS.md). No download or corpus build is performed by this quickstart.
 
 ## Evidence and possibilities
 
-Existing tests establish bounded retrieval, source tracing, snapshot version handling and access controls. They do **not** establish scholarly discovery or restoration quality. Read the separate benchmark [RESULTS](../cuneiform-benchmarks/RESULTS.md), [protocol](../cuneiform-benchmarks/protocol.md) and [reviews](../cuneiform-benchmarks/reviews/), together with the [reading aids review](../cuneiform-research/reviews/reading-aids-review-v0.1.md), [source documentation](../cuneiform-research/docs/READING-AIDS-SOURCES.md) and [UI reviews](reviews/). These sibling links require the corresponding local repositories; they are not published URLs.
+Existing tests establish bounded retrieval, source tracing, snapshot version handling and access controls. They do **not** establish scholarly discovery or restoration quality. Read the [research outcome](docs/RESEARCH-OUTCOME.md): the final value audit found no demonstrated practical advantage for the tested construction. Detailed benchmark evidence is retained privately. The [source documentation](https://github.com/danieliser/cuneiform-research/blob/main/docs/READING-AIDS-SOURCES.md) and [UI reviews](reviews/) describe further limits.
 
 The [future experiments](docs/FUTURE-EXPERIMENTS.md) describe testing proposed interpretations for individual signs, groups of signs, words and phrases across their contexts, including reversible propagation and agent-assisted review. These, restoration suggestions, ranked semantic similarity and collaborative annotation are **future possibilities, not implemented or validated capabilities**. No restoration accuracy is claimed. Any future work needs philological evaluation, leakage-resistant comparisons and evidence that it helps researchers.
 
@@ -57,4 +59,4 @@ Runtime, security contracts, provenance receipts and earlier technical evidence 
 
 Run `bin/cuneiform-ui test` in the configured local environment for the existing security and contract suite. The suite uses isolated roots; retained real-source sample checks need those local samples and are not proof of a fixture-only install. See the [verification report](docs/UI-SIMPLIFICATION.md) for the clean boot actually exercised.
 
-Publication is **prepared, not launched**. There is currently no Git remote and no root software license. A maintainer must select a software license, make the pinned backend obtainable, review redistributed reference facts and source-data rights, and make sibling evidence links accessible before a public release. Code rights and corpus rights are separate: a future software license does not grant rights to eBL, ORACC or CDLI data. The bundled Noto font has its own [OFL](web/fonts/OFL.txt); OSL reference facts record CC0 provenance in `server/refdata/sign-map.json`. No public push, release or corpus redistribution is part of this work.
+This is a source-available experimental starting point, not a maintained hosted service. No root software license has been selected; public visibility alone does not grant an open-source license. Code rights and corpus rights are separate. No corpus snapshots, raw downloads, local credentials or model weights are distributed. Small test fixtures and reference facts retain their source notices. Review source terms before downloading real corpora: the eBL license conflict remains unresolved. The bundled Noto font has its own [OFL](web/fonts/OFL.txt); OSL reference facts record CC0 provenance in `server/refdata/sign-map.json`.
